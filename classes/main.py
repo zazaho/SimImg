@@ -1,3 +1,4 @@
+''' Main Window of SimImg program '''
 # import sys
 import os
 import glob
@@ -5,14 +6,15 @@ import glob
 # import sqlite3
 # from multiprocessing import Pool
 import tkinter as tk
-# # #from tkinter import ttk
-# # from PIL import ImageTk, Image
-from classes import fileobject as FO
-from classes import imageframe as IF
-from utils import jumbling as JU
-from utils import hashing as HA
-from utils import database as DB
-from utils import filecomparison as FC
+#from tkinter import ttk
+#from PIL import ImageTk, Image
+import classes.fileobject as FO
+import classes.imageframe as IF
+import classes.conditionmodules as CM
+import utils.jumbling as JU
+import utils.hashing as HA
+import utils.database as DB
+import utils.filecomparison as FC
 
 class simim_app(tk.Tk):
     ''' Main window for sorting and managing pictures'''
@@ -42,6 +44,11 @@ class simim_app(tk.Tk):
         # start at the top left of the current screen
         self.geometry("+0+0")
 
+        # self.ThumbPane = tk.Frame()
+        # self.ModulePane = tk.Frame()
+        # self.ThumbPane.pack(side=tk.LEFT)
+        # self.ModulePane.pack(side=tk.LEFT)
+        
         self.createfileobjects()
         #self.showinitialthumbnails()
 
@@ -55,19 +62,19 @@ class simim_app(tk.Tk):
         ImgObj2 = self.ImageFileObjectDict[distances[0][1]][0]
         ImgObj2.ThumbFrame.grid_forget()
         ImgObj2.ThumbFrame.grid(column=2,row=1)
-        print(distances[0][2])
 
         ImgObj3 = self.ImageFileObjectDict[distances[3][0]][0]
         ImgObj4 = self.ImageFileObjectDict[distances[3][1]][0]
         ImgObj3.ThumbFrame.grid(column=1,row=2)
         ImgObj4.ThumbFrame.grid(column=2,row=2)
-        print(distances[3][2])
 
         ImgObj5 = self.ImageFileObjectDict[distances[9][0]][0]
         ImgObj6 = self.ImageFileObjectDict[distances[9][1]][0]
         ImgObj5.ThumbFrame.grid(column=1,row=3)
         ImgObj6.ThumbFrame.grid(column=2,row=3)
-        print(distances[9][2])
+
+        thiscm = CM.HashCondition(self)
+        thiscm.grid(column=3,row=1)
         
     def createfileobjects(self):
 

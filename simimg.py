@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 ''' Project to display similar images from an image catalog '''
 import sys
-from classes import main as MAIN
+import classes.main as MAIN
 
 if __name__ == "__main__":
     ' Main routine, shim, do all work inside simim_app '
