@@ -9,6 +9,7 @@
 import tkinter as tk
 
 class ConditionFrame(tk.Frame):
+    name = ''
     " A frame that holds one selection criterion with options"
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
@@ -24,15 +25,8 @@ class ConditionFrame(tk.Frame):
         self.mustMatchToggle = None
         self.mustMatch = "normal"
 
-        self.SetMyName()
         self.make_base_widgets()
         self.make_additional_widgets()
-        
-    def Matches(self, listofpairs, listoffileobjects):
-        pass
-
-    def SetMyName(self):
-        self.name = ''
         
     def make_base_widgets(self):
         self.label = tk.Label(self, text=self.name, anchor='w')
@@ -56,6 +50,9 @@ class ConditionFrame(tk.Frame):
     def make_additional_widgets(self):
         pass
     
+    def Matches(self, listofpairs, listoffileobjects):
+        pass
+
     def activeToggled(self):
         self.active = not self.active
 
@@ -63,9 +60,7 @@ class ConditionFrame(tk.Frame):
         self.mustMatch = not self.mustMatch
 
 class HashCondition(ConditionFrame):
-    def SetMyName(self):
-        self.name = 'Hash distance'
-
+    name = 'HASHING DISTANCE'
     def make_additional_widgets(self):
         self.extra = tk.Checkbutton(self,
                                     text="Wow",

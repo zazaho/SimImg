@@ -16,41 +16,34 @@ import utils.hashing as HA
 import utils.database as DB
 import utils.filecomparison as FC
 
+
 class simim_app(tk.Tk):
     ''' Main window for sorting and managing pictures'''
 
-    def __init__(self, arguments=[], *args, **kwargs):
+    def __init__(self, arguments=None, *args, **kwargs):
         # do what any TK app does
         super().__init__(*args, **kwargs)
 
+        # for parsing the input arguments
         self.arguments = arguments
-
-        ### all constants that could become options
-        ## this will hold the handle of the md5,hashtype, hashvalue database
         self.doRecurse = True
+
+        ## this will hold the handle of the md5,hashtype, hashvalue database
         self.DATABASENAME = os.path.expanduser('~/.config/SimImg/SimImg.db')
         self.HashDBConnection = None
 
-        #how many thumbnails (should be options not hardcoded)
-        self.nx_grid = 5
-        self.ny_grid = 4
-        self.GridSize = (self.nx_grid+1,self.ny_grid+1)
-
-        self.ThumbImageSize = (150, 150)
-        self.ThumbBorderWidth = 3
-
         self.ImageFileObjectDict = None
-        
-        # start at the top left of the current screen
-        self.geometry("+0+0")
 
-        # self.ThumbPane = tk.Frame()
-        # self.ModulePane = tk.Frame()
-        # self.ThumbPane.pack(side=tk.LEFT)
-        # self.ModulePane.pack(side=tk.LEFT)
+        self.ThumbPane = ThumbPaneFrame(self)
+        self.ModulePane = SelectionPaneFrame(self)
+        self.ThumbPane.pack(side=tk.LEFT)
+        self.ModulePane.pack(side=tk.TOP)
         
         self.createfileobjects()
         #self.showinitialthumbnails()
+
+        for fo in self.ImageFileObjectDict.values():
+            print(fo[0].CameraMake(), fo[0].CameraModel())
 
         self.connectdatabase()
         HA.GetImageHashes(self.ImageFileObjectDict, 'phash', db_connection=self.HashDBConnection)
@@ -73,9 +66,13 @@ class simim_app(tk.Tk):
         ImgObj5.ThumbFrame.grid(column=1,row=3)
         ImgObj6.ThumbFrame.grid(column=2,row=3)
 
-        thiscm = CM.HashCondition(self)
-        thiscm.grid(column=3,row=1)
-        
+        thiscm = CM.HashCondition(self.ModulePane)
+        thiscm.pack(side=tk.TOP)
+        thiscm = CM.HashCondition(self.ModulePane)
+        thiscm.pack(side=tk.TOP)
+        thiscm = CM.HashCondition(self.ModulePane)
+        thiscm.pack(side=tk.TOP)
+
     def createfileobjects(self):
 
         ## create candidate file list
@@ -93,7 +90,7 @@ class simim_app(tk.Tk):
             if ThisFileObject.IsImage():
                 ImageFileObjectList.append(ThisFileObject)
                 # create an associated imageframe
-                ThisImageFrame = IF.ImageFrame(self)
+                ThisImageFrame = IF.ImageFrame(self.ThumbPane)
                 #make that the two object know about each-other
                 ThisImageFrame.FileObject = ThisFileObject
                 ThisFileObject.ThumbFrame = ThisImageFrame
@@ -174,3 +171,24 @@ class simim_app(tk.Tk):
 
         filelist = [c for c in candidates if os.path.isfile(c)]
         return filelist
+
+class ThumbPaneFrame(tk.Frame):
+    def __init__(self, parent, *args, **kwargs):
+        # do what any TK Frame does
+        super().__init__(*args, **kwargs)
+        # keep a trace of the top-level
+        self.App = parent
+        #how many thumbnails (should be options not hardcoded)
+        self.nx_grid = 5
+        self.ny_grid = 4
+        self.GridSize = (self.nx_grid+1,self.ny_grid+1)
+        self.ThumbImageSize = (150, 150)
+        self.ThumbBorderWidth = 3
+
+
+class SelectionPaneFrame(tk.Frame):
+    def __init__(self, parent, *args, **kwargs):
+        # do what any TK Frame does
+        super().__init__(*args, **kwargs)
+        # keep a trace of the top-level
+        self.App = parent

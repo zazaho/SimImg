@@ -12,5 +12,9 @@ if __name__ == "__main__":
     else:
         pathargs = sys.argv[1:]
 
+    foofoo = "10"
+    
     app = MAIN.simim_app(arguments=pathargs)
+    app.title("SIMilar IMaGe finder")
+    app.geometry("+0+0")
     app.mainloop()
