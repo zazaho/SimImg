@@ -70,7 +70,12 @@ class FileObject(object):
             'DateTimeDigitized': ''
         }
         with Image.open(self.FullPath) as image:
+            # image does not have method to get tags
+            if not hasattr(image,'_getexif'):
+                return self._ExifTags
+                
             exif = image._getexif()
+            # image does not have tags
             if not exif:
                 return self._ExifTags
 

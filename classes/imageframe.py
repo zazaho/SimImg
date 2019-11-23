@@ -3,8 +3,8 @@ from PIL import ImageTk, Image
 
 class ImageFrame(tk.Frame):
     " A frame that holds one image thumbnail with its buttons"
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+    def __init__(self, parent):
+        super().__init__(parent)
 
         self.image = None
         self.FileObject = None

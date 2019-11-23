@@ -22,7 +22,7 @@ class simim_app(tk.Tk):
 
     def __init__(self, arguments=None, *args, **kwargs):
         # do what any TK app does
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
         # for parsing the input arguments
         self.arguments = arguments
@@ -34,10 +34,10 @@ class simim_app(tk.Tk):
 
         self.ImageFileObjectDict = None
 
-        self.ThumbPane = ThumbPaneFrame(self)
         self.ModulePane = SelectionPaneFrame(self)
-        self.ThumbPane.pack(side=tk.LEFT)
-        self.ModulePane.pack(side=tk.TOP)
+        self.ThumbPane = ThumbPaneFrame(self)
+        self.ModulePane.pack(side=tk.LEFT)
+        self.ThumbPane.pack(side=tk.RIGHT)
         
         self.createfileobjects()
         #self.showinitialthumbnails()
@@ -66,12 +66,12 @@ class simim_app(tk.Tk):
         ImgObj5.ThumbFrame.grid(column=1,row=3)
         ImgObj6.ThumbFrame.grid(column=2,row=3)
 
-        thiscm = CM.HashCondition(self.ModulePane)
-        thiscm.pack(side=tk.TOP)
-        thiscm = CM.HashCondition(self.ModulePane)
-        thiscm.pack(side=tk.TOP)
-        thiscm = CM.HashCondition(self.ModulePane)
-        thiscm.pack(side=tk.TOP)
+        thiscm1 = CM.HashCondition(self.ModulePane)
+        thiscm1.pack(side=tk.TOP)
+        thiscm2 = CM.CameraCondition(self.ModulePane)
+        thiscm2.pack(side=tk.TOP)
+        thiscm3 = CM.DateCondition(self.ModulePane)
+        thiscm3.pack(side=tk.TOP)
 
     def createfileobjects(self):
 
