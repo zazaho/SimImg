@@ -8,6 +8,43 @@
 
 import tkinter as tk
 
+
+class TextScale(tk.Scale):
+    "A scale widget (slider) with text rather than numerical labels"
+    def __init__(self, parent,
+                 label='',
+                 textLabels=None,
+                 variable=None,
+                 command=None,
+                 *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+
+        # eventhough this is a scale widget we need a Frame to hold both
+        # the label and the values. We reuse the orginal label to show the values
+        self.topFrame = tk.Frame(parent)
+        self.textLabelsDict = {key: value for key, value in enumerate(textLabels) }
+        self.label = tk.Label(self.topFrame, text=label)
+        self.label.pack()
+        self.Scale = tk.Scale(self.topFrame, *args, **kwargs)
+        self.NumericalValue = tk.IntVar()
+        self.variable = variable
+        self.command = command
+        
+        self.Scale = tk.Scale(self.topFrame,
+                              from_=min(self.textLabelsDict),
+                              to=max(self.textLabelsDict),
+                              label=self.textLabelsDict[0],
+                              showvalue=False,
+                              command=self.TS_Set_Label,
+                              variable=self.NumericalValue,
+                              *args, **kwargs)
+        self.Scale.pack()
+
+    def TS_Set_Label(self,val):
+        self.variable = self.textLabelsDict[int(val)]
+        self.Scale.config(label=self.variable)
+        self.command()
+
 class ConditionFrame(tk.Frame):
     name = ''
     " A frame that holds one selection criterion with options"
@@ -87,10 +124,11 @@ class DateCondition(ConditionFrame):
         super().__init__(parent)
         self.missingMatchesCheck = None
         self.missingMatchesBool = tk.BooleanVar()
+
         self.timeDifferenceScale = None
-        self.timeDifferenceValue = tk.IntVar()
-        self.timeDifferenceCustomValueLabel = None
-        self.timeDifferenceCustomValueVar = tk.StringVar()
+        self.timeDifferenceValue = tk.StringVar()
+        self.scalelabels = ['1 minute','10 minutes','1 hour','1 day','1 week','1 month','1 year']
+
         self.make_additional_widgets()
 
     def make_additional_widgets(self):
@@ -100,32 +138,19 @@ class DateCondition(ConditionFrame):
                                                   command=self.missingMatchesToggled,
                                                   anchor='w')
         self.missingMatchesCheck.pack()
-        self.timeDifferenceValue = tk.IntVar()
-        
-        self.scalelabels = {
-            1:'1 minute',
-            2:'10 minutes',
-            3:'1 hour',
-            4:'1 day',
-            5:'1 week',
-            6:'1 month',
-            7:'1 year'
-        }
-
-        label = tk.Label(self,text='Maximum Difference')
-        label.pack()
-        self.timeDifferenceScale = tk.Scale(self,
-                                            from_=min(self.scalelabels),
-                                            to=max(self.scalelabels),
-                                            label=self.scalelabels[1],
-                                            showvalue=False,
-                                            command=self.TDS_set_label,
-                                            variable=self.timeDifferenceValue,
-                                            orient=tk.HORIZONTAL)
-        self.timeDifferenceScale.pack()
+        self.timeDifferenceScale = TextScale(self,
+                                             textLabels=self.scalelabels,
+                                             label='Maximum Difference', 
+                                             variable=self.timeDifferenceValue,
+                                             command=self.TDChanged,
+                                             orient=tk.HORIZONTAL)
+        self.timeDifferenceScale.topFrame.pack()
         
     def missingMatchesToggled(self):
         pass
 
+    def TDChanged(self):
+        print(self.timeDifferenceScale.variable)
+        
     def TDS_set_label(self,val):
         self.timeDifferenceScale.config(label=self.scalelabels[int(val)])
