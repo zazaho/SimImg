@@ -73,8 +73,7 @@ def CalculateImageHash(args):
         'phash': phash,
         'whash': whash
         }
-        
-    hashvalue = funcdict[hashname](Image.open(FullPath), hash_size=8)
-    
-    return (md5, str(hashvalue))
 
+    hashvalue = funcdict[hashname](Image.open(FullPath), hash_size=8)
+
+    return (md5, str(hashvalue))

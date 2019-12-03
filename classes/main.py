@@ -36,8 +36,8 @@ class simim_app(tk.Tk):
 
         self.ModulePane = SelectionPaneFrame(self)
         self.ThumbPane = ThumbPaneFrame(self)
-        self.ModulePane.pack(side=tk.LEFT)
-        self.ThumbPane.pack(side=tk.RIGHT)
+        self.ModulePane.pack(side=tk.LEFT,fill='y')
+        self.ThumbPane.pack(side=tk.RIGHT,fill='y')
         
         self.createfileobjects()
         #self.showinitialthumbnails()

@@ -8,6 +8,7 @@ class FileObject(object):
     ' File object that contains all information relating to one file on disk '
     def __init__(self, parent, FullPath=None, *args, **kwargs):
 
+        self.Cfg = parent.Cfg
         self.FullPath = FullPath
         self.DirName = os.path.dirname(self.FullPath)
         self.FileName = os.path.basename(self.FullPath)
@@ -25,14 +26,8 @@ class FileObject(object):
         self._IsImage = None
         self._md5 = None
         self._ExifTags = None
+        self._Thumbnail = None
 
-        #thumbnail object
-        self.ThumbFrame = None
-
-        #Is the thumbnail shown
-        self.ThumbFrameHidden = True
-        self.ThumbFramePosition = (-1,-1)
-        
         #It this file active
         self.Active = True
         self.Selected = False
@@ -98,6 +93,21 @@ class FileObject(object):
         if self.ExifTags()['DateTimeDigitized']:
             return self.ExifTags()['DateTimeDigitized']
         return ''
-    
-    def MakeThumbnail(self):
-        self.ThumbFrame.thumb_load_image()
+
+    def Thumbnail(self):
+        if self._Thumbnail:
+            return self._Thumbnail
+
+        ThumbSize = self.Cfg.get('ThumbImageSize')
+        image = Image.open(self.FullPath)
+        resize_ratio_x = image.size[0]/ThumbSize[0]
+        resize_ratio_y = image.size[1]/ThumbSize[1]
+        resize_ratio = max(resize_ratio_x,resize_ratio_y)
+        new_image_height = int(image.size[0] / resize_ratio)
+        new_image_length = int(image.size[1] / resize_ratio)
+        image = image.resize(
+            (new_image_height, new_image_length),
+            Image.ANTIALIAS
+        )
+        self._Thumbnail = ImageTk.PhotoImage(image)
+        return self._Thumbnail
