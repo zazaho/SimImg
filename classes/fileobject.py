@@ -2,17 +2,22 @@
 
 import os
 import hashlib
+from datetime import datetime
+from dateutil.parser import parse as dateutil_parse
+from dateutil.parser import ParserError as dateutil_parserError
 from PIL import ImageTk, Image, ExifTags
 
 class FileObject(object):
     ' File object that contains all information relating to one file on disk '
-    def __init__(self, parent, FullPath=None, *args, **kwargs):
+    def __init__(self, parent, FullPath=None, serial=None):
 
         self.Cfg = parent.Cfg
         self.FullPath = FullPath
         self.DirName = os.path.dirname(self.FullPath)
         self.FileName = os.path.basename(self.FullPath)
         dummy, self.FileExtension = os.path.splitext(self.FileName)
+
+        self.serial = serial
 
         self.ahash = None
         self.dhash = None
@@ -27,6 +32,7 @@ class FileObject(object):
         self._md5 = None
         self._ExifTags = None
         self._Thumbnail = None
+        self._DateUTC = None
 
         #It this file active
         self.Active = True
@@ -34,26 +40,30 @@ class FileObject(object):
 
     def IsImage(self):
         ' Set IsImage to True if the file can be read by PIL '
-        if not self._IsImage:
-            try:
-                Image.open(self.FullPath)
-                self._IsImage = True
-            except IOError:
-                self._IsImage = False
+        if self._IsImage is not None:
+            return self._IsImage
+
+        try:
+            Image.open(self.FullPath)
+            self._IsImage = True
+        except IOError:
+            self._IsImage = False
         return self._IsImage
 
 
     def md5(self):
-        if not self._md5:
-            hasher = hashlib.md5()
-            with open(self.FullPath, 'rb') as afile:
-                buf = afile.read()
-                hasher.update(buf)
+        if self._md5 is not None:
+            return self._md5
+
+        hasher = hashlib.md5()
+        with open(self.FullPath, 'rb') as afile:
+            buf = afile.read()
+            hasher.update(buf)
             self._md5 = hasher.hexdigest()
         return self._md5
             
     def ExifTags(self):
-        if self._ExifTags:
+        if self._ExifTags is not None:
             return self._ExifTags
 
         # default to empty basic values
@@ -68,7 +78,7 @@ class FileObject(object):
             # image does not have method to get tags
             if not hasattr(image,'_getexif'):
                 return self._ExifTags
-                
+
             exif = image._getexif()
             # image does not have tags
             if not exif:
@@ -81,10 +91,10 @@ class FileObject(object):
 
     def CameraMake(self):
         return self.ExifTags()['Make']
-    
+
     def CameraModel(self):
         return self.ExifTags()['Model']
-    
+
     def Date(self):
         if self.ExifTags()['DateTimeOriginal']:
             return self.ExifTags()['DateTimeOriginal']
@@ -93,6 +103,22 @@ class FileObject(object):
         if self.ExifTags()['DateTimeDigitized']:
             return self.ExifTags()['DateTimeDigitized']
         return ''
+
+    def DateUTC(self):
+        if self._DateUTC is not None :
+            return self._DateUTC
+
+        thisDateString = self.Date()
+        if not thisDateString:
+            self._DateUTC = 'Missing'
+            return self._DateUTC
+
+        try:
+            self._DateUTC = dateutil_parse(thisDateString).timestamp()
+        except dateutil_parserError:
+            self._DateUTC = 'Missing'
+
+        return self._DateUTC
 
     def Thumbnail(self):
         if self._Thumbnail:

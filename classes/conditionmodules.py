@@ -10,6 +10,7 @@
 import tkinter as tk
 from tkinter import ttk
 from imagehash import hex_to_hash
+import classes.textscale as TS
 
 class ConditionFrame(tk.Frame):
     name = ''
@@ -54,10 +55,10 @@ class ConditionFrame(tk.Frame):
     def mustMatchToggled(self):
         self.somethingChanged()
 
-    def somethingChanged(self):
+    def somethingChanged(self, *args):
         pass
 
-    def matchingPairs(self, candidates):
+    def matchingGroups(self, candidates):
         pass
 
 
@@ -83,7 +84,7 @@ class HashCondition(ConditionFrame):
                                     from_= 1, to=100,
                                     label='Threshold',
                                     variable=self.hashThresh,
-                                    command=self.threshScaleChange,
+                                    command=self.somethingChanged,
                                     orient=tk.HORIZONTAL)
         self.hashCombo.pack()
         self.threshScale.pack()
@@ -95,26 +96,40 @@ class HashCondition(ConditionFrame):
             self.hashMethod = newHashMethod
             self.somethingChanged()
 
-    def threshScaleChange(self, event):
-        self.somethingChanged()
-
     def somethingChanged(self):
         if self.active:
             #Call this to make sure the hash values for this method are available
             self.Ctrl.setImageHashes(hashName=self.hashMethod)
         self.Ctrl.onConditionChanged()
 
-    def matchingPairs(self, candidates):
-        matches = []
-        for md5a, md5b in candidates:
-            foa = self.Ctrl.FODict[md5a][0]
-            fob = self.Ctrl.FODict[md5b][0]
-            foaHash = getattr(foa, self.hashMethod)
-            fobHash = getattr(fob, self.hashMethod)
-            if abs(hex_to_hash(foaHash) - hex_to_hash(fobHash)) <= self.hashThresh.get():
-                matches.append((md5a, md5b))
-        return matches
+    def matchingGroups(self, candidates):
 
+        def theymatch(md5a, md5b):
+            foaHash = hex_to_hash(getattr(self.Ctrl.FODict[md5a][0], self.hashMethod))
+            fobHash = hex_to_hash(getattr(self.Ctrl.FODict[md5b][0], self.hashMethod))
+            return abs(foaHash - fobHash) <= self.hashThresh.get()
+
+        md5s = []
+        for a, b in candidates:
+            md5s.append(a)
+            md5s.append(b)
+        md5s = list(set(md5s))
+        md5s.sort()
+
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
+
+        matchingGroups = []
+        for thismd5 in md5s:
+            # put atleast the first image in each matchingGroups
+            dummy = [thismd5]
+            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy = list(set(dummy))
+            dummy.sort()
+            matchingGroups.append(dummy)
+            
+        matchingGroups.sort()
+
+        return matchingGroups
 
 class CameraCondition(ConditionFrame):
     name = 'SAME CAMERA'
@@ -137,20 +152,40 @@ class CameraCondition(ConditionFrame):
     def somethingChanged(self):
         self.Ctrl.onConditionChanged()
 
-    def matchingPairs(self, candidates):
-        matches = []
-        missKeep = self.missingMatches.get()
-        for md5a, md5b in candidates:
-            foaCam = self.Ctrl.FODict[md5a][0].CameraModel()
-            fobCam = self.Ctrl.FODict[md5b][0].CameraModel()
-            if missKeep and (foaCam == '' or fobCam == ''):
-                matches.append((md5a, md5b))
-                continue
-            if foaCam == fobCam:
-                matches.append((md5a, md5b))
+    def matchingGroups(self, candidates):
+        ''' make groups of images that have the same camera model
+        Optionally include the images without info about cameras as a match all
+        '''
+        def theymatch(md5a, md5b):
+            if self.Ctrl.FODict[md5a][0].CameraModel() == '':
+                return False
+            if self.Ctrl.FODict[md5a][0].CameraModel() == self.Ctrl.FODict[md5b][0].CameraModel():
+                return True
+            if self.missingMatches.get() and self.Ctrl.FODict[md5b][0].CameraModel() == '':
+                return True
+            return False
 
-        return matches
+        md5s = []
+        for a, b in candidates:
+            md5s.append(a)
+            md5s.append(b)
+        md5s = list(set(md5s))
+        md5s.sort()
 
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
+
+        matchingGroups = []
+        for thismd5 in md5s:
+            # put atleast the first image in each matchingGroups
+            dummy = [thismd5]
+            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy = list(set(dummy))
+            dummy.sort()
+            matchingGroups.append(dummy)
+
+        matchingGroups.sort()
+
+        return matchingGroups
 
 class DateCondition(ConditionFrame):
     name = 'CLOSE IN TIME'
@@ -160,8 +195,16 @@ class DateCondition(ConditionFrame):
         self.missingMatches = tk.BooleanVar()
 
         self.timeDifferenceScale = None
-        self.timeDifferenceValue = tk.StringVar()
-        self.scalelabels = ['1 minute','10 minutes','1 hour','1 day','1 week','1 month','1 year']
+        self.scalelabels = ['1 minute','10 minutes','1 hour','1 day','1 week','4 weeks','1 year']
+        self.scaleSeconds = {
+            '1 minute':60,
+            '10 minutes':600,
+            '1 hour':3600,
+            '1 day':24*3600,
+            '1 week':7*24*3600,
+            '4 weeks':4*7*24*3600,
+            '1 year':365*24*3600
+        }
 
         self.make_additional_widgets()
 
@@ -169,61 +212,56 @@ class DateCondition(ConditionFrame):
         self.missingMatchesCheck = tk.Checkbutton(self,
                                                   text="Missing Matches",
                                                   variable=self.missingMatches,
-                                                  command=self.missingMatchesToggled,
+                                                  command=self.somethingChanged,
                                                   anchor='w')
         self.missingMatchesCheck.pack()
-        self.timeDifferenceScale = TextScale(self,
+        self.timeDifferenceScale = TS.TextScale(self,
                                              textLabels=self.scalelabels,
                                              label='Maximum Difference', 
-                                             variable=self.timeDifferenceValue,
-                                             command=self.TDChanged,
+                                             command=self.somethingChanged,
                                              orient=tk.HORIZONTAL)
         self.timeDifferenceScale.topFrame.pack()
-        
-    def missingMatchesToggled(self):
-        pass
 
-    def TDChanged(self):
-        print(self.timeDifferenceScale.variable)
-        
-    def TDS_set_label(self,val):
-        self.timeDifferenceScale.config(label=self.scalelabels[int(val)])
+    def somethingChanged(self):
+        self.Ctrl.onConditionChanged()
 
+    def matchingGroups(self, candidates):
+        ''' make groups of images that have the their date close enough together,
+        Optionally include the images without info about date as a match to all.
+        '''
+        def theymatch(md5a, md5b):
+            print(self.timeDifferenceScale.textValue)
+            maxDifferenceInSecs = self.scaleSeconds[self.timeDifferenceScale.textValue]
+            # deal with missings:
+            if self.Ctrl.FODict[md5a][0].DateUTC() == 'Missing':
+                return False
+            if self.Ctrl.FODict[md5b][0].DateUTC() == 'Missing':
+               if self.missingMatches.get():
+                   return True
+               else:
+                   return False
+            if abs(self.Ctrl.FODict[md5a][0].DateUTC() - self.Ctrl.FODict[md5b][0].DateUTC()) <= maxDifferenceInSecs:
+                return True
+            return False
 
+        md5s = []
+        for a, b in candidates:
+            md5s.append(a)
+            md5s.append(b)
+        md5s = list(set(md5s))
+        md5s.sort()
 
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
 
-class TextScale(tk.Scale):
-    "A scale widget (slider) with text rather than numerical labels"
-    def __init__(self, parent,
-                 label='',
-                 textLabels=None,
-                 variable=None,
-                 command=None,
-                 *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+        matchingGroups = []
+        for thismd5 in md5s:
+            # put atleast the first image in each matchingGroups
+            dummy = [thismd5]
+            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy = list(set(dummy))
+            dummy.sort()
+            matchingGroups.append(dummy)
 
-        # eventhough this is a scale widget we need a Frame to hold both
-        # the label and the values. We reuse the orginal label to show the values
-        self.topFrame = tk.Frame(parent)
-        self.textLabelsDict = {key: value for key, value in enumerate(textLabels) }
-        self.label = tk.Label(self.topFrame, text=label)
-        self.label.pack()
-        self.Scale = tk.Scale(self.topFrame, *args, **kwargs)
-        self.NumericalValue = tk.IntVar()
-        self.variable = variable
-        self.command = command
-        
-        self.Scale = tk.Scale(self.topFrame,
-                              from_=min(self.textLabelsDict),
-                              to=max(self.textLabelsDict),
-                              label=self.textLabelsDict[0],
-                              showvalue=False,
-                              command=self.TS_Set_Label,
-                              variable=self.NumericalValue,
-                              *args, **kwargs)
-        self.Scale.pack()
+        matchingGroups.sort()
 
-    def TS_Set_Label(self,val):
-        self.variable = self.textLabelsDict[int(val)]
-        self.Scale.config(label=self.variable)
-        self.command()
+        return matchingGroups

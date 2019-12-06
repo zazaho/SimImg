@@ -6,6 +6,7 @@ from tkinter import PhotoImage
 import tkinter as tk
 import config.configuration as CONF
 import controller.controller as CTRL
+import classes.scrollframe as SF
 
 class simim_app(tk.Tk):
     ''' Main window for sorting and managing pictures'''
@@ -24,9 +25,10 @@ class simim_app(tk.Tk):
         # build the basic layout of the app
         # make menubar
         self.ModulePane = tk.Frame()
-        self.ThumbPane = tk.Frame()
         self.ModulePane.pack(side=tk.LEFT, fill='y')
-        self.ThumbPane.pack(side=tk.RIGHT, fill='y')
+        self.ThumbPane = SF.ScrollFrame()
+        #self.ThumbPane = tk.Frame()
+        self.ThumbPane.pack(side=tk.RIGHT, fill="both", expand=True)
         # make statusbar
 
         # The object responsible for dealing with the data
@@ -44,5 +46,5 @@ if __name__ == "__main__":
     app = simim_app(arguments=pathargs)
     app.title("SIMilar IMaGe finder")
     app.tk.call('wm', 'iconphoto', app._w, PhotoImage(file='simimg.png'))
-    app.geometry("+0+0")
+    app.geometry("1200x800+0+0")
     app.mainloop()

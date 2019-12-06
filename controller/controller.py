@@ -1,27 +1,7 @@
-# all_image_files = image_filename_list()
-# files1, files2, sims = image_similarity(all_image_files)
-
-# # file1 where the maximum occurred
-# _, file1_max = max(zip(sims,files1))
-
-# frame = ImageFrame(self)
-# frame.grid(row=0,column=0)
-# frame.thumb_load_image(file1_max)
-# top4_files2 = images_most_similar_to(file1_max,files1,files2,sims,4)
-# files1,files2,sims = remove_file_from_list(file1_max,files1,files2,sims)
-
-# for idx,f in enumerate(top4_files2):
-#     frame = ImageFrame(self)
-#     frame.grid(row=0,column=idx+1)
-#     frame.thumb_load_image(f)
-#     add_top4_files2 = images_most_similar_to(f,files1,files2,sims,3)
-#     files1,files2,sims = remove_file_from_list(f,files1,files2,sims)
-#     for add_idx,add_f, in enumerate(add_top4_files2):
-#         frame = ImageFrame(self)
-#         frame.grid(row=add_idx+1,column=idx+1)
-#         frame.thumb_load_image(add_f)
-#         files1,files2,sims = remove_file_from_list(add_f,files1,files2,sims)
-
+''' Controller module:
+The main gateway between the information containted in the database,
+the fileinfo objects and the display.
+ '''
 import sys
 import os
 import glob
@@ -44,10 +24,12 @@ import utils.hashing as HA
 # find matches
 # update window with hased and selection
 
+
 class Controller():
-    'Controller object that initializes the program and reacts to events from widgets.'
+    'Controller object that initializes the program and reacts to events.'
     def __init__(self, parent, *args, **kwargs):
 
+        # default values of
         self.TopWindow = parent
         # a dict of configuration values
         self.Cfg = parent.Cfg
@@ -60,8 +42,8 @@ class Controller():
         self.TPPositionDict = {}
         self.activeMD5s = []
         self.activePairs = []
-        self.activeGroups = []
-        
+
+        # get the files from the commandline
         self.getFileList()
         if not self.fileList:
             print("No files found")
@@ -80,7 +62,7 @@ class Controller():
         self.DBConnection = DB.CreateDBConnection(self.Cfg.get('DATABASENAME'))
         if not self.DBConnection:
             sys.exit(1)
-            
+
         if not DB.CreateDBTables(self.DBConnection):
             sys.exit(1)
 
@@ -101,8 +83,10 @@ class Controller():
     def createFileobjects(self):
         # Make list of image file objects with all files the installed PIL can read
         ImageFileObjectList = []
+        serial=1
         for FilePath in self.fileList:
-            ThisFileObject = FO.FileObject(self, FullPath=FilePath)
+            ThisFileObject = FO.FileObject(self, FullPath=FilePath, serial=serial)
+            serial += 1
             if ThisFileObject.IsImage():
                 ImageFileObjectList.append(ThisFileObject)
                 # do md5 hash and thumbnails
@@ -153,20 +137,23 @@ class Controller():
         self.removeThumbXY(X,Y)
         # create a new thumbnail
         ThisThumb = IF.ImageFrame(
-            self.TopWindow.ThumbPane,
+            self.TopWindow.ThumbPane.viewPort,
+            #self.TopWindow.ThumbPane,
             Ctrl=self,
             md5=md5
         )
         # show the new one
         ThisThumb.grid(column=X, row=Y)
         # add thisthumb to the TPPositionDict
-        self.TPPositionDict[(X,Y)] = ThisThumb
-        
-    def removeThumbXY(self,X,Y):
-        ThisThumb = self.ThumbXY(X,Y)
+        self.TPPositionDict[(X, Y)] = ThisThumb
+
+
+    def removeThumbXY(self, X, Y):
+        ThisThumb = self.ThumbXY(X, Y)
         if ThisThumb:
-            del self.TPPositionDict[(X,Y)]
+            del self.TPPositionDict[(X, Y)]
             ThisThumb.destroy()
+
 
     def removeAllThumbs(self):
         for ThisThumb in self.TPPositionDict.values():
@@ -183,69 +170,59 @@ class Controller():
         # keep the list sorted
         self.activePairs.sort()
 
-    def getMatchingPairs(self):
-        'Pairs of images (mds) that fulfil the current conditions'
-        # give the active pairs to each active condition module
-        # the modules will return a list of pairs that match
-        # results will be combined to make a list that fulfils all criteria
+    def md52serial(self, nestedMD5List):
+        nestedSerialList = []
+        for m in nestedMD5List:
+            if isinstance(m, list):
+                s = self.md52serial(m)
+            else:
+                s = self.FODict[m][0].serial
+            nestedSerialList.append(s)
+        return nestedSerialList
 
-        # we keep track of matches en must-matches
-        matchingPairListList = []
-        obligatoryMatchingPairListList = []
-        for CM in self.CMList:
-            if not CM.active:
-                continue
-
-            thisMatchingPairList = CM.matchingPairs(self.activePairs)
-            matchingPairListList.append(thisMatchingPairList)
-            if CM.mustMatch:
-                    obligatoryMatchingPairListList.append(thisMatchingPairList)
-
-
-        # the lists are combined by union
-        # this yields all pairs that match at least one condition
-        finalList = []
-        for MPList in matchingPairListList:
-            finalList = set(finalList) | set(MPList)
-
-        # the obligatory list are combined by intersection
-        # this keeps only those pairs that match all must-match conditions
-        for MPList in obligatoryMatchingPairListList:
-            finalList = set(finalList) & set(MPList)
-
-        self.matchingPairs = list(finalList)
-        # keep the list sorted
-        self.matchingPairs.sort()
 
     def getMatchingGroups(self):
-        ' given the matching pairs, make matching groups'
-        # the logic is to make for each md5A (pmd5) in the self.matchingPairs (md5A, md5B)
-        # a list of all other md5B (omd5s) that match pmd5.
-        # we keep each group (pmd5,omd5s) unless it exists in its entirety as a sublist already
-        # we exploit the fact that the matchingpairlist is sorted.
-        # As a result in the list of group candidates
-        # any group will never be fully contained later on in the list:
-        # when we process the candidate groups in order
-        # we only have to check that is does not yet exist
+        ''' given the matching groups returned by each active condition module
+           make a master list of image groups '''
 
-        def existsAsSubGroup(E,GL):
-            for G in GL:
-                if set(E) - set(G) == set():
-                    return True
-            return False
+        matchingGroupsList = []
+        MMMatchingGroupsList = []
+        for cm in self.CMList:
+            if not cm.active:
+                continue
+            thisMatchingGroups = cm.matchingGroups(self.activePairs)
+            matchingGroupsList.append(thisMatchingGroups)
+            if cm.mustMatch.get():
+                MMMatchingGroupsList.append(thisMatchingGroups)
 
-        matchingGroups = []
-        pmd5s = list(set([md5A for md5A, md5B in self.matchingPairs]))
-        pmd5s.sort()
-        for pmd5 in pmd5s:
-            omd5s = [md5B for md5A, md5B  in self.matchingPairs if md5A == pmd5]
-            omd5s.append(pmd5)
-            omd5s.sort()
-            matchingGroups.append(omd5s)
+        # nothing activated. Start-over
+        if not matchingGroupsList:
+            self.createInitialView()
+            return
 
+        matchingGroups = JU.mergeGroupLists(matchingGroupsList)
+
+        print("****")
+        print(self.md52serial(matchingGroupsList))
+        print("-----")
+        print(self.md52serial(matchingGroups))
+
+        if MMMatchingGroupsList:
+            matchingGroups = JU.applyMMGroupLists(matchingGroups, MMMatchingGroupsList)
+
+        if not matchingGroups:
+            return
+
+        # remove "groups" of only one image
+        matchingGroups = [mg for mg in matchingGroups if len(mg) > 1]
+
+        if not matchingGroups:
+            return
+
+        matchingGroups.sort()
         uniqueMatchingGroups = []
         for MG in matchingGroups:
-            if not existsAsSubGroup(MG, uniqueMatchingGroups):
+            if not JU.existsAsSubGroup(MG, uniqueMatchingGroups):
                 uniqueMatchingGroups.append(MG)
 
         self.matchingGroups = uniqueMatchingGroups
@@ -254,7 +231,7 @@ class Controller():
     def displayMatchingGroups(self):
         for Y, group in enumerate(self.matchingGroups):
             for X, md5 in enumerate(group):
-                self.showThumbXY(md5, X+1, Y+1)
+                self.showThumbXY(md5, X, Y)
 
     def onConditionChanged(self):
         # put everything to default
@@ -271,10 +248,6 @@ class Controller():
         if not self.activePairs:
             return
 
-        self.getMatchingPairs()
-        if not self.matchingPairs:
-            return
-        
         self.getMatchingGroups()
         if not self.matchingGroups:
             return
