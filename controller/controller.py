@@ -103,7 +103,8 @@ class Controller():
         self.CMList = [
             CM.HashCondition(self.TopWindow.ModulePane, Controller=self),
             CM.CameraCondition(self.TopWindow.ModulePane, Controller=self),
-            CM.DateCondition(self.TopWindow.ModulePane, Controller=self)
+            CM.DateCondition(self.TopWindow.ModulePane, Controller=self),
+            CM.HSVCondition(self.TopWindow.ModulePane, Controller=self)
         ]
 
     def createInitialView(self):
@@ -201,11 +202,6 @@ class Controller():
             return
 
         matchingGroups = JU.mergeGroupLists(matchingGroupsList)
-
-        print("****")
-        print(self.md52serial(matchingGroupsList))
-        print("-----")
-        print(self.md52serial(matchingGroups))
 
         if MMMatchingGroupsList:
             matchingGroups = JU.applyMMGroupLists(matchingGroups, MMMatchingGroupsList)

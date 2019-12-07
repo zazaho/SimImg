@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 ''' Project to display similar images from an image catalog '''
 import sys
+import os
 from tkinter import PhotoImage
 # import sys
 import tkinter as tk
@@ -45,6 +46,7 @@ if __name__ == "__main__":
 
     app = simim_app(arguments=pathargs)
     app.title("SIMilar IMaGe finder")
-    app.tk.call('wm', 'iconphoto', app._w, PhotoImage(file='simimg.png'))
+    iconpath = os.path.join(os.path.dirname(os.path.realpath(__file__)),'icons','simimg.png')
+    app.tk.call('wm', 'iconphoto', app._w, PhotoImage(file=iconpath))
     app.geometry("1200x800+0+0")
     app.mainloop()

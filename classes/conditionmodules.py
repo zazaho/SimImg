@@ -11,6 +11,7 @@ import tkinter as tk
 from tkinter import ttk
 from imagehash import hex_to_hash
 import classes.textscale as TS
+import utils.hashing as HA
 
 class ConditionFrame(tk.Frame):
     name = ''
@@ -96,7 +97,7 @@ class HashCondition(ConditionFrame):
             self.hashMethod = newHashMethod
             self.somethingChanged()
 
-    def somethingChanged(self):
+    def somethingChanged(self, *args):
         if self.active:
             #Call this to make sure the hash values for this method are available
             self.Ctrl.setImageHashes(hashName=self.hashMethod)
@@ -149,7 +150,7 @@ class CameraCondition(ConditionFrame):
         )
         self.missingMatchesCheck.pack()
 
-    def somethingChanged(self):
+    def somethingChanged(self, *args):
         self.Ctrl.onConditionChanged()
 
     def matchingGroups(self, candidates):
@@ -222,7 +223,7 @@ class DateCondition(ConditionFrame):
                                              orient=tk.HORIZONTAL)
         self.timeDifferenceScale.topFrame.pack()
 
-    def somethingChanged(self):
+    def somethingChanged(self, *args):
         self.Ctrl.onConditionChanged()
 
     def matchingGroups(self, candidates):
@@ -230,19 +231,213 @@ class DateCondition(ConditionFrame):
         Optionally include the images without info about date as a match to all.
         '''
         def theymatch(md5a, md5b):
-            print(self.timeDifferenceScale.textValue)
-            maxDifferenceInSecs = self.scaleSeconds[self.timeDifferenceScale.textValue]
+            maxDiff = self.scaleSeconds[self.timeDifferenceScale.textValue]
             # deal with missings:
-            if self.Ctrl.FODict[md5a][0].DateUTC() == 'Missing':
+            datetime_a = self.Ctrl.FODict[md5a][0].DateTime()
+            datetime_b = self.Ctrl.FODict[md5b][0].DateTime()
+            if datetime_a == 'Missing':
                 return False
-            if self.Ctrl.FODict[md5b][0].DateUTC() == 'Missing':
-               if self.missingMatches.get():
-                   return True
-               else:
-                   return False
-            if abs(self.Ctrl.FODict[md5a][0].DateUTC() - self.Ctrl.FODict[md5b][0].DateUTC()) <= maxDifferenceInSecs:
+            if datetime_b == 'Missing':
+                return self.missingMatches.get()
+            if abs((datetime_a - datetime_b).total_seconds()) <= maxDiff:
                 return True
             return False
+
+        md5s = []
+        for a, b in candidates:
+            md5s.append(a)
+            md5s.append(b)
+        md5s = list(set(md5s))
+        md5s.sort()
+
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
+
+        matchingGroups = []
+        for thismd5 in md5s:
+            # put atleast the first image in each matchingGroups
+            dummy = [thismd5]
+            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy = list(set(dummy))
+            dummy.sort()
+            matchingGroups.append(dummy)
+
+        matchingGroups.sort()
+
+        return matchingGroups
+
+
+
+class HashCondition(ConditionFrame):
+    name = 'HASHING DISTANCE'
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.hashCombo = None
+        self.hashMethod = "ahash"
+        self.threshScale = None
+        self.hashThresh = tk.IntVar()
+        self.make_additional_widgets()
+        
+    def make_additional_widgets(self):
+        self.hashCombo = ttk.Combobox(
+            self,
+            values=["ahash","dhash","phash","whash"],
+            width=8,
+        )
+        self.hashCombo.set(self.hashMethod)
+        self.hashCombo.bind("<<ComboboxSelected>>", self.hashComboMethodChange)
+        self.threshScale = tk.Scale(self,
+                                    from_= 1, to=100,
+                                    label='Threshold',
+                                    variable=self.hashThresh,
+                                    command=self.somethingChanged,
+                                    orient=tk.HORIZONTAL)
+        self.hashCombo.pack()
+        self.threshScale.pack()
+
+    def hashComboMethodChange(self, event):
+        oldHashMethod = self.hashMethod
+        newHashMethod = self.hashCombo.get()
+        if oldHashMethod != newHashMethod:
+            self.hashMethod = newHashMethod
+            self.somethingChanged()
+
+    def somethingChanged(self, *args):
+        if self.active:
+            #Call this to make sure the hash values for this method are available
+            self.Ctrl.setImageHashes(hashName=self.hashMethod)
+        self.Ctrl.onConditionChanged()
+
+    def matchingGroups(self, candidates):
+
+        def theymatch(md5a, md5b):
+            foaHash = hex_to_hash(getattr(self.Ctrl.FODict[md5a][0], self.hashMethod))
+            fobHash = hex_to_hash(getattr(self.Ctrl.FODict[md5b][0], self.hashMethod))
+            return abs(foaHash - fobHash) <= self.hashThresh.get()
+
+        md5s = []
+        for a, b in candidates:
+            md5s.append(a)
+            md5s.append(b)
+        md5s = list(set(md5s))
+        md5s.sort()
+
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
+
+        matchingGroups = []
+        for thismd5 in md5s:
+            # put atleast the first image in each matchingGroups
+            dummy = [thismd5]
+            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy = list(set(dummy))
+            dummy.sort()
+            matchingGroups.append(dummy)
+            
+        matchingGroups.sort()
+
+        return matchingGroups
+
+class CameraCondition(ConditionFrame):
+    name = 'SAME CAMERA'
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.missingMatchesCheck = None
+        self.missingMatches = tk.BooleanVar()
+        self.make_additional_widgets()
+
+    def make_additional_widgets(self):
+        self.missingMatchesCheck = tk.Checkbutton(
+            self,
+            text="Missing Matches",
+            variable=self.missingMatches,
+            command=self.somethingChanged,
+            anchor='w'
+        )
+        self.missingMatchesCheck.pack()
+
+    def somethingChanged(self, *args):
+        self.Ctrl.onConditionChanged()
+
+    def matchingGroups(self, candidates):
+        ''' make groups of images that have the same camera model
+        Optionally include the images without info about cameras as a match all
+        '''
+        def theymatch(md5a, md5b):
+            if self.Ctrl.FODict[md5a][0].CameraModel() == '':
+                return False
+            if self.Ctrl.FODict[md5a][0].CameraModel() == self.Ctrl.FODict[md5b][0].CameraModel():
+                return True
+            if self.missingMatches.get() and self.Ctrl.FODict[md5b][0].CameraModel() == '':
+                return True
+            return False
+
+        md5s = []
+        for a, b in candidates:
+            md5s.append(a)
+            md5s.append(b)
+        md5s = list(set(md5s))
+        md5s.sort()
+
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
+
+        matchingGroups = []
+        for thismd5 in md5s:
+            # put atleast the first image in each matchingGroups
+            dummy = [thismd5]
+            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy = list(set(dummy))
+            dummy.sort()
+            matchingGroups.append(dummy)
+
+        matchingGroups.sort()
+
+        return matchingGroups
+
+class HSVCondition(ConditionFrame):
+    name = 'SIMILAR COLOURS'
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.hashCombo = None
+        self.hashMethod = "hsvhash"
+        self.threshScale = None
+        self.hashThresh = tk.IntVar()
+        self.make_additional_widgets()
+        
+    def make_additional_widgets(self):
+        self.hashCombo = ttk.Combobox(
+            self,
+            values=["hsvhash","hsv5hash"],
+            width=8,
+        )
+        self.hashCombo.set(self.hashMethod)
+        self.hashCombo.bind("<<ComboboxSelected>>", self.hashComboMethodChange)
+        self.threshScale = tk.Scale(self,
+                                    from_= 1, to=100,
+                                    label='Threshold',
+                                    variable=self.hashThresh,
+                                    command=self.somethingChanged,
+                                    orient=tk.HORIZONTAL)
+        self.hashCombo.pack()
+        self.threshScale.pack()
+
+    def hashComboMethodChange(self, event):
+        oldHashMethod = self.hashMethod
+        newHashMethod = self.hashCombo.get()
+        if oldHashMethod != newHashMethod:
+            self.hashMethod = newHashMethod
+            self.somethingChanged()
+
+    def somethingChanged(self, *args):
+        if self.active:
+            #Call this to make sure the hash values for this method are available
+            self.Ctrl.setImageHashes(hashName=self.hashMethod)
+        self.Ctrl.onConditionChanged()
+
+    def matchingGroups(self, candidates):
+
+        def theymatch(md5a, md5b):
+            foaHash = HA.hexstring_to_array(getattr(self.Ctrl.FODict[md5a][0], self.hashMethod))
+            fobHash = HA.hexstring_to_array(getattr(self.Ctrl.FODict[md5b][0], self.hashMethod))
+            return HA.array_to_array_distance(foaHash,fobHash) <= self.hashThresh.get()
 
         md5s = []
         for a, b in candidates:

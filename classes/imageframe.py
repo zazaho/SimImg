@@ -7,12 +7,12 @@ class ImageFrame(tk.Frame):
         super().__init__(parent)
 
         self.Ctrl = Ctrl
-        self.Cfg = Ctrl.Cfg
+        self.ThumbSize = Ctrl.Cfg.get('ThumbImageSize')
+        self.BorderWidth = Ctrl.Cfg.get('ThumbBorderWidth')
         self.md5 = md5
-        self.ThumbSize = self.Cfg.get('ThumbImageSize')
-        self.BorderWidth = self.Cfg.get('ThumbBorderWidth')
+        self.selected = False
 
-        self.config(relief="groove",borderwidth=self.BorderWidth)
+        #self.config(relief="groove",borderwidth=self.BorderWidth)
         self.thumb_canvas = tk.Canvas(self,
                                       width=self.ThumbSize[0],
                                       height=self.ThumbSize[1],
@@ -29,17 +29,12 @@ class ImageFrame(tk.Frame):
                 image=Ctrl.FODict[md5][0].Thumbnail()
             )
 
-        self.select_button = tk.Button(self, text="Select", command=self.button_select)
         self.hide_button = tk.Button(self, text="Hide", command=self.button_hide)
         self.delete_button = tk.Button(self, text="Delete", command=self.button_delete)
 
         self.thumb_canvas.pack(side=tk.TOP)
-        self.select_button.pack(side=tk.LEFT)
         self.hide_button.pack(side=tk.LEFT)
-        self.delete_button.pack(side=tk.LEFT)
-
-    def button_select(self):
-        pass
+        self.delete_button.pack(side=tk.RIGHT)
 
     def button_hide(self):
         pass
@@ -48,4 +43,8 @@ class ImageFrame(tk.Frame):
         pass
 
     def thumb_click(self,event):
-        print("clicked at", event.x, event.y)
+        if not self.selected:
+            self.thumb_canvas.config(bg="blue")
+        else:
+            self.thumb_canvas.config(bg="white")
+        self.selected = not self.selected

@@ -3,8 +3,6 @@
 import os
 import hashlib
 from datetime import datetime
-from dateutil.parser import parse as dateutil_parse
-from dateutil.parser import ParserError as dateutil_parserError
 from PIL import ImageTk, Image, ExifTags
 
 class FileObject(object):
@@ -23,6 +21,8 @@ class FileObject(object):
         self.dhash = None
         self.phash = None
         self.whash = None
+        self.hsvhash = None
+        self.hsv5hash = None
 
         # These are private variables that allow to call the corresponding method
         # If the variable is None we calculate the value
@@ -32,7 +32,7 @@ class FileObject(object):
         self._md5 = None
         self._ExifTags = None
         self._Thumbnail = None
-        self._DateUTC = None
+        self._DateTime = None
 
         #It this file active
         self.Active = True
@@ -104,21 +104,21 @@ class FileObject(object):
             return self.ExifTags()['DateTimeDigitized']
         return ''
 
-    def DateUTC(self):
-        if self._DateUTC is not None :
-            return self._DateUTC
+    def DateTime(self):
+        if self._DateTime is not None:
+            return self._DateTime
 
         thisDateString = self.Date()
-        if not thisDateString:
-            self._DateUTC = 'Missing'
-            return self._DateUTC
+        if thisDateString == '':
+            self._DateTime = 'Missing'
+            return self._DateTime
 
         try:
-            self._DateUTC = dateutil_parse(thisDateString).timestamp()
-        except dateutil_parserError:
-            self._DateUTC = 'Missing'
+            self._DateTime = datetime.strptime(thisDateString ,'%Y:%m:%d %H:%M:%S')
+        except ValueError:
+            self._DateTime = 'Missing'
 
-        return self._DateUTC
+        return self._DateTime
 
     def Thumbnail(self):
         if self._Thumbnail:
