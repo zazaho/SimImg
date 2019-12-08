@@ -16,7 +16,6 @@ class TextScale(tk.Scale):
         self.label = tk.Label(self.topFrame, text=label)
         self.label.pack()
         self.Scale = tk.Scale(self.topFrame, *args, **kwargs)
-        self.NumericalValue = tk.IntVar()
         self.textValue = textLabels[0]
         self.command = command
         
@@ -26,7 +25,6 @@ class TextScale(tk.Scale):
                               label=self.textLabelsDict[0],
                               showvalue=False,
                               command=self.TS_Set_Label,
-                              variable=self.NumericalValue,
                               *args, **kwargs)
         self.Scale.pack()
 

@@ -7,7 +7,7 @@ from PIL import ImageTk, Image, ExifTags
 
 class FileObject(object):
     ' File object that contains all information relating to one file on disk '
-    def __init__(self, parent, FullPath=None, serial=None):
+    def __init__(self, parent, FullPath=None, MD5HashesDict={}, serial=None):
 
         self.Cfg = parent.Cfg
         self.FullPath = FullPath
@@ -27,66 +27,54 @@ class FileObject(object):
         # These are private variables that allow to call the corresponding method
         # If the variable is None we calculate the value
         # otherwise we return the value of this private variable
-
         self._IsImage = None
-        self._md5 = None
+        self._md5 = MD5HashesDict[FullPath] if FullPath in MD5HashesDict else None
         self._ExifTags = None
         self._Thumbnail = None
         self._DateTime = None
 
         #It this file active
         self.Active = True
-        self.Selected = False
 
     def IsImage(self):
         ' Set IsImage to True if the file can be read by PIL '
-        if self._IsImage is not None:
-            return self._IsImage
-
-        try:
-            Image.open(self.FullPath)
-            self._IsImage = True
-        except IOError:
-            self._IsImage = False
+        if self._IsImage is None:
+            try:
+                Image.open(self.FullPath)
+                self._IsImage = True
+            except IOError:
+                self._IsImage = False
         return self._IsImage
 
-
     def md5(self):
-        if self._md5 is not None:
-            return self._md5
-
-        hasher = hashlib.md5()
-        with open(self.FullPath, 'rb') as afile:
-            buf = afile.read()
-            hasher.update(buf)
-            self._md5 = hasher.hexdigest()
+        if self._md5 is None:
+            hasher = hashlib.md5()
+            with open(self.FullPath, 'rb') as afile:
+                hasher.update(afile.read())
+                self._md5 = hasher.hexdigest()
         return self._md5
             
     def ExifTags(self):
-        if self._ExifTags is not None:
-            return self._ExifTags
-
-        # default to empty basic values
-        self._ExifTags = {
-            'Make': '',
-            'Model': '',
-            'DateTimeOriginal': '',
-            'DateTime': '',
-            'DateTimeDigitized': ''
-        }
-        with Image.open(self.FullPath) as image:
-            # image does not have method to get tags
-            if not hasattr(image,'_getexif'):
-                return self._ExifTags
-
-            exif = image._getexif()
-            # image does not have tags
-            if not exif:
-                return self._ExifTags
-
-            for key, value in exif.items():
-                if key in ExifTags.TAGS:
-                    self._ExifTags[ExifTags.TAGS[key]] = value
+        if self._ExifTags is None:
+            # default to empty basic values
+            self._ExifTags = {
+                'Make': '',
+                'Model': '',
+                'DateTimeOriginal': '',
+                'DateTime': '',
+                'DateTimeDigitized': ''
+            }
+            with Image.open(self.FullPath) as image:
+                # image does not have method to get tags
+                if not hasattr(image,'_getexif'):
+                    return self._ExifTags
+                exif = image._getexif()
+                # image does not have tags
+                if not exif:
+                    return self._ExifTags
+                for key, value in exif.items():
+                    if key in ExifTags.TAGS:
+                        self._ExifTags[ExifTags.TAGS[key]] = value
         return self._ExifTags
 
     def CameraMake(self):
@@ -105,35 +93,29 @@ class FileObject(object):
         return ''
 
     def DateTime(self):
-        if self._DateTime is not None:
-            return self._DateTime
-
-        thisDateString = self.Date()
-        if thisDateString == '':
-            self._DateTime = 'Missing'
-            return self._DateTime
-
-        try:
-            self._DateTime = datetime.strptime(thisDateString ,'%Y:%m:%d %H:%M:%S')
-        except ValueError:
-            self._DateTime = 'Missing'
-
+        if self._DateTime is None:
+            thisDateString = self.Date()
+            if thisDateString == '':
+                self._DateTime = 'Missing'
+                return self._DateTime
+            try:
+                self._DateTime = datetime.strptime(thisDateString ,'%Y:%m:%d %H:%M:%S')
+            except ValueError:
+                self._DateTime = 'Missing'
         return self._DateTime
 
     def Thumbnail(self):
-        if self._Thumbnail:
-            return self._Thumbnail
-
-        ThumbSize = self.Cfg.get('ThumbImageSize')
-        image = Image.open(self.FullPath)
-        resize_ratio_x = image.size[0]/ThumbSize[0]
-        resize_ratio_y = image.size[1]/ThumbSize[1]
-        resize_ratio = max(resize_ratio_x,resize_ratio_y)
-        new_image_height = int(image.size[0] / resize_ratio)
-        new_image_length = int(image.size[1] / resize_ratio)
-        image = image.resize(
-            (new_image_height, new_image_length),
-            Image.ANTIALIAS
-        )
-        self._Thumbnail = ImageTk.PhotoImage(image)
+        if self._Thumbnail is None:
+            ThumbSize = self.Cfg.get('ThumbImageSize')
+            image = Image.open(self.FullPath)
+            resize_ratio_x = image.size[0]/ThumbSize[0]
+            resize_ratio_y = image.size[1]/ThumbSize[1]
+            resize_ratio = max(resize_ratio_x,resize_ratio_y)
+            new_image_height = int(image.size[0] / resize_ratio)
+            new_image_length = int(image.size[1] / resize_ratio)
+            image = image.resize(
+                (new_image_height, new_image_length),
+                Image.ANTIALIAS
+            )
+            self._Thumbnail = ImageTk.PhotoImage(image)
         return self._Thumbnail

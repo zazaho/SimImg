@@ -1,4 +1,5 @@
 import math
+import hashlib
 import statistics as stats
 from multiprocessing import Pool
 from PIL import Image
@@ -9,19 +10,19 @@ from imagehash import whash
 from utils import jumbling as JU
 from utils import database as DB
 
-def hexstring_to_array(hexstring):
-    return [int(hexstring[i:i+2],16) for i in range(0, len(hexstring), 2)]
-
-def array_to_hexstring(array):
-    return ''.join(format(round(i), 'x').zfill(2) for i in array)
-
-def array_to_array_distance(array1, array2):
-    narray = len(array1)
-    distance = 0.0
-    for i in range(narray):
-        distance += math.sqrt(((array1[i]-array2[i])/256.)**2)
-    distance *= 100.0/narray
-    return distance
+def GetMD5Hashes(filelist):
+    '''return md5 hashing value for each file the list.'''
+    HashValueDict = {} ## filename,md5
+    with Pool() as pool:
+        calculatedhashes = pool.map(CalculateMD5Hash, filelist)
+    HashValueDict.update(calculatedhashes)
+    return HashValueDict
+    
+def CalculateMD5Hash(file):
+    hasher = hashlib.md5()
+    with open(file, 'rb') as afile:
+        hasher.update(afile.read())
+    return (file, hasher.hexdigest())
 
 def GetImageHashes(fodict, hashname, db_connection=None):
     '''return hashing value according to selected hashname method
@@ -46,12 +47,12 @@ def GetImageHashes(fodict, hashname, db_connection=None):
     for md5, ImageFileObjectList in fodict.items():
         FirstImageFileObject = ImageFileObjectList[0]
         hashvalue = getattr(FirstImageFileObject, hashname)
-        if hashvalue:
+        if hashvalue is not None:
             HashValueDict[md5] = hashvalue
             continue
 
         hashvalue = DB.GetHashValueFromDataBase(md5, hashname, db_connection=db_connection)
-        if hashvalue:
+        if hashvalue is not None:
             HashValueDict[md5] = hashvalue
             continue
 
@@ -60,9 +61,6 @@ def GetImageHashes(fodict, hashname, db_connection=None):
     ## For the md5 with None calculate the hashvalue in a pool of workers
     ## Returning (md5, imagehash)
     if needcalculating:
-        # calculatedhashes = []
-        # for need in needcalculating:
-        #     calculatedhashes.append(CalculateImageHash(need))
 
         with Pool() as pool:
             calculatedhashes = pool.map(CalculateImageHash, needcalculating)
@@ -80,9 +78,7 @@ def GetImageHashes(fodict, hashname, db_connection=None):
 
 
 def CalculateImageHash(args):
-
     md5, FullPath, hashname = args
-    
     funcdict = {
         'ahash': average_hash,
         'dhash': dhash,
@@ -91,10 +87,7 @@ def CalculateImageHash(args):
         'hsvhash': hsvhash,
         'hsv5hash': hsv5hash
         }
-
-    hashvalue = funcdict[hashname](Image.open(FullPath), hash_size=8)
-
-    return (md5, str(hashvalue))
+    return (md5, funcdict[hashname](Image.open(FullPath), hash_size=8))
 
 def subImage(Img, FracBox):
     ''' return a subImage from Image based on coordinates in dimensionless units'''
@@ -109,7 +102,9 @@ def hsv5hash(Img, **kwargs):
     ''' Calculate a hash that stores info about the colour histogram 
     after having split the image in 5 regions'''
 
-    x = 0.3
+    # size of boxes that has ~equal amount over overlap between the boxes
+    # and the amount of unsampled area
+    x = 0.46
     boxes = [
         (0.0, 0.0,  x,    x),
         (0.0, 1-x,  x,  1.0),
@@ -136,7 +131,7 @@ def hsv5hash(Img, **kwargs):
         values.extend(quantS)
         values.extend(quantV)
 
-    return array_to_hexstring(values)
+    return values
 
 def hsvhash(Img, **kwargs):
     ''' Calculate a hash that stores info about the colour histogram'''
@@ -156,4 +151,4 @@ def hsvhash(Img, **kwargs):
     values.extend(quantS)
     values.extend(quantV)
 
-    return array_to_hexstring(values)
+    return values

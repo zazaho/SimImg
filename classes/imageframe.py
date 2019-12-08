@@ -21,13 +21,15 @@ class ImageFrame(tk.Frame):
                                       borderwidth=self.BorderWidth)
         self.thumb_canvas.bind("<Button-1>", self.thumb_click)
 
-        if md5:
+        if self.md5:
             self.thumb_canvas.create_image(
                 self.BorderWidth+self.ThumbSize[0]/2,
                 self.BorderWidth+self.ThumbSize[1]/2,
                 anchor='center',
-                image=Ctrl.FODict[md5][0].Thumbnail()
+                image=Ctrl.FODict[self.md5][0].Thumbnail()
             )
+            if len(Ctrl.FODict[self.md5]) > 1:
+                self.thumb_canvas.config(highlightbackground="green", highlightthickness=2)
 
         self.hide_button = tk.Button(self, text="Hide", command=self.button_hide)
         self.delete_button = tk.Button(self, text="Delete", command=self.button_delete)
@@ -37,7 +39,9 @@ class ImageFrame(tk.Frame):
         self.delete_button.pack(side=tk.RIGHT)
 
     def button_hide(self):
-        pass
+        for fo in self.Ctrl.FODict[self.md5]:
+            fo.Active = False
+            self.Ctrl.onThumbnailChanged()
 
     def button_delete(self):
         pass

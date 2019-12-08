@@ -5,8 +5,8 @@ import tkinter as tk
 # ************************
 class ScrollFrame(tk.Frame):
     ''' Frame with two scrollbars two be able to view content bigger than the window '''
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
 
         self.canvas = tk.Canvas(self)
         self.viewPort = tk.Frame(self.canvas)

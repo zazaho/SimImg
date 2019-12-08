@@ -3,8 +3,10 @@ import os.path
 
 class Configuration(object):
     ' Object that can initialise, change and inform about App configuration'
-    def __init__(self, Arguments=None):
+    def __init__(self, Arguments=None, ScriptPath=None, IconPath=None):
         self.Arguments = Arguments
+        self.ScriptPath = ScriptPath
+        self.IconPath = IconPath
         self.ConfigurationDict = {}
         self.readConfiguration()
 
@@ -18,6 +20,8 @@ class Configuration(object):
         self.ConfigurationDict['ThumbImageSize'] = (150, 150)
         self.ConfigurationDict['ThumbBorderWidth'] = 3
         self.ConfigurationDict['CmdLineArguments'] = self.Arguments
+        self.ConfigurationDict['ScriptPath'] = self.ScriptPath
+        self.ConfigurationDict['IconPath'] = self.IconPath
 
     def writeConfiguration(self):
         'save configuration info'

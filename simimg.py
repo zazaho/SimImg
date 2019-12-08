@@ -5,14 +5,14 @@ import os
 from tkinter import PhotoImage
 # import sys
 import tkinter as tk
-import config.configuration as CONF
-import controller.controller as CTRL
+import classes.configuration as CONF
+import classes.controller as CTRL
 import classes.scrollframe as SF
 
 class simim_app(tk.Tk):
     ''' Main window for sorting and managing pictures'''
 
-    def __init__(self, arguments=None, *args, **kwargs):
+    def __init__(self, arguments=None, ScriptPath=None, IconPath=None):
         # do what any TK app does
         super().__init__()
 
@@ -21,16 +21,19 @@ class simim_app(tk.Tk):
         # working of the App.
 
         # Object that hold configuration database
-        self.Cfg = CONF.Configuration(Arguments=arguments)
+        self.Cfg = CONF.Configuration(Arguments=arguments, ScriptPath=ScriptPath, IconPath=IconPath)
 
         # build the basic layout of the app
         # make menubar
-        self.ModulePane = tk.Frame()
+        self.Statusbar = tk.Label(self,text="...", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.Statusbar.pack(side=tk.BOTTOM, fill='x')
+
+        self.ModulePane = tk.Frame(self)
         self.ModulePane.pack(side=tk.LEFT, fill='y')
-        self.ThumbPane = SF.ScrollFrame()
+        self.ThumbPane = SF.ScrollFrame(self)
         #self.ThumbPane = tk.Frame()
         self.ThumbPane.pack(side=tk.RIGHT, fill="both", expand=True)
-        # make statusbar
+
 
         # The object responsible for dealing with the data
         # and the display of those data
@@ -43,10 +46,12 @@ class simim_app(tk.Tk):
 if __name__ == "__main__":
     # interpret the commandline arguments or lack thereof
     pathargs = sys.argv[1:] if len(sys.argv) > 1 else ['./']
+    scriptpath = os.path.join(os.path.dirname(os.path.realpath(__file__)))
+    iconpath = os.path.join(scriptpath,'icons')
+    appicon = os.path.join(iconpath,'simimg.png')
 
-    app = simim_app(arguments=pathargs)
+    app = simim_app(arguments=pathargs, ScriptPath=scriptpath, IconPath=iconpath)
     app.title("SIMilar IMaGe finder")
-    iconpath = os.path.join(os.path.dirname(os.path.realpath(__file__)),'icons','simimg.png')
-    app.tk.call('wm', 'iconphoto', app._w, PhotoImage(file=iconpath))
+    app.tk.call('wm', 'iconphoto', app._w, PhotoImage(file=appicon))
     app.geometry("1200x800+0+0")
     app.mainloop()
