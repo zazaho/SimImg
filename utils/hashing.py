@@ -1,4 +1,3 @@
-import math
 import hashlib
 import statistics as stats
 from multiprocessing import Pool
@@ -7,7 +6,6 @@ from imagehash import dhash
 from imagehash import average_hash
 from imagehash import phash
 from imagehash import whash
-from utils import jumbling as JU
 from utils import database as DB
 
 def GetMD5Hashes(filelist):
@@ -114,7 +112,8 @@ def hsv5hash(Img, **kwargs):
     ]
 
     # open and convert to HSV
-    HSV = Img.convert("HSV")
+    # resample to speed up the calculation
+    HSV = Img.convert("HSV").resize((100,100), Image.NEAREST)
     H = HSV.getchannel('H').getdata()
     S = HSV.getchannel('S').getdata()
     V = HSV.getchannel('V').getdata()
@@ -137,7 +136,8 @@ def hsvhash(Img, **kwargs):
     ''' Calculate a hash that stores info about the colour histogram'''
 
     # open and convert to HSV
-    HSV = Img.convert("HSV")
+    # resample to speed up the calculation
+    HSV = Img.convert("HSV").resize((100,100), Image.NEAREST)
     H = HSV.getchannel('H').getdata()
     S = HSV.getchannel('S').getdata()
     V = HSV.getchannel('V').getdata()

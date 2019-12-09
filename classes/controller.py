@@ -7,13 +7,17 @@ import os
 import glob
 import itertools
 import tkinter as tk
+from tkinter import filedialog
+from PIL import ImageTk
+import classes.conditionmodules as CM
 import classes.fileobject as FO
 import classes.imageframe as IF
 import classes.toolbar as TB
-import classes.conditionmodules as CM
-import utils.jumbling as JU
+import classes.viewer as VI
 import utils.database as DB
 import utils.hashing as HA
+import utils.jumbling as JU
+import utils.tumbling as TU
 
 # Upon starting the window
 # we show the images
@@ -45,6 +49,7 @@ class Controller():
         self.activeMD5s = []
         self.activePairs = []
         self.MD5HashesDict = {}
+        self.lastSelectedXY = None
         # this variable keeps track of whether the thumbs have changed
         # since the last time the groups were calculated
         # initially true since groups are not yet calclulated
@@ -59,23 +64,17 @@ class Controller():
         for cm in self.CMList:
             cm.pack(side=tk.TOP, fill='x')
 
-        # get the files from the commandline
-        self.getFileList()
-        if not self.fileList:
-            print("No files found")
-            sys.exit()
-
-        # calculate md5s in multiprocessing
-        self.getMD5Hashes()
-        
-        self.createFileobjects()
-        if not self.FODict:
-            print("No Files containing images found")
-            sys.exit()
-
-        self.getActiveMD5s()
         self.startDatabase()
-        
+        self.processFilelist()
+
+    def createConditionModules(self):
+        self.CMList = [
+            CM.HashCondition(self.TopWindow.ModulePane, Controller=self),
+            CM.HSVCondition(self.TopWindow.ModulePane, Controller=self),
+            CM.DateCondition(self.TopWindow.ModulePane, Controller=self),
+            CM.CameraCondition(self.TopWindow.ModulePane, Controller=self)
+        ]
+
     def startDatabase(self):
         self.DBConnection = DB.CreateDBConnection(self.Cfg.get('DATABASENAME'))
         if not self.DBConnection:
@@ -87,6 +86,41 @@ class Controller():
     def stopDatabase(self):
         pass
 
+    def exitProgram(self):
+        self.stopDatabase()
+        self.TopWindow.quit()
+    
+    def configureProgram(self):
+        pass
+    
+    def openFolder(self):
+        folder_selected = filedialog.askdirectory()
+        self.Cfg.set('CmdLineArguments', [folder_selected])
+        self.processFilelist()
+        self.onThumbnailChanged()
+        
+    def processFilelist(self):
+        ''' Things to do when starting with a new image(s) path'''
+        # get the files
+        self.getFileList()
+        if not self.fileList:
+            print("No files found")
+            sys.exit()
+
+        # calculate md5s in multiprocessing
+        self.getMD5Hashes()
+
+        self.createFileobjects()
+        if not self.FODict:
+            print("No Files containing images found")
+            sys.exit()
+
+        # calculate thumbnails in multiprocessing
+        self.setThumbnails()
+
+        self.getActiveMD5s()
+
+        
     def getFileList(self):
         candidates = []
         doRecurse = self.Cfg.get('doRecurse')
@@ -101,14 +135,11 @@ class Controller():
     def createFileobjects(self):
         # Make list of image file objects with all files the installed PIL can read
         ImageFileObjectList = []
-        serial=1
         for FilePath in self.fileList:
             ThisFileObject = FO.FileObject(self,
                                            FullPath=FilePath,
-                                           MD5HashesDict=self.MD5HashesDict,
-                                           serial=serial
+                                           MD5HashesDict=self.MD5HashesDict
             )
-            serial += 1
             if ThisFileObject.IsImage():
                 ImageFileObjectList.append(ThisFileObject)
                 # do md5 hash and thumbnails
@@ -120,14 +151,6 @@ class Controller():
         self.FODict = JU.PairListToDict(
             [(i.md5(), i) for i in ImageFileObjectList]
         )
-
-    def createConditionModules(self):
-        self.CMList = [
-            CM.HashCondition(self.TopWindow.ModulePane, Controller=self),
-            CM.HSVCondition(self.TopWindow.ModulePane, Controller=self),
-            CM.DateCondition(self.TopWindow.ModulePane, Controller=self),
-            CM.CameraCondition(self.TopWindow.ModulePane, Controller=self)
-        ]
 
     def createInitialView(self):
         'Create the initial display'
@@ -145,8 +168,8 @@ class Controller():
             Y = thumbToShow // nx
             self.showThumbXY(md5, X, Y)
             thumbToShow += 1
-            # if thumbToShow >= nx*ny:
-            #     break
+            if thumbToShow >= 300:
+                break
         
     def ThumbXY(self, X, Y):
         if (X,Y) in self.TPPositionDict:
@@ -162,20 +185,20 @@ class Controller():
         ThisThumb = IF.ImageFrame(
             self.TopWindow.ThumbPane.viewPort,
             Ctrl=self,
-            md5=md5
+            md5=md5,
+            X=X,
+            Y=Y
         )
         # show the new one
         ThisThumb.grid(column=X, row=Y)
         # add thisthumb to the TPPositionDict
         self.TPPositionDict[(X, Y)] = ThisThumb
 
-
     def removeThumbXY(self, X, Y):
         ThisThumb = self.ThumbXY(X, Y)
         if ThisThumb:
             del self.TPPositionDict[(X, Y)]
             ThisThumb.destroy()
-
 
     def removeAllThumbs(self):
         for ThisThumb in self.TPPositionDict.values():
@@ -192,17 +215,6 @@ class Controller():
         # keep the list sorted
         self.activePairs.sort()
         
-    def md52serial(self, nestedMD5List):
-        nestedSerialList = []
-        for m in nestedMD5List:
-            if isinstance(m, list):
-                s = self.md52serial(m)
-            else:
-                s = self.FODict[m][0].serial
-            nestedSerialList.append(s)
-        return nestedSerialList
-
-
     def getMatchingGroups(self):
         ''' given the matching groups returned by each active condition module
            make a master list of image groups '''
@@ -249,6 +261,10 @@ class Controller():
         for Y, group in enumerate(self.matchingGroups):
             for X, md5 in enumerate(group):
                 self.showThumbXY(md5, X, Y)
+            if X*Y > 300:
+                self.Statusbar.config(text="Warning too many matches: truncated to ~300")
+                self.Statusbar.update()
+                return
 
     def onConditionChanged(self):
         # put everything to default
@@ -279,22 +295,92 @@ class Controller():
         self.thumbListChanged = True
         self.onConditionChanged()
 
-    def selectedFOs(self):
+    def resetThumbnails(self):
+        for foList in self.FODict.values():
+            for fo in foList:
+                fo.Active = True
+        self.onThumbnailChanged()
+    
+    # functions related to the selected thumbnails
+    def selectedFOs(self, firstFOOnly = False):
         lst = []
         for tp in self.TPPositionDict.values():
             if tp.selected:
-                lst.extend(self.FODict[tp.md5])
+                if firstFOOnly:
+                    lst.append(self.FODict[tp.md5][0])
+                else:
+                    lst.extend(self.FODict[tp.md5])
         return lst
         
+    def viewSelected(self):
+        filenames = [fo.FullPath for fo in self.selectedFOs(firstFOOnly = True)]
+        if filenames:
+            VI.viewer(self, Filenames=filenames)
+
     def hideSelected(self):
         for fo in self.selectedFOs():
             fo.Active = False
         self.onThumbnailChanged()
 
+    def deleteSelected(self):
+        pass
+    
+    def unselectThumbnails(self):
+        for tp in self.TPPositionDict.values():
+            tp.setSelected(False)
+        self.lastSelectedXY = None
+
+    def toggleSelectRow(self, Y, value):
+        for tp in self.TPPositionDict.values():
+            if tp.Y == Y:
+                tp.setSelected(value)
+
+    def selectRangeFromLastSelected(self, X, Y):
+        def gridXYLargerOrEqual(c1, c2):
+            (x1, y1) = c1
+            (x2, y2) = c2
+            if y1 > y2:
+                return True
+            if y1 < y2:
+                return False
+            if x1 < x2:
+                return False
+            return True
+            
+        if not self.lastSelectedXY:
+            return
+
+        fromXY = self.lastSelectedXY
+        toXY = (X,Y)
+        if gridXYLargerOrEqual(fromXY, toXY):
+            fromXY, toXY = toXY, fromXY
+
+        for tp in self.TPPositionDict.values():
+            if (
+                    gridXYLargerOrEqual((tp.X, tp.Y), fromXY) and
+                    gridXYLargerOrEqual(toXY, (tp.X, tp.Y))
+            ):
+                tp.setSelected(True)
+
+    # some routines related to expensive calculations done in a
+    # multiprocessing pool
     def getMD5Hashes(self):
         self.MD5HashesDict = HA.GetMD5Hashes(self.fileList)
 
+    def setThumbnails(self):
+        MD5ThumbDict = TU.GetMD5Thumbnails(
+            self.FODict,
+            Thumbsize=self.Cfg.get('ThumbImageSize')
+        )
+        if not MD5ThumbDict:
+            return
+        for md5, thumb in MD5ThumbDict.items():
+            fo = self.FODict[md5]
+            for afo in fo:
+                afo._Thumbnail = ImageTk.PhotoImage(thumb)
+
     def setImageHashes(self, hashName="ahash"):
         self.Statusbar.config(text="Calculating Images Hashes, please be patient")
+        self.Statusbar.update()
         HA.GetImageHashes(self.FODict, hashName, self.DBConnection)
         self.Statusbar.config(text="...")

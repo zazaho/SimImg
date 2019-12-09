@@ -1,34 +1,39 @@
 import tkinter as tk
 
-class TextScale(tk.Scale):
+class TextScale(tk.Frame):
     "A scale widget (slider) with text rather than numerical labels"
     def __init__(self, parent,
-                 label='',
+                 topLabel='',
                  textLabels=None,
-                 command=None,
+                 onChange=None,
+                 initialInt=None,
                  *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+        super().__init__(parent)
 
         # eventhough this is a scale widget we need a Frame to hold both
         # the label and the values. We reuse the orginal label to show the values
-        self.topFrame = tk.Frame(parent)
+        if not initialInt:
+            initialInt=0
+            
+        self.textValue = textLabels[initialInt]
         self.textLabelsDict = {key: value for key, value in enumerate(textLabels) }
-        self.label = tk.Label(self.topFrame, text=label)
-        self.label.pack()
-        self.Scale = tk.Scale(self.topFrame, *args, **kwargs)
-        self.textValue = textLabels[0]
-        self.command = command
-        
-        self.Scale = tk.Scale(self.topFrame,
-                              from_=min(self.textLabelsDict),
-                              to=max(self.textLabelsDict),
-                              label=self.textLabelsDict[0],
-                              showvalue=False,
-                              command=self.TS_Set_Label,
-                              *args, **kwargs)
-        self.Scale.pack()
+        self.onChange = onChange
+        self.TSScaleIntVar = tk.IntVar()
+        self.TSlabel = tk.Label(self, text=topLabel)
+        self.TSScale = tk.Scale(self,
+                                from_=min(self.textLabelsDict),
+                                to=max(self.textLabelsDict),
+                                label=self.textValue,
+                                showvalue=False,
+                                variable=self.TSScaleIntVar,
+                                command=self.TScommand,
+                                *args, **kwargs
+        )
+        self.TSScale.set(initialInt)
+        self.TSlabel.pack()
+        self.TSScale.pack()
 
-    def TS_Set_Label(self, val):
+    def TScommand(self, val):
         self.textValue = self.textLabelsDict[int(val)]
-        self.Scale.config(label=self.textValue)
-        self.command()
+        self.TSScale.config(label=self.textValue)
+        self.onChange()

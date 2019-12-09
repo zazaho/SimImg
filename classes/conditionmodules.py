@@ -7,13 +7,10 @@
     A method to determine which imagepairs from a list of pairs match
 '''
 
-import math
 import statistics as stats
 import tkinter as tk
 from tkinter import ttk
-from imagehash import hex_to_hash
 import classes.textscale as TS
-import utils.hashing as HA
 
 class ConditionFrame(tk.Frame):
     name = ''
@@ -308,7 +305,8 @@ class DateCondition(ConditionFrame):
         self.missingVar = tk.BooleanVar()
         self.missing = False
         self.timeDifferenceScale = None
-        self.timeDifferenceVar = tk.IntVar()
+        
+        self.initialIndex = 1
         self.scalelabels = ['1 minute','10 minutes','1 hour','1 day','1 week','4 weeks','1 year']
         self.scaleSeconds = {
             '1 minute':60,
@@ -319,6 +317,8 @@ class DateCondition(ConditionFrame):
             '4 weeks':4*7*24*3600,
             '1 year':365*24*3600
         }
+        self.timeDifferenceInSec = self.scaleSeconds[self.scalelabels[self.initialIndex]]
+
         self.currentConfig = {'missingmatches':None, 'timedifference':''}
         self.currentMatchingGroups = []
         self.make_additional_widgets()
@@ -332,16 +332,16 @@ class DateCondition(ConditionFrame):
         self.missingMatchesCheck.pack()
         self.timeDifferenceScale = TS.TextScale(self,
                                                 textLabels=self.scalelabels,
-                                                label='Maximum Difference', 
-                                                command=self.somethingChanged,
-                                                variable=self.timeDifferenceVar,
-                                                orient=tk.HORIZONTAL)
-        self.timeDifferenceVar.set(1)
-        self.timeDifferenceScale.TS_Set_Label(1)
-        self.timeDifferenceScale.topFrame.pack()
+                                                topLabel='Maximum Difference',
+                                                initialInt=self.initialIndex,
+                                                onChange=self.somethingChanged,
+                                                orient=tk.HORIZONTAL
+        )
+        self.timeDifferenceScale.pack()
 
     def somethingChanged(self, *args):
         self.missing = self.missingVar.get()
+        self.timeDifferenceInSec = self.scaleSeconds[self.timeDifferenceScale.textValue]
         self.Ctrl.onConditionChanged()
 
     def matchingGroups(self, candidates):
@@ -349,7 +349,6 @@ class DateCondition(ConditionFrame):
         Optionally include the images without info about date as a match to all.
         '''
         def theymatch(md5a, md5b):
-            maxDiff = self.scaleSeconds[self.timeDifferenceScale.textValue]
             # deal with missings:
             datetime_a = self.Ctrl.FODict[md5a][0].DateTime()
             datetime_b = self.Ctrl.FODict[md5b][0].DateTime()
@@ -357,7 +356,7 @@ class DateCondition(ConditionFrame):
                 return False
             if datetime_b == 'Missing':
                 return self.missing
-            if abs((datetime_a - datetime_b).total_seconds()) <= maxDiff:
+            if abs((datetime_a - datetime_b).total_seconds()) <= self.timeDifferenceInSec:
                 return True
             return False
 
@@ -366,12 +365,12 @@ class DateCondition(ConditionFrame):
         if (
                 self.Ctrl.thumbListChanged == False and
                 self.missing == self.currentConfig['missingmatches'] and
-                self.timeDifferenceScale.textValue == self.currentConfig['timedifference']
+                self.timeDifferenceInSec == self.currentConfig['timedifference']
         ):
             return self.currentMatchingGroups
 
         self.currentConfig['missingmatches'] = self.missing
-        self.currentConfig['timedifference'] = self.timeDifferenceScale.textValue
+        self.currentConfig['timedifference'] = self.timeDifferenceInSec
 
         md5s = []
         for a, b in candidates:

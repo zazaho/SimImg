@@ -1,15 +1,8 @@
 import tkinter as tk
-import tkinter.ttk as ttk
 
 class Tooltip:
     '''
     It creates a tooltip for a given widget as the mouse goes on it.
-
-    see:
-
-    http://stackoverflow.com/questions/3221956/
-           what-is-the-simplest-way-to-make-tooltips-
-           in-tkinter/36221216#36221216
 
     http://www.daniweb.com/programming/software-development/
            code/484591/a-tooltip-class-for-tkinter
@@ -26,10 +19,6 @@ class Tooltip:
         - to add customizable background color, padding, waittime and
           wraplength on creation
       by Alberto Vassena on 2016.11.05.
-
-      Tested on Ubuntu 16.04/16.10, running Python 3.5.2
-
-    TODO: themes styles support
     '''
 
     def __init__(self, widget,

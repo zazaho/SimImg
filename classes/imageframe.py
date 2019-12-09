@@ -1,9 +1,8 @@
 import tkinter as tk
-from PIL import ImageTk, Image
 
 class ImageFrame(tk.Frame):
     " A frame that holds one image thumbnail with its buttons"
-    def __init__(self, parent, md5=None, Ctrl=None):
+    def __init__(self, parent, md5=None, Ctrl=None, X=None, Y=None):
         super().__init__(parent)
 
         self.Ctrl = Ctrl
@@ -11,7 +10,9 @@ class ImageFrame(tk.Frame):
         self.BorderWidth = Ctrl.Cfg.get('ThumbBorderWidth')
         self.md5 = md5
         self.selected = False
-
+        self.X = X
+        self.Y = Y
+        
         #self.config(relief="groove",borderwidth=self.BorderWidth)
         self.thumb_canvas = tk.Canvas(self,
                                       width=self.ThumbSize[0],
@@ -46,9 +47,20 @@ class ImageFrame(tk.Frame):
     def button_delete(self):
         pass
 
-    def thumb_click(self,event):
-        if not self.selected:
+    def setSelected(self, value):
+        self.selected = value
+        if self.selected:
             self.thumb_canvas.config(bg="blue")
+            self.Ctrl.lastSelectedXY = (self.X, self.Y)
         else:
             self.thumb_canvas.config(bg="white")
-        self.selected = not self.selected
+            self.Ctrl.lastSelectedXY = None
+
+    def thumb_click(self, event):
+        if (event.state & 0x4) != 0:
+            self.Ctrl.toggleSelectRow(self.Y, not self.selected)
+            return
+        if (event.state & 0x1) != 0:
+            self.Ctrl.selectRangeFromLastSelected(self.X, self.Y)
+            return
+        self.setSelected(not self.selected)

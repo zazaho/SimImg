@@ -7,15 +7,13 @@ from PIL import ImageTk, Image, ExifTags
 
 class FileObject(object):
     ' File object that contains all information relating to one file on disk '
-    def __init__(self, parent, FullPath=None, MD5HashesDict={}, serial=None):
+    def __init__(self, parent, FullPath=None, MD5HashesDict={}):
 
         self.Cfg = parent.Cfg
         self.FullPath = FullPath
         self.DirName = os.path.dirname(self.FullPath)
         self.FileName = os.path.basename(self.FullPath)
         dummy, self.FileExtension = os.path.splitext(self.FileName)
-
-        self.serial = serial
 
         self.ahash = None
         self.dhash = None

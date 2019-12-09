@@ -22,9 +22,9 @@ class ScrollFrame(tk.Frame):
             tags="self.viewPort"
         )
         self.viewPort.bind("<Configure>", self.onFrameConfigure)
-        self.bind_all("<MouseWheel>", self.onMouseScroll)
-        self.bind_all("<Button-4>", self.onMouseScroll)
-        self.bind_all("<Button-5>", self.onMouseScroll)
+        parent.bind("<MouseWheel>", self.onMouseScroll)
+        parent.bind("<Button-4>", self.onMouseScroll)
+        parent.bind("<Button-5>", self.onMouseScroll)
         self.hsb.pack(side="bottom", fill="x")
         self.vsb.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
