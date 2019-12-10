@@ -32,7 +32,7 @@ class ConditionFrame(tk.Frame):
         self.currentMatchingGroups = []
         
         self.make_base_widgets()
-
+        self.setActive(False)
 
     def make_base_widgets(self):
         self.label = tk.Label(self, text=self.name, anchor='w')
@@ -44,15 +44,23 @@ class ConditionFrame(tk.Frame):
                                               command=self.mustMatchToggled
         )
 
+        self.childWidgets = [self.mustMatchToggle]
         self.label.pack(fill='x')
         self.mustMatchToggle.pack(fill='x')
 
-    def activeToggled(self,event):
-        self.active = not self.active
+    def setActive(self, value):
+        self.active = value
         if self.active:
             self.config(relief="raised")
+            for widget in self.childWidgets:
+                widget.config(state=tk.NORMAL)
         else:
             self.config(relief="sunken")
+            for widget in self.childWidgets:
+                widget.config(state=tk.DISABLED)
+                
+    def activeToggled(self,event):
+        self.setActive(not self.active)
         self.somethingChanged()
         
     def mustMatchToggled(self):
@@ -77,11 +85,13 @@ class HashCondition(ConditionFrame):
         self.currentConfig = {'method':'', 'limit':0}
         self.currentMatchingGroups = []
         self.make_additional_widgets()
+        self.setActive(False)
         
     def make_additional_widgets(self):
         self.Combo = ttk.Combobox(
             self,
             values=["ahash","dhash","phash","whash"],
+            state=tk.DISABLED,
             width=8,
         )
         self.Combo.set(self.method)
@@ -96,7 +106,8 @@ class HashCondition(ConditionFrame):
         self.Scale.set(self.limit)
         self.Combo.pack()
         self.Scale.pack()
-
+        self.childWidgets.extend([self.Combo, self.Scale])
+        
     def somethingChanged(self, *args):
         self.method = self.Combo.get()
         self.limit = self.limitVar.get()
@@ -156,11 +167,13 @@ class HSVCondition(ConditionFrame):
         self.currentConfig = {'method':'', 'limit':-1}
         self.currentMatchingGroups = []
         self.make_additional_widgets()
-        
+        self.setActive(False)
+
     def make_additional_widgets(self):
         self.Combo = ttk.Combobox(
             self,
             values=["hsvhash","hsv5hash"],
+            state=tk.DISABLED,
             width=8,
         )
         self.Combo.set(self.method)
@@ -175,6 +188,7 @@ class HSVCondition(ConditionFrame):
         self.Scale.set(self.limit)
         self.Combo.pack()
         self.Scale.pack()
+        self.childWidgets.extend([self.Combo, self.Scale])
 
     def somethingChanged(self, *args):
         self.method = self.Combo.get()
@@ -238,6 +252,7 @@ class CameraCondition(ConditionFrame):
         self.currentConfig = {'missingmatches':None}
         self.currentMatchingGroups = []
         self.make_additional_widgets()
+        self.setActive(False)
 
     def make_additional_widgets(self):
         self.missingMatchesCheck = tk.Checkbutton(
@@ -248,6 +263,7 @@ class CameraCondition(ConditionFrame):
             anchor='w'
         )
         self.missingMatchesCheck.pack()
+        self.childWidgets.extend([self.missingMatchesCheck])
 
     def somethingChanged(self, *args):
         self.missing = self.missingVar.get()
@@ -322,6 +338,7 @@ class DateCondition(ConditionFrame):
         self.currentConfig = {'missingmatches':None, 'timedifference':''}
         self.currentMatchingGroups = []
         self.make_additional_widgets()
+        self.setActive(False)
 
     def make_additional_widgets(self):
         self.missingMatchesCheck = tk.Checkbutton(self,
@@ -338,7 +355,8 @@ class DateCondition(ConditionFrame):
                                                 orient=tk.HORIZONTAL
         )
         self.timeDifferenceScale.pack()
-
+        self.childWidgets.extend([self.missingMatchesCheck, self.timeDifferenceScale])
+        
     def somethingChanged(self, *args):
         self.missing = self.missingVar.get()
         self.timeDifferenceInSec = self.scaleSeconds[self.timeDifferenceScale.textValue]

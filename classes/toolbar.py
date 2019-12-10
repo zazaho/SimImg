@@ -19,35 +19,38 @@ class Toolbar(tk.Frame):
 
         self.refreshImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "refresh.png")))
         self.openImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "open.png")))
-        self.uncheckImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "uncheck.png")))
+        self.addImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "add.png")))
 
+        self.uncheckImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "uncheck.png")))
         self.deleteImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "delete.png")))
         self.hideImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "hide.png")))
         self.playImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "play.png")))
 
-        self.exitButton = tk.Button(self, image=self.exitImg, relief="flat", command=self.onexit )
-        self.settingsButton = tk.Button(self, image=self.settingsImg, relief="flat", command=self.onsettings )
-        self.infoButton = tk.Button(self, image=self.infoImg, relief="flat", command=self.oninfo )
+        self.exitButton = tk.Button(self, image=self.exitImg, relief="flat", command=self.onExit )
+        self.settingsButton = tk.Button(self, image=self.settingsImg, relief="flat", command=self.onSettings )
+        self.infoButton = tk.Button(self, image=self.infoImg, relief="flat", command=self.onInfo )
 
-        self.refreshButton = tk.Button(self, image=self.refreshImg, relief="flat", command=self.onrefresh )
-        self.openButton = tk.Button(self, image=self.openImg, relief="flat", command=self.onopen )
-        self.uncheckButton = tk.Button(self, image=self.uncheckImg, relief="flat", command=self.onuncheck )
-        
-        self.deleteButton = tk.Button(self, image=self.deleteImg, relief="flat", command=self.ondelete )
-        self.hideButton = tk.Button(self, image=self.hideImg, relief="flat", command=self.onhide )
-        self.playButton = tk.Button(self, image=self.playImg, relief="flat", command=self.onplay )
+        self.refreshButton = tk.Button(self, image=self.refreshImg, relief="flat", command=self.onRefresh )
+        self.openButton = tk.Button(self, image=self.openImg, relief="flat", command=self.onOpen )
+        self.addButton = tk.Button(self, image=self.addImg, relief="flat", command=self.onAdd )
 
-        self.exitButton.grid(column=0, row=0, padx=2, pady=2)
-        self.settingsButton.grid(column=1, row=0, padx=2, pady=2)
-        self.infoButton.grid(column=2, row=0, padx=2, pady=2)
+        self.uncheckButton = tk.Button(self, image=self.uncheckImg, relief="flat", command=self.onUncheck )
+        self.deleteButton = tk.Button(self, image=self.deleteImg, relief="flat", command=self.onDelete )
+        self.hideButton = tk.Button(self, image=self.hideImg, relief="flat", command=self.onHide )
+        self.playButton = tk.Button(self, image=self.playImg, relief="flat", command=self.onPlay )
 
-        self.refreshButton.grid(column=0, row=1, padx=2, pady=2)
-        self.openButton.grid(column=1, row=1, padx=2, pady=2)
-        self.uncheckButton.grid(column=2, row=1, padx=2, pady=2)
-        
-        self.deleteButton.grid(column=0, row=2, padx=2, pady=2)
-        self.hideButton.grid(column=1, row=2, padx=2, pady=2)
-        self.playButton.grid(column=2, row=2, padx=2, pady=2)
+        self.exitButton.grid(column=0, row=0)
+        self.settingsButton.grid(column=1, row=0)
+        self.infoButton.grid(column=3, row=0)
+
+        self.openButton.grid(column=0, row=1)
+        self.addButton.grid(column=1, row=1)
+        self.refreshButton.grid(column=3, row=1)
+
+        self.uncheckButton.grid(column=0, row=2)
+        self.deleteButton.grid(column=1, row=2)
+        self.hideButton.grid(column=2, row=2)
+        self.playButton.grid(column=3, row=2)
 
         TT.Tooltip(self.exitButton, text='Quit')
         TT.Tooltip(self.settingsButton, text='Settings')
@@ -55,36 +58,43 @@ class Toolbar(tk.Frame):
 
         TT.Tooltip(self.refreshButton, text='Start fresh with all images shown')
         TT.Tooltip(self.openButton, text='Open folder of images')
-        TT.Tooltip(self.uncheckButton, text='Unselect all images')
+        TT.Tooltip(self.addButton, text='Add folder of images')
 
+        TT.Tooltip(self.uncheckButton, text='Unselect all images')
         TT.Tooltip(self.deleteButton, text='Delete Selected Images')
         TT.Tooltip(self.hideButton, text='Hide Selected Images')
         TT.Tooltip(self.playButton, text='View Selected Images')
 
-        
-    def onexit(self):
+    def onExit(self):
         self.Ctrl.exitProgram()
     
-    def onsettings(self):
+    def onSettings(self):
         self.Ctrl.configureProgram()
 
-    def oninfo(self):
+    def onInfo(self):
         IW.showInfoDialog()
     
-    def ondelete(self):
+    def onDelete(self):
         self.Ctrl.deleteSelected()
     
-    def onhide(self):
+    def onHide(self):
         self.Ctrl.hideSelected()
     
-    def onplay(self):
+    def onPlay(self):
         self.Ctrl.viewSelected()
 
-    def onrefresh(self):
+    def onRefresh(self):
         self.Ctrl.resetThumbnails()
 
-    def onuncheck(self):
+    def onUncheck(self):
         self.Ctrl.unselectThumbnails()
 
-    def onopen(self):
+    def onAdd(self):
+        self.Ctrl.addFolder()
+        self.Ctrl.processFilelist()
+        self.Ctrl.onThumbnailChanged()
+
+    def onOpen(self):
         self.Ctrl.openFolder()
+        self.Ctrl.processFilelist()
+        self.Ctrl.onThumbnailChanged()

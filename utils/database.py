@@ -1,11 +1,6 @@
 import sqlite3
 from imagehash import hex_to_hash
-
-def hexstring_to_array(hexstring):
-    return [int(hexstring[i:i+2],16) for i in range(0, len(hexstring), 2)]
-
-def array_to_hexstring(array):
-    return ''.join(format(round(i), 'x').zfill(2) for i in array)
+import utils.handyfunctions as HF
 
 def CreateDBConnection(db_file):
     'Create a connection to the DataBase'
@@ -41,8 +36,8 @@ def GetHashValueFromDataBase(md5, hashname, db_connection=None):
         'dhash':hex_to_hash,
         'phash':hex_to_hash,
         'whash':hex_to_hash,
-        'hsvhash':hexstring_to_array,
-        'hsv5hash':hexstring_to_array
+        'hsvhash':HF.hexstring_to_array,
+        'hsv5hash':HF.hexstring_to_array
         }
     try:
         db_cursor = db_connection.cursor()
@@ -68,16 +63,15 @@ def SetHashValues(Md5HashValueTuples, hashname, db_connection=None):
         'dhash':str,
         'phash':str,
         'whash':str,
-        'hsvhash':array_to_hexstring,
-        'hsv5hash':array_to_hexstring
+        'hsvhash':HF.array_to_hexstring,
+        'hsv5hash':HF.array_to_hexstring
         }
-    
+
     tupled_data = [(md5, hashname, convDict[hashname](imagehashvalue)) for md5, imagehashvalue in Md5HashValueTuples]
-        
+
     db_cursor = db_connection.cursor()
     db_cursor.executemany(
         ' INSERT INTO HashValueTable (FileHash, HashMethod, ImageHashValue) VALUES(?, ?, ?) ' , tupled_data
     )
     db_cursor.close()
     db_connection.commit()
-

@@ -37,3 +37,10 @@ class TextScale(tk.Frame):
         self.textValue = self.textLabelsDict[int(val)]
         self.TSScale.config(label=self.textValue)
         self.onChange()
+
+    def config(self, state = None, *args, **kwargs):
+        super().config()
+        if state:
+            self.TSScale.config(state=state)
+
+        

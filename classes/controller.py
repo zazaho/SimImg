@@ -3,6 +3,7 @@ The main gateway between the information containted in the database,
 the fileinfo objects and the display.
  '''
 import sys
+import time
 import os
 import glob
 import itertools
@@ -14,7 +15,9 @@ import classes.fileobject as FO
 import classes.imageframe as IF
 import classes.toolbar as TB
 import classes.viewer as VI
+import classes.infowindow as IW
 import utils.database as DB
+import utils.handyfunctions as HF
 import utils.hashing as HA
 import utils.jumbling as JU
 import utils.tumbling as TU
@@ -55,6 +58,9 @@ class Controller():
         # initially true since groups are not yet calclulated
         self.thumbListChanged = True
 
+        # call the exitProgram function when the user clicks the X
+        self.TopWindow.protocol("WM_DELETE_WINDOW", self.exitProgram)
+        
         # put the toolbar in the self.TopWindow.ModulePane
         self.Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
         self.Toolbar.pack(side=tk.TOP, fill='x')
@@ -64,8 +70,11 @@ class Controller():
         for cm in self.CMList:
             cm.pack(side=tk.TOP, fill='x')
 
+        self.TopWindow.bind("<Key>", self.onKeyPress)
         self.startDatabase()
         self.processFilelist()
+        self.maxThumbnails = self.Cfg.ConfigurationDict.get('MaxThumbnails')
+        self.TopWindow.ThumbPane.viewPort.bind("<Button-1>",  self.unselectThumbnails)
 
     def createConditionModules(self):
         self.CMList = [
@@ -88,32 +97,46 @@ class Controller():
 
     def exitProgram(self):
         self.stopDatabase()
+        self.Cfg.set('MainGeometry', self.TopWindow.geometry())
+        self.Cfg.writeConfiguration()
         self.TopWindow.quit()
     
     def configureProgram(self):
         pass
     
+    def addFolder(self):
+        self.Statusbar.config(text="...")
+        self.Statusbar.update()
+        folder_selected = filedialog.askdirectory()
+        args = self.Cfg.get('CmdLineArguments')
+        args.append(folder_selected)
+        self.Cfg.set('CmdLineArguments', args)
+        
     def openFolder(self):
+        self.Statusbar.config(text="...")
+        self.Statusbar.update()
         folder_selected = filedialog.askdirectory()
         self.Cfg.set('CmdLineArguments', [folder_selected])
-        self.processFilelist()
-        self.onThumbnailChanged()
         
     def processFilelist(self):
         ''' Things to do when starting with a new image(s) path'''
         # get the files
         self.getFileList()
         if not self.fileList:
-            print("No files found")
-            sys.exit()
+            #print("No files found")
+            self.Statusbar.config(text="Warning: no files found")
+            self.Statusbar.update()
+            #sys.exit()
 
         # calculate md5s in multiprocessing
         self.getMD5Hashes()
 
         self.createFileobjects()
         if not self.FODict:
-            print("No Files containing images found")
-            sys.exit()
+            self.Statusbar.config(text="Warning: no files containing image data found")
+            self.Statusbar.update()
+            #print("No Files containing images found")
+            #sys.exit()
 
         # calculate thumbnails in multiprocessing
         self.setThumbnails()
@@ -148,7 +171,7 @@ class Controller():
         if not ImageFileObjectList:
             return
         # transform into a dict based on uniq md5
-        self.FODict = JU.PairListToDict(
+        self.FODict = HF.pairListToDict(
             [(i.md5(), i) for i in ImageFileObjectList]
         )
 
@@ -157,18 +180,22 @@ class Controller():
         self.removeAllThumbs()
 
         # because there are no criteria yet display thumbnails in order
-        nx = self.Cfg.get('nx_grid')
-        ny = self.Cfg.get('ny_grid')
+        # calculate how many thumbs fit nicely in the viewPort
+        #
+        maxW = self.TopWindow.ThumbPane.winfo_width()
+        thumbW = 2 * self.Cfg.ConfigurationDict.get('ThumbBorderWidth') + self.Cfg.ConfigurationDict.get('ThumbImageSize')[0]
+        nx = maxW // thumbW
+        
         # maximum nx*ny thumbs to show
         thumbToShow = 0
-        for md5 in self.FODict.keys():
+        for md5 in self.FODict:
             if not self.FODict[md5][0].Active:
                 continue
             X = thumbToShow % nx
             Y = thumbToShow // nx
             self.showThumbXY(md5, X, Y)
             thumbToShow += 1
-            if thumbToShow >= 300:
+            if thumbToShow >= self.maxThumbnails:
                 break
         
     def ThumbXY(self, X, Y):
@@ -251,7 +278,7 @@ class Controller():
         matchingGroups.sort()
         uniqueMatchingGroups = []
         for MG in matchingGroups:
-            if not JU.existsAsSubGroup(MG, uniqueMatchingGroups):
+            if not HF.existsAsSubGroup(MG, uniqueMatchingGroups):
                 uniqueMatchingGroups.append(MG)
 
         self.matchingGroups = uniqueMatchingGroups
@@ -261,8 +288,8 @@ class Controller():
         for Y, group in enumerate(self.matchingGroups):
             for X, md5 in enumerate(group):
                 self.showThumbXY(md5, X, Y)
-            if X*Y > 300:
-                self.Statusbar.config(text="Warning too many matches: truncated to ~300")
+            if X*Y > self.maxThumbnails:
+                self.Statusbar.config(text="Warning too many matches: truncated to ~%s" % self.maxThumbnails)
                 self.Statusbar.update()
                 return
 
@@ -315,7 +342,7 @@ class Controller():
     def viewSelected(self):
         filenames = [fo.FullPath for fo in self.selectedFOs(firstFOOnly = True)]
         if filenames:
-            VI.viewer(self, Filenames=filenames)
+            VI.viewer(Filenames=filenames, Controller=self)
 
     def hideSelected(self):
         for fo in self.selectedFOs():
@@ -325,7 +352,7 @@ class Controller():
     def deleteSelected(self):
         pass
     
-    def unselectThumbnails(self):
+    def unselectThumbnails(self, *args):
         for tp in self.TPPositionDict.values():
             tp.setSelected(False)
         self.lastSelectedXY = None
@@ -384,3 +411,17 @@ class Controller():
         self.Statusbar.update()
         HA.GetImageHashes(self.FODict, hashName, self.DBConnection)
         self.Statusbar.config(text="...")
+
+    def onKeyPress(self, event):
+        if event.keysym == 'F1':
+            IW.showInfoDialog()
+            return
+        if (event.state & 0x4) != 0:
+            keyDict = {
+                'd':self.deleteSelected,
+                'h':self.hideSelected,
+                'v':self.viewSelected,
+            }
+            if event.keysym in keyDict:
+                keyDict[event.keysym]()
+                return

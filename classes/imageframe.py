@@ -32,8 +32,8 @@ class ImageFrame(tk.Frame):
             if len(Ctrl.FODict[self.md5]) > 1:
                 self.thumb_canvas.config(highlightbackground="green", highlightthickness=2)
 
-        self.hide_button = tk.Button(self, text="Hide", command=self.button_hide)
-        self.delete_button = tk.Button(self, text="Delete", command=self.button_delete)
+        self.hide_button = tk.Button(self, text="Hide", command=self.button_hide, pady=0)
+        self.delete_button = tk.Button(self, text="Delete", command=self.button_delete, pady=0)
 
         self.thumb_canvas.pack(side=tk.TOP)
         self.hide_button.pack(side=tk.LEFT)

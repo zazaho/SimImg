@@ -1,19 +1,3 @@
-def PairListToDict(list):
-    'take a list containing key,values pairs and return a dict where each key hold a list of matching values'
-    dict = { }
-    for key, value in list:
-        if key in dict:
-            dict[key].append(value)
-        else:
-            dict[key] = [value]
-    return dict
-
-def existsAsSubGroup(E, GL):
-    for G in GL:
-        if set(E) - set(G) == set():
-            return True
-    return False
-
 def mergeGroupLists(ListGList):
     ''' this routine takes a list of group lists 
     each element containing a list of matching images 

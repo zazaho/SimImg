@@ -4,41 +4,54 @@ import classes.tooltip as TT
 
 class viewer(tk.Toplevel):
     "A viewer window to display the selected pictures"
-    def __init__(self, parent, Filenames=None):
+    def __init__(self, Filenames=None, Controller=None):
         super().__init__()
 
         self.Filenames = Filenames
-
-        self.geometry("%dx%d+0+0" %
-                      (self.winfo_screenwidth()*0.9, self.winfo_screenheight()*0.9)
-        )
+        self.Ctrl = Controller
+        
+        self.geometry(self.Ctrl.Cfg.get('ViewerGeometry'))
 
         self.canvas = tk.Canvas(self,bg="white")
         self.canvas.pack(fill='both', expand=True)
         self.canvas.update()
-        self.maxImgWidth = self.canvas.winfo_width()
-        self.maxImgHeight = self.canvas.winfo_height()
         self.canvas.bind("<Button>", self.clicked)
         self.bind("<Key>", self.key_press)
         TT.Tooltip(self, text='Press F1 for help')
         self.ImgDict = {}
-        self.makeImgDict()
         self.ImgIndex = 0
         self.showImage()
-        
-    def makeImgDict(self):
-        for i, file in enumerate(self.Filenames):
-            Img = Image.open(file)
-            if (Img.size[0] > self.maxImgWidth or Img.size[1] > self.maxImgHeight):
-                ratio_x = Img.size[0]/self.maxImgWidth
-                ratio_y = Img.size[1]/self.maxImgHeight
-                ratio = max(ratio_x, ratio_y)
-                Img = Img.resize(
-                    (int(Img.size[0]/ratio), int(Img.size[1]/ratio)),
-                    Image.ANTIALIAS
-            )
-            self.ImgDict[i] = (file, ImageTk.PhotoImage(Img))
+        self.protocol("WM_DELETE_WINDOW", self.exitViewer)
 
+    def fillImgDict(self, Index):
+        maxW = self.canvas.winfo_width()
+        maxH = self.canvas.winfo_height()
+        # check if this image already exists?
+        if Index in self.ImgDict:
+            File, Img, W, H, targetW, targetH = self.ImgDict[Index]
+            # check if this image has the right dimensions.
+            # if the max-dimensions did not change, fine!
+            if targetW == maxW and targetH == maxH:
+                return
+            # if the dimensions did change,  but the image is:
+            # small than the old target and smaller than the new target
+            # no scaling was done and should be done, fine!
+            if W <= maxW and W <= targetW and H <= maxH and H <= targetH:
+                return
+
+        # if we get here, we need to create and image tuple
+        File = self.Filenames[Index]
+        Img = Image.open(File)
+        W = Img.size[0]
+        H = Img.size[1]
+        # scale down if too large
+        if W > maxW or H > maxH:
+            ratioX = W/maxW
+            ratioY = H/maxH
+            ratio = max(ratioX, ratioY)
+            Img = Img.resize((round(W/ratio), round(H/ratio)),Image.ANTIALIAS)
+        self.ImgDict[Index] = (File, ImageTk.PhotoImage(Img), W, H, maxW, maxH)
+        
     # clicks
     def clicked(self, event):
         if event.num in [1,4]:
@@ -66,9 +79,10 @@ class viewer(tk.Toplevel):
 
     def showImage(self):
         self.canvas.delete(tk.ALL)
+        self.fillImgDict(self.ImgIndex)
         self.canvas.create_image(
-            self.maxImgWidth/2,
-            self.maxImgHeight/2,
+            self.canvas.winfo_width()/2,
+            self.canvas.winfo_height()/2,
             anchor='center',
             image=self.ImgDict[self.ImgIndex][1]
         )
@@ -76,12 +90,12 @@ class viewer(tk.Toplevel):
 
     def showNext(self):
         self.ImgIndex += 1
-        self.ImgIndex = self.ImgIndex % len(self.ImgDict)
+        self.ImgIndex = self.ImgIndex % len(self.Filenames)
         self.showImage()
         
     def showPrevious(self):
         self.ImgIndex -= 1
-        self.ImgIndex = self.ImgIndex % len(self.ImgDict)
+        self.ImgIndex = self.ImgIndex % len(self.Filenames)
         self.showImage()
 
     def deleteFile(self):
@@ -105,6 +119,7 @@ d, Delete: delete the file from your hard disk!
 q, Escape: quit the viewer
 '''
         tk.messagebox.showinfo("Information", msg, parent=self)
-        
+
     def exitViewer(self):
+        self.Ctrl.Cfg.set('ViewerGeometry', self.geometry())
         self.destroy()
