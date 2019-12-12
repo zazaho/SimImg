@@ -1,10 +1,11 @@
+import sys
 import os.path
 import configparser
 import utils.handyfunctions as HF
 
 class Configuration():
     ' Object that can initialise, change and inform about App configuration'
-    def __init__(self, Arguments=None, ScriptPath=None):
+    def __init__(self, ScriptPath=None):
         # The path of the appdata and ini file
         ConfigPath = os.path.join(
             os.environ.get('APPDATA') or
@@ -16,66 +17,68 @@ class Configuration():
 
         # dict to store all settings
         self.ConfigurationDict = {
-            'CmdLineArguments':Arguments,
-            'IconPath':os.path.join(ScriptPath, 'icons'),
-            'DATABASENAME':os.path.join(ConfigPath,'SIMIMG.db')
+            'cmdlinearguments':sys.argv[1:],
+            'iconpath':os.path.join(ScriptPath, 'icons'),
+            'databasename':os.path.join(ConfigPath,'SIMIMG.db')
         }
-        self.setDefaultConfiguration()
-        self.readConfiguration()
+        self._setDefaultConfiguration()
+        self._readConfiguration()
 
-    def setDefaultConfiguration(self):
+    def _setDefaultConfiguration(self):
         'Default configuration parameters'
         # not yet? configurable
-        self.ConfigurationDict['ThumbBorderWidth'] = 3
-        self.ConfigurationDict['MaxThumbnails'] = 300
+        self.ConfigurationDict['thumbnailborderwidth'] = 3
+        self.ConfigurationDict['maxthumbnails'] = 300
         # can be overwritten from ini file
-        self.ConfigurationDict['doRecurse'] = True
-        self.ConfigurationDict['doConfirmDelete'] = True
-        self.ConfigurationDict['doSaveSettings'] = True
-        self.ConfigurationDict['ThumbImageSize'] = (150, 150)
-        self.ConfigurationDict['MainGeometry'] = '1200x800+0+0'
-        self.ConfigurationDict['ViewerGeometry'] = '1200x800+50+0'
+        self.ConfigurationDict['searchinsubfolders'] = True
+        self.ConfigurationDict['confirmdelete'] = True
+        self.ConfigurationDict['gzipinsteadofdelete'] = False
+        self.ConfigurationDict['savesettings'] = True
+        self.ConfigurationDict['thumbnailsize'] = 150
+        self.ConfigurationDict['startupfolder'] = '.'
+        self.ConfigurationDict['findergeometry'] = '1200x800+0+0'
+        self.ConfigurationDict['viewergeometry'] = '1200x800+50+0'
 
-    def readConfiguration(self):
+    def _readConfiguration(self):
         '''Function to get configurable parameters from SimImg.ini.'''
-        # SearchInSubFolders [True]
-        # confirm delete [True]
-        # savesettings [True]
-        # thumbsize [150]
-        # windowposition [1200x800+0+0]
-        # viewerposition [1200x800+50+0]
         config = configparser.ConfigParser()
         if config.read(self.IniPath):
             default = config['SIMIMG']
             doRecursive = default.get('searchinsubfolders', 'yes')
-            doConfirmDelete = default.get('confirmdelete', 'yes')
-            doSaveSettings = default.get('savesettings', 'yes')
+            confirmdelete = default.get('confirmdelete', 'yes')
+            doGzip = default.get('gzipinsteadofdelete', 'no')
+            savesettings = default.get('savesettings', 'yes')
             thumbSize = default.getint('thumbnailsize', 150)
-            finderGeometry = default.get('finderposition', '1200x800+0+0')
-            viewerGeometry = default.get('viewerposition', '1200x800+50+0')
+            startupDir = default.get('startupfolder', '.')
+            finderGeometry = default.get('findergeometry', '1200x800+0+0')
+            viewerGeometry = default.get('viewergeometry', '1200x800+50+0')
             # store read values in ConfigurationDict
-            self.ConfigurationDict['doRecurse'] = HF.str2bool(doRecursive, default=True)
-            self.ConfigurationDict['doConfirmDelete'] = HF.str2bool(doConfirmDelete, default=True)
-            self.ConfigurationDict['doSaveSettings'] = HF.str2bool(doSaveSettings, default=True)
-            self.ConfigurationDict['ThumbImageSize'] = (thumbSize, thumbSize)
-            self.ConfigurationDict['MainGeometry'] = finderGeometry
-            self.ConfigurationDict['ViewerGeometry'] = viewerGeometry
+            self.ConfigurationDict['searchinsubfolders'] = HF.str2bool(doRecursive, default=True)
+            self.ConfigurationDict['confirmdelete'] = HF.str2bool(confirmdelete, default=True)
+            self.ConfigurationDict['gzipinsteadofdelete'] = HF.str2bool(doGzip, default=True)
+            self.ConfigurationDict['savesettings'] = HF.str2bool(savesettings, default=True)
+            self.ConfigurationDict['thumbnailsize'] = thumbSize
+            self.ConfigurationDict['startupfolder'] = startupDir
+            self.ConfigurationDict['findergeometry'] = finderGeometry
+            self.ConfigurationDict['viewergeometry'] = viewerGeometry
 
     def writeConfiguration(self):
         'save configuration info'
 
         # save settings disabled
-        if not self.ConfigurationDict['doSaveSettings']:
+        if not self.ConfigurationDict['savesettings']:
             return
 
         config = configparser.ConfigParser()
         config['SIMIMG'] = {
-            'searchinsubfolders':self.ConfigurationDict['doRecurse'],
-            'confirmdelete':self.ConfigurationDict['doConfirmDelete'],
-            'savesettings':self.ConfigurationDict['doSaveSettings'],
-            'thumbnailsize':self.ConfigurationDict['ThumbImageSize'][0],
-            'finderposition':self.ConfigurationDict['MainGeometry'],
-            'viewerposition':self.ConfigurationDict['ViewerGeometry']
+            'searchinsubfolders':self.ConfigurationDict['searchinsubfolders'],
+            'confirmdelete':self.ConfigurationDict['confirmdelete'],
+            'gzipinsteadofdelete':self.ConfigurationDict['gzipinsteadofdelete'],
+            'savesettings':self.ConfigurationDict['savesettings'],
+            'thumbnailsize':self.ConfigurationDict['thumbnailsize'],
+            'startupfolder':self.ConfigurationDict['startupfolder'],
+            'findergeometry':self.ConfigurationDict['findergeometry'],
+            'viewergeometry':self.ConfigurationDict['viewergeometry']
         }
         with open(self.IniPath, 'w') as configfile:
             config.write(configfile)
@@ -84,8 +87,6 @@ class Configuration():
         'Return one value of the configuration'
         if parameter in self.ConfigurationDict:
             return self.ConfigurationDict[parameter]
-        else:
-            return None
 
     def set(self, param, value):
         'Add/Change a configuration parameter'

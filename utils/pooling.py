@@ -151,3 +151,21 @@ def GetImageHashes(fodict, hashname, db_connection=None):
     for md5, hashvalue in HashValueDict.items():
         for fo in fodict[md5]:
             setattr(fo, hashname, hashvalue)
+def getOneThumb(arg):
+    md5, filename, tsize = arg
+    img = Image.open(filename)
+    ratio = max(img.size[0]/tsize, img.size[1]/tsize)
+    img = img.resize(
+        (int(img.size[0]/ratio), int(img.size[1]/ratio)),
+        Image.ANTIALIAS
+    )
+    return (md5, img)
+
+def GetMD5Thumbnails(FODict, Thumbsize=150):
+    '''return thumbnail for each md5 in FODict.'''
+    args = [(md5, fo[0].FullPath, Thumbsize) for md5, fo in FODict.items()]
+    ThumbDict = {} ## md5, thumbnail
+    with Pool() as pool:
+        calculatedthumbs = pool.map(getOneThumb, args)
+    ThumbDict.update(calculatedthumbs)
+    return ThumbDict

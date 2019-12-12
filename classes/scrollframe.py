@@ -21,19 +21,19 @@ class ScrollFrame(tk.Frame):
             anchor="nw",
             tags="self.viewPort"
         )
-        self.viewPort.bind("<Configure>", self.onFrameConfigure)
-        parent.bind("<MouseWheel>", self.onMouseScroll)
-        parent.bind("<Button-4>", self.onMouseScroll)
-        parent.bind("<Button-5>", self.onMouseScroll)
+        self.viewPort.bind("<Configure>", self._frameConfigure)
+        parent.bind("<MouseWheel>", self._mouseScroll)
+        parent.bind("<Button-4>", self._mouseScroll)
+        parent.bind("<Button-5>", self._mouseScroll)
         self.hsb.pack(side="bottom", fill="x")
         self.vsb.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
 
-    def onFrameConfigure(self, event):
+    def _frameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def onMouseScroll(self, event):
+    def _mouseScroll(self, event):
         if event.delta:
             self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
             return

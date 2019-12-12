@@ -3,10 +3,9 @@
     A name label
     A active swtich (click on the name label)
     A switch to make this criterion obligatory (must match)
-    A method to do something when somethingChanged
+    A method to do something when _somethingChanged
     A method to determine which imagepairs from a list of pairs match
 '''
-
 import statistics as stats
 import tkinter as tk
 from tkinter import ttk
@@ -21,8 +20,7 @@ class ConditionFrame(tk.Frame):
         # keep a handle of the controller object
         self.Ctrl = Controller
 
-        self.config(borderwidth=3,relief="sunken")
-        self.width = 150
+        self.config(borderwidth=1,relief="sunken")
 
         self.label = None
         self.active = False
@@ -31,17 +29,18 @@ class ConditionFrame(tk.Frame):
         self.currentConfig = {}
         self.currentMatchingGroups = []
         
-        self.make_base_widgets()
+        self._makeBaseWidgets()
         self.setActive(False)
-
-    def make_base_widgets(self):
+        self._candidates = {}
+        
+    def _makeBaseWidgets(self):
         self.label = tk.Label(self, text=self.name, anchor='w')
-        self.label.bind('<Button-1>', self.activeToggled)
+        self.label.bind('<Button-1>', self._activeToggled)
         self.mustMatchToggle = tk.Checkbutton(self,
                                               text="Must Match",
                                               anchor='w',
                                               variable=self.mustMatch,
-                                              command=self.mustMatchToggled
+                                              command=self._mustMatchToggled
         )
 
         self.childWidgets = [self.mustMatchToggle]
@@ -59,14 +58,14 @@ class ConditionFrame(tk.Frame):
             for widget in self.childWidgets:
                 widget.config(state=tk.DISABLED)
                 
-    def activeToggled(self,event):
+    def _activeToggled(self,event):
         self.setActive(not self.active)
-        self.somethingChanged()
+        self._somethingChanged()
         
-    def mustMatchToggled(self):
-        self.somethingChanged()
+    def _mustMatchToggled(self):
+        self._somethingChanged()
 
-    def somethingChanged(self, *args):
+    def _somethingChanged(self, *args):
         pass
 
     def matchingGroups(self, candidates):
@@ -82,12 +81,13 @@ class HashCondition(ConditionFrame):
         self.method = "ahash"
         self.limit = 14
         self.limitVar = tk.IntVar()
+        self.limitVar.set(self.limit)
         self.currentConfig = {'method':'', 'limit':0}
         self.currentMatchingGroups = []
-        self.make_additional_widgets()
+        self._makeAdditionalWidgets()
         self.setActive(False)
         
-    def make_additional_widgets(self):
+    def _makeAdditionalWidgets(self):
         self.Combo = ttk.Combobox(
             self,
             values=["ahash","dhash","phash","whash"],
@@ -95,20 +95,19 @@ class HashCondition(ConditionFrame):
             width=8,
         )
         self.Combo.set(self.method)
-        self.Combo.bind("<<ComboboxSelected>>", self.somethingChanged)
+        self.Combo.bind("<<ComboboxSelected>>", self._somethingChanged)
         self.Scale = tk.Scale(self,
                               from_= 1, to=50,
                               label='Limit',
                               variable=self.limitVar,
                               orient=tk.HORIZONTAL
         )
-        self.Scale.bind("<ButtonRelease-1>", self.somethingChanged)
-        self.Scale.set(self.limit)
+        self.Scale.bind("<ButtonRelease-1>", self._somethingChanged)
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
         
-    def somethingChanged(self, *args):
+    def _somethingChanged(self, *args):
         self.method = self.Combo.get()
         self.limit = self.limitVar.get()
         self.Ctrl.onConditionChanged()
@@ -122,12 +121,13 @@ class HashCondition(ConditionFrame):
         # check that the widget parameters are different from before
         # if not simply return the matchingGroupsList from before
         if (
-                self.Ctrl.thumbListChanged == False and
+                self._candidates == set(candidates) and
                 self.method == self.currentConfig['method'] and
                 self.limit == self.currentConfig['limit']
         ):
             return self.currentMatchingGroups
 
+        self._candidates = set(candidates)
         self.currentConfig['method'] = self.method
         self.currentConfig['limit'] = self.limit
         
@@ -164,12 +164,13 @@ class HSVCondition(ConditionFrame):
         self.method = "hsvhash"
         self.limit = 10
         self.limitVar = tk.IntVar()
+        self.limitVar.set(self.limit)
         self.currentConfig = {'method':'', 'limit':-1}
         self.currentMatchingGroups = []
-        self.make_additional_widgets()
+        self._makeAdditionalWidgets()
         self.setActive(False)
 
-    def make_additional_widgets(self):
+    def _makeAdditionalWidgets(self):
         self.Combo = ttk.Combobox(
             self,
             values=["hsvhash","hsv5hash"],
@@ -177,20 +178,19 @@ class HSVCondition(ConditionFrame):
             width=8,
         )
         self.Combo.set(self.method)
-        self.Combo.bind("<<ComboboxSelected>>", self.somethingChanged)
+        self.Combo.bind("<<ComboboxSelected>>", self._somethingChanged)
         self.Scale = tk.Scale(self,
                               from_= 1, to=50,
                               label='Limit',
                               variable=self.limitVar,
                               orient=tk.HORIZONTAL
         )
-        self.Scale.bind("<ButtonRelease-1>", self.somethingChanged)
-        self.Scale.set(self.limit)
+        self.Scale.bind("<ButtonRelease-1>", self._somethingChanged)
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
 
-    def somethingChanged(self, *args):
+    def _somethingChanged(self, *args):
         self.method = self.Combo.get()
         self.limit = self.limitVar.get()
         self.Ctrl.onConditionChanged()
@@ -209,12 +209,13 @@ class HSVCondition(ConditionFrame):
         # check that the widget parameters are different from before
         # if not simply return the matchingGroupsList from before
         if (
-                self.Ctrl.thumbListChanged == False and
+                self._candidates == set(candidates) and
                 self.method == self.currentConfig['method'] and
                 self.limit == self.currentConfig['limit']
         ):
             return self.currentMatchingGroups
 
+        self._candidates = set(candidates)
         self.currentConfig['method'] = self.method
         self.currentConfig['limit'] = self.limit
         
@@ -251,21 +252,21 @@ class CameraCondition(ConditionFrame):
         self.missing = False
         self.currentConfig = {'missingmatches':None}
         self.currentMatchingGroups = []
-        self.make_additional_widgets()
+        self._makeAdditionalWidgets()
         self.setActive(False)
 
-    def make_additional_widgets(self):
+    def _makeAdditionalWidgets(self):
         self.missingMatchesCheck = tk.Checkbutton(
             self,
             text="Missing Matches",
             variable=self.missingVar,
-            command=self.somethingChanged,
+            command=self._somethingChanged,
             anchor='w'
         )
         self.missingMatchesCheck.pack()
         self.childWidgets.extend([self.missingMatchesCheck])
 
-    def somethingChanged(self, *args):
+    def _somethingChanged(self, *args):
         self.missing = self.missingVar.get()
         self.Ctrl.onConditionChanged()
 
@@ -285,11 +286,12 @@ class CameraCondition(ConditionFrame):
         # check that the widget parameters are different from before
         # if not simply return the matchingGroupsList from before
         if (
-                self.Ctrl.thumbListChanged == False and
+                self._candidates == set(candidates) and
                 self.missing == self.currentConfig['missingmatches']
         ):
             return self.currentMatchingGroups
 
+        self._candidates = set(candidates)
         self.currentConfig['missingmatches'] = self.missingVar.get()
 
         md5s = []
@@ -337,27 +339,27 @@ class DateCondition(ConditionFrame):
 
         self.currentConfig = {'missingmatches':None, 'timedifference':''}
         self.currentMatchingGroups = []
-        self.make_additional_widgets()
+        self._makeAdditionalWidgets()
         self.setActive(False)
 
-    def make_additional_widgets(self):
+    def _makeAdditionalWidgets(self):
         self.missingMatchesCheck = tk.Checkbutton(self,
                                                   text="Missing Matches",
                                                   variable=self.missingVar,
-                                                  command=self.somethingChanged,
+                                                  command=self._somethingChanged,
                                                   anchor='w')
         self.missingMatchesCheck.pack()
         self.timeDifferenceScale = TS.TextScale(self,
                                                 textLabels=self.scalelabels,
                                                 topLabel='Maximum Difference',
                                                 initialInt=self.initialIndex,
-                                                onChange=self.somethingChanged,
+                                                onChange=self._somethingChanged,
                                                 orient=tk.HORIZONTAL
         )
         self.timeDifferenceScale.pack()
         self.childWidgets.extend([self.missingMatchesCheck, self.timeDifferenceScale])
-        
-    def somethingChanged(self, *args):
+
+    def _somethingChanged(self, *args):
         self.missing = self.missingVar.get()
         self.timeDifferenceInSec = self.scaleSeconds[self.timeDifferenceScale.textValue]
         self.Ctrl.onConditionChanged()
@@ -381,12 +383,13 @@ class DateCondition(ConditionFrame):
         # check that the widget parameters are different from before
         # if not simply return the matchingGroupsList from before
         if (
-                self.Ctrl.thumbListChanged == False and
+                self._candidates == set(candidates) and
                 self.missing == self.currentConfig['missingmatches'] and
                 self.timeDifferenceInSec == self.currentConfig['timedifference']
         ):
             return self.currentMatchingGroups
 
+        self._candidates = set(candidates)
         self.currentConfig['missingmatches'] = self.missing
         self.currentConfig['timedifference'] = self.timeDifferenceInSec
 
@@ -403,7 +406,7 @@ class DateCondition(ConditionFrame):
         for thismd5 in md5s:
             # put atleast the first image in each matchingGroups
             dummy = [thismd5]
-            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy.extend([md5b for md5a, md5b in matches if md5a == thismd5])
             dummy = list(set(dummy))
             dummy.sort()
             self.currentMatchingGroups.append(dummy)

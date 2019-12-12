@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 ''' Project to display similar images from an image catalog '''
-import sys
 import os
 from tkinter import PhotoImage
 # import sys
@@ -12,7 +11,7 @@ import classes.scrollframe as SF
 class simim_app(tk.Tk):
     ''' Main window for sorting and managing pictures'''
 
-    def __init__(self, arguments=None, ScriptPath=None):
+    def __init__(self, ScriptPath=None):
         # do what any TK app does
         super().__init__()
 
@@ -21,15 +20,15 @@ class simim_app(tk.Tk):
         # working of the App.
 
         # Object that hold configuration database
-        self.Cfg = CONF.Configuration(Arguments=arguments, ScriptPath=ScriptPath)
+        self.Cfg = CONF.Configuration(ScriptPath=ScriptPath)
 
         appIcon = os.path.join(
-            self.Cfg.ConfigurationDict['IconPath'],
+            self.Cfg.get('iconpath'),
             'SIMIMG.png'
         )
         self.title("SIMilar IMaGe finder")
         self.tk.call('wm', 'iconphoto', self._w, PhotoImage(file=appIcon))
-        self.geometry(self.Cfg.ConfigurationDict['MainGeometry'])
+        self.geometry(self.Cfg.get('findergeometry'))
 
         self.Statusbar = tk.Label(self,text="...", bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.Statusbar.pack(side=tk.BOTTOM, fill='x')
@@ -38,16 +37,14 @@ class simim_app(tk.Tk):
         self.ThumbPane = SF.ScrollFrame(self)
         self.ThumbPane.pack(side=tk.RIGHT, fill="both", expand=True)
 
-        self.update()
+        #self.update_idletasks()
         # The object responsible for dealing with the data
         # and the display of those data
         self.Ctrl = CTRL.Controller(self)
-        self.Ctrl.createInitialView()
+        #self.Ctrl.createViewWithoutConditions()
 
 # Main routine, shim, do all work inside simim_app
 if __name__ == "__main__":
-    # interpret the commandline arguments or lack thereof
-    pathargs = sys.argv[1:] if len(sys.argv) > 1 else ['./']
     scriptpath = os.path.join(os.path.dirname(os.path.realpath(__file__)))
-    app = simim_app(arguments=pathargs, ScriptPath=scriptpath)
+    app = simim_app(ScriptPath=scriptpath)
     app.mainloop()

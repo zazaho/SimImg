@@ -1,5 +1,4 @@
-' The basic object that represents one file '
-
+''' The basic object that represents one file '''
 import os
 import hashlib
 from datetime import datetime
@@ -7,7 +6,7 @@ from PIL import ImageTk, Image, ExifTags
 
 class FileObject(object):
     ' File object that contains all information relating to one file on disk '
-    def __init__(self, parent, FullPath=None, MD5HashesDict={}):
+    def __init__(self, parent, FullPath=None, MD5HashesDict=None):
 
         self.Cfg = parent.Cfg
         self.FullPath = FullPath
@@ -104,10 +103,10 @@ class FileObject(object):
 
     def Thumbnail(self):
         if self._Thumbnail is None:
-            ThumbSize = self.Cfg.get('ThumbImageSize')
+            ThumbSize = self.Cfg.get('thumbnailsize')
             image = Image.open(self.FullPath)
-            resize_ratio_x = image.size[0]/ThumbSize[0]
-            resize_ratio_y = image.size[1]/ThumbSize[1]
+            resize_ratio_x = image.size[0]/ThumbSize
+            resize_ratio_y = image.size[1]/ThumbSize
             resize_ratio = max(resize_ratio_x,resize_ratio_y)
             new_image_height = int(image.size[0] / resize_ratio)
             new_image_length = int(image.size[1] / resize_ratio)

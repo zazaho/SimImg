@@ -1,161 +1,204 @@
 ''' Controller module:
-The main gateway between the information containted in the database,
+The main gateway between the information contained in the database,
 the fileinfo objects and the display.
  '''
 import sys
-import time
 import os
 import glob
 import itertools
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog as tkfiledialog
 from PIL import ImageTk
 import classes.conditionmodules as CM
 import classes.fileobject as FO
 import classes.imageframe as IF
 import classes.toolbar as TB
-import classes.viewer as VI
-import classes.infowindow as IW
+import dialogs.confirmdeletedialog as CDD
+import dialogs.configurationwindow as CW
+import dialogs.infowindow as IW
+import dialogs.viewer as VI
 import utils.database as DB
 import utils.handyfunctions as HF
-import utils.hashing as HA
-import utils.jumbling as JU
-import utils.tumbling as TU
-
-# Upon starting the window
-# we show the images
-# we set some default selection options
-# we show the selection panel
-# we build the menu
-
-# start hashing
-# find matches
-# update window with hased and selection
-
+import utils.pooling as POOL
 
 class Controller():
     'Controller object that initializes the program and reacts to events.'
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent):
 
-        # default values of
         self.TopWindow = parent
-        # a dict of configuration values
         self.Cfg = parent.Cfg
-        self.Statusbar = parent.Statusbar
-        self.DBConnection = None
+        self.maxThumbnails = self.Cfg.get('maxthumbnails')
 
+        # empty starting values
+        self.DBConnection = None
         self.fileList = []
+        self.filenameCommon = ""
+        self.filenameUniqueDict = {}
         self.FODict = {}
-        self.TPDict = {}
-        self.CMList = []
         self.TPPositionDict = {}
-        self.activeMD5s = []
-        self.activePairs = []
+        self.matchingGroups = []
         self.MD5HashesDict = {}
         self.lastSelectedXY = None
-        # this variable keeps track of whether the thumbs have changed
-        # since the last time the groups were calculated
-        # initially true since groups are not yet calclulated
-        self.thumbListChanged = True
 
         # call the exitProgram function when the user clicks the X
         self.TopWindow.protocol("WM_DELETE_WINDOW", self.exitProgram)
-        
-        # put the toolbar in the self.TopWindow.ModulePane
-        self.Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
-        self.Toolbar.pack(side=tk.TOP, fill='x')
-
-        # put the condition modules in the self.TopWindow.ModulePane
-        self.createConditionModules()
-        for cm in self.CMList:
-            cm.pack(side=tk.TOP, fill='x')
-
-        self.TopWindow.bind("<Key>", self.onKeyPress)
-        self.startDatabase()
-        self.processFilelist()
-        self.maxThumbnails = self.Cfg.ConfigurationDict.get('MaxThumbnails')
+        # allow some key actions (Ctrl-A, Ctl-D, Ctrl-H, Ctrl-V and F1)
+        self.TopWindow.bind("<Key>", self._onKeyPress)
+        # bind clicking in an empty area of the thumbPane to unselectThumbnails
         self.TopWindow.ThumbPane.viewPort.bind("<Button-1>",  self.unselectThumbnails)
 
-    def createConditionModules(self):
+        # put the toolbar in the self.TopWindow.ModulePane
+        Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
+        Toolbar.pack(side=tk.TOP, fill='x')
+
+        # create the condition modules in the self.TopWindow.ModulePane
+        # put them in a list so that we can easily iterate over them
         self.CMList = [
             CM.HashCondition(self.TopWindow.ModulePane, Controller=self),
             CM.HSVCondition(self.TopWindow.ModulePane, Controller=self),
             CM.DateCondition(self.TopWindow.ModulePane, Controller=self),
             CM.CameraCondition(self.TopWindow.ModulePane, Controller=self)
         ]
+        for cm in self.CMList:
+            cm.pack(side=tk.TOP, fill='x')
 
-    def startDatabase(self):
-        self.DBConnection = DB.CreateDBConnection(self.Cfg.get('DATABASENAME'))
+        self._startDatabase()
+        self._getFileList()
+        self._processFilelist()
+        self.onFileListChanged()
+        
+    def _onKeyPress(self, event):
+        if event.keysym == 'F1':
+            IW.showInfoDialog()
+            return
+        if (event.state & 0x4) != 0:
+            keyDict = {
+                'a':self.selectAllThumbnails,
+                'd':self.deleteSelected,
+                'h':self.hideSelected,
+                'v':self.viewSelected,
+                'q':self.exitProgram
+            }
+            if event.keysym in keyDict:
+                keyDict[event.keysym]()
+                return
+
+    def _startDatabase(self):
+        self.DBConnection = DB.CreateDBConnection(self.Cfg.get('databasename'))
         if not self.DBConnection:
             sys.exit(1)
 
         if not DB.CreateDBTables(self.DBConnection):
             sys.exit(1)
 
-    def stopDatabase(self):
-        pass
+    def _stopDatabase(self):
+        self.DBConnection.commit()
+        self.DBConnection.close()
 
     def exitProgram(self):
-        self.stopDatabase()
-        self.Cfg.set('MainGeometry', self.TopWindow.geometry())
+        self._stopDatabase()
+        self.Cfg.set('findergeometry', self.TopWindow.geometry())
         self.Cfg.writeConfiguration()
         self.TopWindow.quit()
     
     def configureProgram(self):
-        pass
-    
+        oldThumbsize = self.Cfg.get('thumbnailsize')
+        CW.CfgWindow(self.TopWindow, Controller=self)
+        if self.Cfg.get('thumbnailsize') != oldThumbsize:
+            self._setThumbnails()
+            self._onThumbnailsChanged()
+
     def addFolder(self):
-        self.Statusbar.config(text="...")
-        self.Statusbar.update()
-        folder_selected = filedialog.askdirectory()
-        args = self.Cfg.get('CmdLineArguments')
-        args.append(folder_selected)
-        self.Cfg.set('CmdLineArguments', args)
+        selectedFolder = tkfiledialog.askdirectory()
+        if not selectedFolder:
+            return
+        if not os.path.isdir(selectedFolder):
+            return
+        self._getFileList(Add=selectedFolder)
+        self._processFilelist()
+        self.onFileListChanged()
         
     def openFolder(self):
-        self.Statusbar.config(text="...")
-        self.Statusbar.update()
-        folder_selected = filedialog.askdirectory()
-        self.Cfg.set('CmdLineArguments', [folder_selected])
-        
-    def processFilelist(self):
-        ''' Things to do when starting with a new image(s) path'''
-        # get the files
-        self.getFileList()
-        if not self.fileList:
-            #print("No files found")
-            self.Statusbar.config(text="Warning: no files found")
-            self.Statusbar.update()
-            #sys.exit()
+        selectedFolder = tkfiledialog.askdirectory()
+        if not selectedFolder:
+            return
+        if not os.path.isdir(selectedFolder):
+            return
+        self._getFileList(Replace=selectedFolder)
+        self._processFilelist()
+        self.onFileListChanged()
+
+    def _showInStatusbar(self, txt):
+        self.TopWindow.Statusbar.config(text=txt)
+        self.TopWindow.Statusbar.update_idletasks()
+
+    def _processFilelist(self):
+        ''' Things to do when starting with new image(s)/path'''
+
+        #clear messages from the statusbar
+        self._showInStatusbar("...")
 
         # calculate md5s in multiprocessing
-        self.getMD5Hashes()
+        self._getMD5Hashes()
 
-        self.createFileobjects()
+        self._createFileobjects()
         if not self.FODict:
-            self.Statusbar.config(text="Warning: no files containing image data found")
-            self.Statusbar.update()
-            #print("No Files containing images found")
-            #sys.exit()
+            self._showInStatusbar("Warning: no files containing image data found")
 
         # calculate thumbnails in multiprocessing
-        self.setThumbnails()
-
-        self.getActiveMD5s()
-
+        self._setThumbnails()
         
-    def getFileList(self):
+    def _getFileList(self, Replace=None, Add=None):
+        pathList = []
+        #determine which mode we are called
+        # from openFolder
+        if Replace:
+            pathList = [Replace]
+            oldFiles = []
+        # from add folder    
+        if Add:
+            pathList = [Add]
+            oldFiles = self.fileList
+
+        # from startup
+        if not Replace and not Add:
+            pathList = self.Cfg.get('cmdlinearguments')
+            oldFiles = []
+
+        # from startup without arguments
+        if not pathList:
+            oldFiles = []
+            startupFolder = self.Cfg.get('startupfolder')
+            # start empty
+            if not startupFolder:
+                self.fileList = []
+                return
+            pathList = [startupFolder]
+
+        # now we know which folders to search
+        doRecurse = self.Cfg.get('searchinsubfolders')
         candidates = []
-        doRecurse = self.Cfg.get('doRecurse')
-        for arg in self.Cfg.get('CmdLineArguments'):
+        for arg in pathList:
+            arg = os.path.abspath(arg)
             if os.path.isdir(arg):
                 candidates.extend(glob.glob(arg+'/**', recursive=doRecurse))
             else:
                 candidates.append(arg)
-
         self.fileList = [c for c in candidates if os.path.isfile(c)]
+        self.fileList.extend(oldFiles)
+        self.fileList = list(set(self.fileList))
+        self.fileList.sort()
 
-    def createFileobjects(self):
+        # split the fileList into a common and a unique part
+        self.filenameCommon, filenameUniqueList = HF.stringList2CommonUnique(self.fileList)
+        self.filenameUniqueDict = {}
+        self.filenameUniqueDict.update(zip(self.fileList, filenameUniqueList))
+
+    def _createFileobjects(self):
+
+        #reset FODict
+        self.FODict = {}
+
         # Make list of image file objects with all files the installed PIL can read
         ImageFileObjectList = []
         for FilePath in self.fileList:
@@ -170,20 +213,18 @@ class Controller():
 
         if not ImageFileObjectList:
             return
+
         # transform into a dict based on uniq md5
-        self.FODict = HF.pairListToDict(
-            [(i.md5(), i) for i in ImageFileObjectList]
-        )
+        self.FODict = HF.pairListToDict([(i.md5(), i) for i in ImageFileObjectList])
 
-    def createInitialView(self):
-        'Create the initial display'
-        self.removeAllThumbs()
+    def _createViewWithoutConditions(self):
+        'Create an overview of all images without conditions'
+        self._removeAllThumbs()
 
-        # because there are no criteria yet display thumbnails in order
-        # calculate how many thumbs fit nicely in the viewPort
-        #
+        # because there are no criteria display thumbnails in order
+        # calculate how many thumbs fit in the viewPort
         maxW = self.TopWindow.ThumbPane.winfo_width()
-        thumbW = 2 * self.Cfg.ConfigurationDict.get('ThumbBorderWidth') + self.Cfg.ConfigurationDict.get('ThumbImageSize')[0]
+        thumbW = 2 * self.Cfg.get('thumbnailborderwidth') + self.Cfg.get('thumbnailsize')
         nx = maxW // thumbW
         
         # maximum nx*ny thumbs to show
@@ -193,21 +234,15 @@ class Controller():
                 continue
             X = thumbToShow % nx
             Y = thumbToShow // nx
-            self.showThumbXY(md5, X, Y)
+            self._showThumbXY(md5, X, Y)
             thumbToShow += 1
             if thumbToShow >= self.maxThumbnails:
                 break
         
-    def ThumbXY(self, X, Y):
-        if (X,Y) in self.TPPositionDict:
-            return self.TPPositionDict[(X,Y)]
-        else:
-            return None
-
-    def showThumbXY(self, md5, X, Y):
+    def _showThumbXY(self, md5, X, Y):
         # make sure that if a thumb is currently shown it is removed
         # and deleted
-        self.removeThumbXY(X,Y)
+        self._removeThumbXY(X,Y)
         # create a new thumbnail
         ThisThumb = IF.ImageFrame(
             self.TopWindow.ThumbPane.viewPort,
@@ -221,50 +256,44 @@ class Controller():
         # add thisthumb to the TPPositionDict
         self.TPPositionDict[(X, Y)] = ThisThumb
 
-    def removeThumbXY(self, X, Y):
-        ThisThumb = self.ThumbXY(X, Y)
+    def _removeThumbXY(self, X, Y):
+        ThisThumb = self.TPPositionDict[(X,Y)] if (X,Y) in self.TPPositionDict else None
         if ThisThumb:
             del self.TPPositionDict[(X, Y)]
             ThisThumb.destroy()
 
-    def removeAllThumbs(self):
+    def _removeAllThumbs(self):
         for ThisThumb in self.TPPositionDict.values():
             ThisThumb.destroy()
         self.TPPositionDict = {}
 
-    def getActiveMD5s(self):
-        self.activeMD5s = [md5 for md5, FO in self.FODict.items() if FO[0].Active]
-        # keep the list sorted
-        self.activeMD5s.sort()
-        
-    def getActivePairs(self):
-        self.activePairs = list(itertools.combinations(self.activeMD5s,2))
-        # keep the list sorted
-        self.activePairs.sort()
-        
-    def getMatchingGroups(self):
+    def _getMatchingGroups(self, activePairs):
         ''' given the matching groups returned by each active condition module
            make a master list of image groups '''
 
+        self.matchingGroups = []
         matchingGroupsList = []
         MMMatchingGroupsList = []
         for cm in self.CMList:
             if not cm.active:
                 continue
-            thisMatchingGroups = cm.matchingGroups(self.activePairs)
+            thisMatchingGroups = cm.matchingGroups(activePairs)
             matchingGroupsList.append(thisMatchingGroups)
             if cm.mustMatch.get():
                 MMMatchingGroupsList.append(thisMatchingGroups)
 
         # nothing activated. Start-over
         if not matchingGroupsList:
-            self.createInitialView()
+            self._createViewWithoutConditions()
             return
 
-        matchingGroups = JU.mergeGroupLists(matchingGroupsList)
+        matchingGroups = HF.mergeGroupLists(matchingGroupsList)
+
+        if not matchingGroups:
+            return
 
         if MMMatchingGroupsList:
-            matchingGroups = JU.applyMMGroupLists(matchingGroups, MMMatchingGroupsList)
+            matchingGroups = HF.applyMMGroupLists(matchingGroups, MMMatchingGroupsList)
 
         if not matchingGroups:
             return
@@ -284,52 +313,57 @@ class Controller():
         self.matchingGroups = uniqueMatchingGroups
         self.matchingGroups.sort()
 
-    def displayMatchingGroups(self):
+    def _displayMatchingGroups(self):
+        #clear messages from the statusbar
+        self._showInStatusbar("...")
         for Y, group in enumerate(self.matchingGroups):
             for X, md5 in enumerate(group):
-                self.showThumbXY(md5, X, Y)
+                self._showThumbXY(md5, X, Y)
             if X*Y > self.maxThumbnails:
-                self.Statusbar.config(text="Warning too many matches: truncated to ~%s" % self.maxThumbnails)
-                self.Statusbar.update()
+                self._showInStatusbar("Warning too many matches: truncated to ~%s" % self.maxThumbnails)
                 return
 
     def onConditionChanged(self):
         # put everything to default
-        self.activeMD5s = None
-        self.activePairs = None
-        self.matchingPairs = None
-        self.matchingGroups = None
-
-        self.getActiveMD5s()
-        if not self.activeMD5s:
-            return
-
-        self.getActivePairs()
-        if not self.activePairs:
-            return
-
+        self.matchingGroups = []
         # make sure to clean the interface
-        self.removeAllThumbs()
+        self._removeAllThumbs()
 
-        self.getMatchingGroups()
-        self.thumbListChanged = False
-        if not self.matchingGroups:
+        activeMD5s = [md5 for md5, FO in self.FODict.items() if FO[0].Active]
+        if not activeMD5s:
             return
+        
+        activePairs = list(itertools.combinations(activeMD5s,2))
+        if not activePairs:
+            return
+        
+        self._getMatchingGroups(activePairs)
 
-        self.displayMatchingGroups()
+        self._displayMatchingGroups()
 
-    def onThumbnailChanged(self):
-        self.thumbListChanged = True
+    def onFileListChanged(self):
         self.onConditionChanged()
+
+    def _onThumbnailsChanged(self):
+        # check if any conditions are active
+        someCMActive = False
+        for cm in self.CMList:
+            if cm.active:
+                someCMActive = True
+                break
+        if someCMActive:
+            self._displayMatchingGroups()
+        else:
+            self._createViewWithoutConditions()
 
     def resetThumbnails(self):
         for foList in self.FODict.values():
             for fo in foList:
                 fo.Active = True
-        self.onThumbnailChanged()
+        self.onFileListChanged()
     
     # functions related to the selected thumbnails
-    def selectedFOs(self, firstFOOnly = False):
+    def _selectedFOs(self, firstFOOnly = False):
         lst = []
         for tp in self.TPPositionDict.values():
             if tp.selected:
@@ -340,27 +374,71 @@ class Controller():
         return lst
         
     def viewSelected(self):
-        filenames = [fo.FullPath for fo in self.selectedFOs(firstFOOnly = True)]
-        if filenames:
-            VI.viewer(Filenames=filenames, Controller=self)
+        fileinfo = [(fo.md5(), fo.FullPath) for fo in self._selectedFOs(firstFOOnly = True)]
+        if fileinfo:
+            VI.viewer(Fileinfo=fileinfo, Controller=self)
 
     def hideSelected(self):
-        for fo in self.selectedFOs():
+        for fo in self._selectedFOs():
             fo.Active = False
-        self.onThumbnailChanged()
+        self.onFileListChanged()
 
-    def deleteSelected(self):
-        pass
+    def _deleteFile(self, Filename):
+        if self.Cfg.get('gzipinsteadofdelete'):
+            HF.gzipfile(Filename)
+        else:
+            os.remove(Filename)
     
+    def deleteFOs(self, FOs, Owner=None):
+        somethingDeleted = False
+        mustconfirm = self.Cfg.get('confirmdelete')
+        onlyOneFO = len(FOs) == 1
+        for fo in FOs:
+            filename = fo.FullPath
+            uniqueFilename = self.filenameUniqueDict[filename]
+            md5 = fo.md5()
+            if mustconfirm:
+                answer = CDD.CDDialog(
+                    Owner,
+                    Filename=uniqueFilename,
+                    simple=onlyOneFO
+                ).result
+            else:
+                answer = "yes"
+            if answer == "abort":
+                break
+            if answer == "no":
+                continue
+            if answer == "yestoall":
+                mustconfirm = False
+                answer = "yes"
+            if answer == "yes":
+                if md5 in self.FODict:
+                    del self.FODict[md5]
+                somethingDeleted = True
+                self._deleteFile(filename)
+
+        if somethingDeleted:
+            self.onFileListChanged()
+        return somethingDeleted
+    
+    def deleteSelected(self):
+        self.deleteFOs(self._selectedFOs(), Owner=self.TopWindow)
+                
     def unselectThumbnails(self, *args):
         for tp in self.TPPositionDict.values():
-            tp.setSelected(False)
+            tp.select(False)
+        self.lastSelectedXY = None
+
+    def selectAllThumbnails(self, *args):
+        for tp in self.TPPositionDict.values():
+            tp.select(True)
         self.lastSelectedXY = None
 
     def toggleSelectRow(self, Y, value):
         for tp in self.TPPositionDict.values():
             if tp.Y == Y:
-                tp.setSelected(value)
+                tp.select(value)
 
     def selectRangeFromLastSelected(self, X, Y):
         def gridXYLargerOrEqual(c1, c2):
@@ -387,17 +465,17 @@ class Controller():
                     gridXYLargerOrEqual((tp.X, tp.Y), fromXY) and
                     gridXYLargerOrEqual(toXY, (tp.X, tp.Y))
             ):
-                tp.setSelected(True)
+                tp.select(True)
 
     # some routines related to expensive calculations done in a
     # multiprocessing pool
-    def getMD5Hashes(self):
-        self.MD5HashesDict = HA.GetMD5Hashes(self.fileList)
+    def _getMD5Hashes(self):
+        self.MD5HashesDict = POOL.GetMD5Hashes(self.fileList)
 
-    def setThumbnails(self):
-        MD5ThumbDict = TU.GetMD5Thumbnails(
+    def _setThumbnails(self):
+        MD5ThumbDict = POOL.GetMD5Thumbnails(
             self.FODict,
-            Thumbsize=self.Cfg.get('ThumbImageSize')
+            Thumbsize=self.Cfg.get('thumbnailsize')
         )
         if not MD5ThumbDict:
             return
@@ -407,21 +485,7 @@ class Controller():
                 afo._Thumbnail = ImageTk.PhotoImage(thumb)
 
     def setImageHashes(self, hashName="ahash"):
-        self.Statusbar.config(text="Calculating Images Hashes, please be patient")
-        self.Statusbar.update()
-        HA.GetImageHashes(self.FODict, hashName, self.DBConnection)
-        self.Statusbar.config(text="...")
-
-    def onKeyPress(self, event):
-        if event.keysym == 'F1':
-            IW.showInfoDialog()
-            return
-        if (event.state & 0x4) != 0:
-            keyDict = {
-                'd':self.deleteSelected,
-                'h':self.hideSelected,
-                'v':self.viewSelected,
-            }
-            if event.keysym in keyDict:
-                keyDict[event.keysym]()
-                return
+        self._showInStatusbar("Calculating Images Hashes, please be patient")
+        POOL.GetImageHashes(self.FODict, hashName, self.DBConnection)
+        #clear messages from the statusbar
+        self._showInStatusbar("...")

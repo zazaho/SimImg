@@ -1,29 +1,30 @@
 import tkinter as tk
-from PIL import Image,  ImageTk
+from PIL import Image, ImageTk
 import classes.tooltip as TT
 
 class viewer(tk.Toplevel):
     "A viewer window to display the selected pictures"
-    def __init__(self, Filenames=None, Controller=None):
+    def __init__(self, Fileinfo=None, Controller=None):
         super().__init__()
 
-        self.Filenames = Filenames
+        self.Filenames = [f for _, f in Fileinfo]
+        self.MD5s = [m for m, _ in Fileinfo]
         self.Ctrl = Controller
-        
-        self.geometry(self.Ctrl.Cfg.get('ViewerGeometry'))
 
-        self.canvas = tk.Canvas(self,bg="white")
+        self.geometry(self.Ctrl.Cfg.get('viewergeometry'))
+
+        self.canvas = tk.Canvas(self, bg="white")
         self.canvas.pack(fill='both', expand=True)
-        self.canvas.update()
-        self.canvas.bind("<Button>", self.clicked)
-        self.bind("<Key>", self.key_press)
+        self.canvas.update_idletasks()
+        self.canvas.bind("<Button>", self._click)
+        self.bind("<Key>", self._key)
         TT.Tooltip(self, text='Press F1 for help')
         self.ImgDict = {}
         self.ImgIndex = 0
-        self.showImage()
-        self.protocol("WM_DELETE_WINDOW", self.exitViewer)
+        self.protocol("WM_DELETE_WINDOW", self._exitViewer)
+        self.bind("<Configure>", self._showImage)
 
-    def fillImgDict(self, Index):
+    def _fillImgDict(self, Index):
         maxW = self.canvas.winfo_width()
         maxH = self.canvas.winfo_height()
         # check if this image already exists?
@@ -51,35 +52,35 @@ class viewer(tk.Toplevel):
             ratio = max(ratioX, ratioY)
             Img = Img.resize((round(W/ratio), round(H/ratio)),Image.ANTIALIAS)
         self.ImgDict[Index] = (File, ImageTk.PhotoImage(Img), W, H, maxW, maxH)
-        
+
     # clicks
-    def clicked(self, event):
-        if event.num in [1,4]:
-            self.showNext()
+    def _click(self, event):
+        if event.num in [1, 4]:
+            self._showNext()
         else:
-            self.showPrevious()
+            self._showPrevious()
 
     # keys
-    def key_press(self, event):
+    def _key(self, event):
         keyDict = {
-            'n':self.showNext,
-            'Right':self.showNext,
-            'p':self.showPrevious,
-            'Left':self.showPrevious,
-            'd':self.deleteFile,
-            'Delete':self.deleteFile ,
-            'h':self.showHelp,
-            'F1':self.showHelp,
-            'q':self.exitViewer,
-            'Escape':self.exitViewer
+            'n':self._showNext,
+            'Right':self._showNext,
+            'p':self._showPrevious,
+            'Left':self._showPrevious,
+            'd':self._deleteFile,
+            'Delete':self._deleteFile ,
+            'h':self._showHelp,
+            'F1':self._showHelp,
+            'q':self._exitViewer,
+            'Escape':self._exitViewer
             }
         if not event.keysym in keyDict:
             return
         keyDict[event.keysym]()
 
-    def showImage(self):
+    def _showImage(self, *args):
         self.canvas.delete(tk.ALL)
-        self.fillImgDict(self.ImgIndex)
+        self._fillImgDict(self.ImgIndex)
         self.canvas.create_image(
             self.canvas.winfo_width()/2,
             self.canvas.winfo_height()/2,
@@ -88,20 +89,38 @@ class viewer(tk.Toplevel):
         )
         self.title("SIMilar IMaGe viewer: %s" % self.ImgDict[self.ImgIndex][0])
 
-    def showNext(self):
+    def _showNext(self):
         self.ImgIndex += 1
         self.ImgIndex = self.ImgIndex % len(self.Filenames)
-        self.showImage()
-        
-    def showPrevious(self):
+        #if the filename is none skip to next
+        if self.Filenames[self.ImgIndex] == None:
+            self._showNext()
+        self._showImage()
+
+    def _showPrevious(self):
         self.ImgIndex -= 1
         self.ImgIndex = self.ImgIndex % len(self.Filenames)
-        self.showImage()
+        if self.Filenames[self.ImgIndex] == None:
+            self._showPrevious()
+        self._showImage()
 
-    def deleteFile(self):
-        pass
-    
-    def showHelp(self):
+    def _deleteFile(self):
+        md5 = self.MD5s[self.ImgIndex]
+        fo = [self.Ctrl.FODict[md5][0]]
+        if not self.Ctrl.deleteFOs(fo, Owner=self):
+            return
+
+        # remove the filename
+        self.Filenames[self.ImgIndex] = None
+        self.MD5s[self.ImgIndex] = None
+        del self.ImgDict[self.ImgIndex]
+        # check if all filenames are None
+        if len(set(self.Filenames)) > 1:
+            self._showNext()
+        else:
+            self.destroy()
+
+    def _showHelp(self):
         msg = '''
 SiMilar ImaGe viewer:
 
@@ -120,6 +139,6 @@ q, Escape: quit the viewer
 '''
         tk.messagebox.showinfo("Information", msg, parent=self)
 
-    def exitViewer(self):
-        self.Ctrl.Cfg.set('ViewerGeometry', self.geometry())
+    def _exitViewer(self):
+        self.Ctrl.Cfg.set('viewergeometry', self.geometry())
         self.destroy()

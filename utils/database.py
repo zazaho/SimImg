@@ -1,9 +1,19 @@
+import os
 import sqlite3
 from imagehash import hex_to_hash
 import utils.handyfunctions as HF
 
 def CreateDBConnection(db_file):
     'Create a connection to the DataBase'
+
+    dirName = os.path.dirname(db_file)
+    if not os.path.isdir(dirName):
+        try:
+            os.mkdir(dirName)
+        except OSError as error:
+            print(error)
+            return None
+            
     try:
         db_connection = sqlite3.connect(db_file)
         return db_connection
@@ -11,7 +21,7 @@ def CreateDBConnection(db_file):
         print(error)
         return None
 
-def CreateDBTables(db_connection):
+def CreateDBTables(db_connection, clear=None):
     'Create or empty the required tables in the DataBase'
 
     sql_delete_table = ' DROP TABLE IF EXISTS HashValueTable '
@@ -19,7 +29,8 @@ def CreateDBTables(db_connection):
 
     try:
         db_cursor = db_connection.cursor()
-        #db_cursor.execute(sql_delete_table)
+        if clear:
+            db_cursor.execute(sql_delete_table)
         db_cursor.execute(sql_create_table)
 
         db_cursor.close()
@@ -41,16 +52,18 @@ def GetHashValueFromDataBase(md5, hashname, db_connection=None):
         }
     try:
         db_cursor = db_connection.cursor()
-        db_cursor.execute(' SELECT ImageHashValue FROM HashValueTable WHERE FileHash=? AND HashMethod=? ' , (md5, hashname))
+        db_cursor.execute(
+            'SELECT ImageHashValue FROM HashValueTable WHERE FileHash=? AND HashMethod=?',
+            (md5, hashname)
+        )
         hashvalue = db_cursor.fetchone()
         db_cursor.close()
         if hashvalue:
             return convDict[hashname](hashvalue[0])
-        else:
-            return None
     except sqlite3.Error as error:
         print(error)
-        return None
+        db_cursor.close()
+    return None
 
 def SetHashValues(Md5HashValueTuples, hashname, db_connection=None):
 
@@ -71,7 +84,8 @@ def SetHashValues(Md5HashValueTuples, hashname, db_connection=None):
 
     db_cursor = db_connection.cursor()
     db_cursor.executemany(
-        ' INSERT INTO HashValueTable (FileHash, HashMethod, ImageHashValue) VALUES(?, ?, ?) ' , tupled_data
+        'INSERT INTO HashValueTable (FileHash, HashMethod, ImageHashValue) VALUES(?, ?, ?)',
+        tupled_data
     )
     db_cursor.close()
     db_connection.commit()
