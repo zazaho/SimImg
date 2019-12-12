@@ -4,22 +4,23 @@ import hashlib
 from datetime import datetime
 from PIL import ImageTk, Image, ExifTags
 
-class FileObject(object):
+class FileObject():
     ' File object that contains all information relating to one file on disk '
     def __init__(self, parent, FullPath=None, MD5HashesDict=None):
 
         self.Cfg = parent.Cfg
         self.FullPath = FullPath
-        self.DirName = os.path.dirname(self.FullPath)
-        self.FileName = os.path.basename(self.FullPath)
-        dummy, self.FileExtension = os.path.splitext(self.FileName)
+        #self.DirName = os.path.dirname(self.FullPath)
+        #self.FileName = os.path.basename(self.FullPath)
+        #dummy, self.FileExtension = os.path.splitext(self.FileName)
 
-        self.ahash = None
-        self.dhash = None
-        self.phash = None
-        self.whash = None
-        self.hsvhash = None
-        self.hsv5hash = None
+        self.hashDict = {}
+        # self.ahash = None
+        # self.dhash = None
+        # self.phash = None
+        # self.whash = None
+        # self.hsvhash = None
+        # self.hsv5hash = None
 
         # These are private variables that allow to call the corresponding method
         # If the variable is None we calculate the value
@@ -31,7 +32,7 @@ class FileObject(object):
         self._DateTime = None
 
         #It this file active
-        self.Active = True
+        self.active = True
 
     def IsImage(self):
         ' Set IsImage to True if the file can be read by PIL '

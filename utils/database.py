@@ -40,6 +40,13 @@ def CreateDBTables(db_connection, clear=None):
         print(error)
         return False
 
+def CloseDBConnection(db_connection):
+    try:
+        db_connection.commit()
+        db_connection.close()
+    except sqlite3.Error as error:
+        print(error)
+
 def GetHashValueFromDataBase(md5, hashname, db_connection=None):
     # which function to use to translate the string to hash
     convDict = {

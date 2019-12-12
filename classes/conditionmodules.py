@@ -114,8 +114,16 @@ class HashCondition(ConditionFrame):
 
     def matchingGroups(self, candidates):
         def theymatch(md5a, md5b):
-            foaHash = getattr(self.Ctrl.FODict[md5a][0], self.method)
-            fobHash = getattr(self.Ctrl.FODict[md5b][0], self.method)
+            foa = self.Ctrl.FODict[md5a][0]
+            if not self.method in foa.hashDict:
+                print('Warning: requested a hash that is not available')
+                return False
+            foaHash = foa.hashDict[self.method]
+            fob = self.Ctrl.FODict[md5b][0]
+            if not self.method in fob.hashDict:
+                print('Warning: requested a hash that is not available')
+                return False
+            fobHash = fob.hashDict[self.method]
             return abs(foaHash - fobHash) <= self.limit
 
         # check that the widget parameters are different from before
@@ -197,9 +205,16 @@ class HSVCondition(ConditionFrame):
 
     def matchingGroups(self, candidates):
         def theymatch(md5a, md5b):
-            foaHash = getattr(self.Ctrl.FODict[md5a][0], self.method)
-            fobHash = getattr(self.Ctrl.FODict[md5b][0], self.method)
-            #return sum(abs(foaHash-fobHash))/256.*100./len(foaHash) <= self.limit
+            foa = self.Ctrl.FODict[md5a][0]
+            if not self.method in foa.hashDict:
+                print('Warning: requested a hash that is not available')
+                return False
+            foaHash = foa.hashDict[self.method]
+            fob = self.Ctrl.FODict[md5b][0]
+            if not self.method in fob.hashDict:
+                print('Warning: requested a hash that is not available')
+                return False
+            fobHash = fob.hashDict[self.method]
             return stats.mean(
                 [abs(foaHash[i]-fobHash[i]) for i,_ in enumerate(foaHash)]
             )/2.56 <= self.limit

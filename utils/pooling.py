@@ -16,11 +16,11 @@ def CalculateMD5Hash(file):
 
 def GetMD5Hashes(filelist):
     '''return md5 hashing value for each file the list.'''
-    HashValueDict = {} ## filename,md5
+    hashValueDict = {} ## filename,md5
     with Pool() as pool:
-        calculatedhashes = pool.map(CalculateMD5Hash, filelist)
-    HashValueDict.update(calculatedhashes)
-    return HashValueDict
+        calculatedHashes = pool.map(CalculateMD5Hash, filelist)
+    hashValueDict.update(calculatedHashes)
+    return hashValueDict
 
 def subImage(Img, FracBox):
     ''' return a subImage from Image based on coordinates in dimensionless units'''
@@ -89,7 +89,7 @@ def hsvhash(Img, **kwargs):
     return values
 
 def CalculateImageHash(args):
-    md5, FullPath, hashname = args
+    md5, FullPath, hashName = args
     funcdict = {
         'ahash': average_hash,
         'dhash': dhash,
@@ -98,59 +98,59 @@ def CalculateImageHash(args):
         'hsvhash': hsvhash,
         'hsv5hash': hsv5hash
         }
-    return (md5, funcdict[hashname](Image.open(FullPath), hash_size=8))
+    return (md5, funcdict[hashName](Image.open(FullPath), hash_size=8))
 
-def GetImageHashes(fodict, hashname, db_connection=None):
-    '''return hashing value according to selected hashname method
+def GetImageHashes(FODict, hashName, db_connection=None):
+    '''return hashing value according to selected hashName method
     for each file the (file,md5) list.'''
 
     ## the logic to apply is:
     ## create an empty dict to hold the results
-    HashValueDict = {} ## md5:hashvalue
+    hashValueDict = {} ## md5:hashValue
 
-    ## create an empty list to hold md5,file,hashname tuples that need to be calculated
-    needcalculating = []
+    ## create an empty list to hold md5,file,hashName tuples that need to be calculated
+    needCalculating = []
 
-    ## for each uniq md5 in the requested fileinfodict
+    ## for each uniq md5 in the requested file in FODict
     ## check if the FileObject has the hash value already list.
     ## if yes take it
     #
     ## if none:
     ## get the hash value for this method and this md5 from the database or None
     #
-    ## if none add the info to the needcalculating list
+    ## if none add the info to the needCalculating list
 
-    for md5, ImageFileObjectList in fodict.items():
-        FirstImageFileObject = ImageFileObjectList[0]
-        hashvalue = getattr(FirstImageFileObject, hashname)
-        if hashvalue is not None:
-            HashValueDict[md5] = hashvalue
+    for md5, imageFileObjectList in FODict.items():
+        firstFO = imageFileObjectList[0]
+        if hashName in firstFO.hashDict:
+            hashValueDict[md5] = firstFO.hashDict[hashName]
             continue
 
-        hashvalue = DB.GetHashValueFromDataBase(md5, hashname, db_connection=db_connection)
-        if hashvalue is not None:
-            HashValueDict[md5] = hashvalue
+        hashValue = DB.GetHashValueFromDataBase(md5, hashName, db_connection=db_connection)
+        if hashValue is not None:
+            hashValueDict[md5] = hashValue
             continue
 
-        needcalculating.append((md5, FirstImageFileObject.FullPath, hashname))
+        needCalculating.append((md5, firstFO.FullPath, hashName))
 
-    ## For the md5 with None calculate the hashvalue in a pool of workers
+    ## For the md5 with None calculate the hashValue in a pool of workers
     ## Returning (md5, imagehash)
-    if needcalculating:
+    if needCalculating:
 
         with Pool() as pool:
-            calculatedhashes = pool.map(CalculateImageHash, needcalculating)
+            calculatedHashes = pool.map(CalculateImageHash, needCalculating)
 
-        HashValueDict.update(calculatedhashes)
+        hashValueDict.update(calculatedHashes)
 
-        ## update the database with the new md5, method, HashValueDict
-        DB.SetHashValues(calculatedhashes, hashname, db_connection=db_connection)
+        ## update the database with the new md5, method, hashValueDict
+        DB.SetHashValues(calculatedHashes, hashName, db_connection=db_connection)
 
     # write everything back to each fileobject
-    # behind every md5 key in the fodict is a list of fileobjects with corresponding md5
-    for md5, hashvalue in HashValueDict.items():
-        for fo in fodict[md5]:
-            setattr(fo, hashname, hashvalue)
+    # behind every md5 key in the FODict is a list of fileobjects with corresponding md5
+    for md5, hashValue in hashValueDict.items():
+        for FO in FODict[md5]:
+            FO.hashDict[hashName] = hashValue
+
 def getOneThumb(arg):
     md5, filename, tsize = arg
     img = Image.open(filename)

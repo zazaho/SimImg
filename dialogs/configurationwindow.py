@@ -1,111 +1,141 @@
+''' Modules that defines a oolbar with action items'''
+import os
 import tkinter as tk
-from tkinter import font
+from tkinter import font as tkfont
+from tkinter import filedialog as tkfiledialog
+from PIL import ImageTk, Image
 import classes.tooltip as TT
 
 class CfgWindow(tk.Toplevel):
     def __init__(self, parent, Controller=None):
         super().__init__()
 
-        myfont = font.Font(family='Helvetica', size=11)
+        myfont = tkfont.Font(family='Helvetica', size=11)
         self.title("Settings")
 
         self.parent = parent
         self.transient(self.parent)
 
+        self.Ctrl = Controller
         self.Cfg = Controller.Cfg
+        iconpath = self.Cfg.get('iconpath')
 
         self.recurse = tk.BooleanVar()
+        self.recurse.set(self.Cfg.get('searchinsubfolders'))
         self.confirmDel = tk.BooleanVar()
+        self.confirmDel.set(self.Cfg.get('confirmdelete'))
         self.doGzip = tk.BooleanVar()
+        self.doGzip.set(self.Cfg.get('gzipinsteadofdelete'))
         self.saveSettings = tk.BooleanVar()
+        self.saveSettings.set(self.Cfg.get('savesettings'))
         self.thumbSize = tk.IntVar()
+        self.thumbSize.set(self.Cfg.get('thumbnailsize'))
         self.startupDir = tk.StringVar()
+        self.startupDir.set(self.Cfg.get('startupfolder'))
 
-        frame3 = tk.Frame(self)
-        frame3.pack(fill='x', padx=5)
+        startupFrame = tk.Frame(self)
+        startupFrame.pack(fill='x', padx=5)
         startlabel = tk.Label(
-            frame3,
+            startupFrame,
             font=myfont,
             text="Startup Folder"
         )
-        startlabel.pack(pady=5,side=tk.LEFT)
         startentry = tk.Entry(
-            frame3,
+            startupFrame,
             font=myfont,
             textvariable=self.startupDir
         )
+        self.openImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "open.png")))
+        openbutton = tk.Button(
+            startupFrame,
+            image=self.openImg,
+            relief="flat",
+            command=self._openFolder
+        )
+        startlabel.pack(pady=5,side=tk.LEFT)
         startentry.pack(pady=5,side=tk.LEFT)
-        self.startupDir.set(self.Cfg.get('startupfolder'))
+        openbutton.pack(side=tk.LEFT)
         msg = '''Folder to read upon starting the application.
 . means the directory from which the script was started
 leave empty to start without reading files.'''
         TT.Tooltip(startlabel, text=msg)
         TT.Tooltip(startentry, text=msg)
+        TT.Tooltip(openbutton, text='Select Startup Folder')
 
-        frame1 = tk.Frame(self)
-        frame1.pack(fill='x', padx=5)
-        subdir = tk.Checkbutton(frame1,
-                                text="Search in Subfolders",
-                                font=myfont,
-                                variable=self.recurse
-        )
-        subdir.pack(pady=5, anchor='w')
-        self.recurse.set(self.Cfg.get('searchinsubfolders'))
-        msg = '''Search recursively in the subfolders for image files.'''
-        TT.Tooltip(subdir, text=msg)
-
-        cnfrm = tk.Checkbutton(frame1,
-                               text="Confirm File Delete",
-                               font=myfont,
-                               variable=self.confirmDel
-        )
-        cnfrm.pack(pady=5, anchor='w')
-        self.confirmDel.set(self.Cfg.get('confirmdelete'))
-        msg = '''Ask before deleting files.'''
-        TT.Tooltip(subdir, text=msg)
-
-        gzp = tk.Checkbutton(frame1,
-                             text="Gzip File Instead of Delete",
-                             font=myfont,
-                             variable=self.doGzip
-        )
-        gzp.pack(pady=5, anchor='w')
-        self.doGzip.set(self.Cfg.get('gzipinsteadofdelete'))
-        msg = '''Instead of deleting the file gzip it (adds .gz to the filename).'''
-        TT.Tooltip(gzp, text=msg)
-
-        tk.Checkbutton(frame1,
-                       text="Save Settings on Exit",
-                       font=myfont,
-                       variable=self.saveSettings
-        ).pack(pady=5, anchor='w')
-        self.saveSettings.set(self.Cfg.get('savesettings'))
-
-        frame2 = tk.Frame(self)
-        frame2.pack(fill='x', padx=5)
+        thumbSizeFrame = tk.Frame(self)
+        thumbSizeFrame.pack(fill='x', padx=5)
         
         tk.Label(
-            frame2,
+            thumbSizeFrame,
             font=myfont,
             text="Thumbnail Size"
         ).pack(pady=5,side=tk.LEFT)
         tk.Entry(
-            frame2,
+            thumbSizeFrame,
             font=myfont,
             textvariable=self.thumbSize
         ).pack(pady=5,side=tk.LEFT)
-        self.thumbSize.set(self.Cfg.get('thumbnailsize'))
 
-        frame4 = tk.Frame(self)
-        frame4.pack(fill='x')
+        clearDBFrame = tk.Frame(self)
+        clearDBFrame.pack(fill='x', padx=5)
+        self.clearDBImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "refresh.png")))
+        clearDBbutton = tk.Button(
+            clearDBFrame,
+            image=self.clearDBImg,
+            text="Clear Database",
+            compound="left",
+            command=self._clearDB
+        )
+        clearDBbutton.pack(side=tk.LEFT)
+        msg = '''Empty the database that holds the calculated image properties.'''
+        TT.Tooltip(clearDBbutton, text=msg)
+
+        toggleFrame = tk.Frame(self)
+        toggleFrame.pack(fill='x', padx=5)
+        subdir = tk.Checkbutton(toggleFrame,
+                                text="Search in Subfolders",
+                                font=myfont,
+                                variable=self.recurse
+        )
+        msg = '''Search recursively in the subfolders for image files.'''
+        TT.Tooltip(subdir, text=msg)
+
+        cnfrm = tk.Checkbutton(toggleFrame,
+                               text="Confirm File Delete",
+                               font=myfont,
+                               variable=self.confirmDel
+        )
+        msg = '''Ask before deleting files.'''
+        TT.Tooltip(cnfrm, text=msg)
+
+        gzp = tk.Checkbutton(toggleFrame,
+                             text="Gzip File Instead of Delete",
+                             font=myfont,
+                             variable=self.doGzip
+        )
+        msg = '''Instead of deleting the file gzip it (adds .gz to the filename).'''
+        TT.Tooltip(gzp, text=msg)
+
+        svs = tk.Checkbutton(toggleFrame,
+                             text="Save Settings on Exit",
+                             font=myfont,
+                             variable=self.saveSettings
+        )
+        subdir.pack(pady=5, anchor='w')
+        cnfrm.pack(pady=5, anchor='w')
+        gzp.pack(pady=5, anchor='w')
+        svs.pack(pady=5, anchor='w')
+
+        btnFrame = tk.Frame(self)
+        btnFrame.pack(fill='x')
         tk.Button(
-            frame4,
+            btnFrame,
             text="Ok",
             width=15,
             command=self._ok
         ).pack(padx=10, side=tk.LEFT)
         tk.Button(
-            frame4,
+            btnFrame,
             text="Cancel",
             width=15,
             command=self._cancel
@@ -115,7 +145,19 @@ leave empty to start without reading files.'''
         self.protocol("WM_DELETE_WINDOW", self._cancel)
         self.grab_set()
         self.wait_window(self)
-        
+
+    def _openFolder(self):
+        selectedFolder = tkfiledialog.askdirectory()
+        if not selectedFolder:
+            return
+        if not os.path.isdir(selectedFolder):
+            return
+        self.startupDir.set(selectedFolder)
+
+    def _clearDB(self):
+        self.Ctrl.stopDatabase()
+        self.Ctrl.startDatabase(clear=True)
+
     def _ok(self, *args):
         self.Cfg.set('searchinsubfolders', self.recurse.get())
         self.Cfg.set('confirmdelete', self.confirmDel.get())

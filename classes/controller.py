@@ -62,7 +62,7 @@ class Controller():
         for cm in self.CMList:
             cm.pack(side=tk.TOP, fill='x')
 
-        self._startDatabase()
+        self.startDatabase()
         self._getFileList()
         self._processFilelist()
         self.onFileListChanged()
@@ -83,20 +83,21 @@ class Controller():
                 keyDict[event.keysym]()
                 return
 
-    def _startDatabase(self):
-        self.DBConnection = DB.CreateDBConnection(self.Cfg.get('databasename'))
+    def startDatabase(self, clear=None):
+        self.DBConnection = DB.CreateDBConnection(
+            self.Cfg.get('databasename')
+        )
         if not self.DBConnection:
             sys.exit(1)
 
-        if not DB.CreateDBTables(self.DBConnection):
+        if not DB.CreateDBTables(self.DBConnection, clear=clear):
             sys.exit(1)
 
-    def _stopDatabase(self):
-        self.DBConnection.commit()
-        self.DBConnection.close()
+    def stopDatabase(self):
+        DB.CloseDBConnection(self.DBConnection)
 
     def exitProgram(self):
-        self._stopDatabase()
+        self.stopDatabase()
         self.Cfg.set('findergeometry', self.TopWindow.geometry())
         self.Cfg.writeConfiguration()
         self.TopWindow.quit()
@@ -230,7 +231,7 @@ class Controller():
         # maximum nx*ny thumbs to show
         thumbToShow = 0
         for md5 in self.FODict:
-            if not self.FODict[md5][0].Active:
+            if not self.FODict[md5][0].active:
                 continue
             X = thumbToShow % nx
             Y = thumbToShow // nx
@@ -329,7 +330,7 @@ class Controller():
         # make sure to clean the interface
         self._removeAllThumbs()
 
-        activeMD5s = [md5 for md5, FO in self.FODict.items() if FO[0].Active]
+        activeMD5s = [md5 for md5, FO in self.FODict.items() if FO[0].active]
         if not activeMD5s:
             return
         
@@ -359,7 +360,7 @@ class Controller():
     def resetThumbnails(self):
         for foList in self.FODict.values():
             for fo in foList:
-                fo.Active = True
+                fo.active = True
         self.onFileListChanged()
     
     # functions related to the selected thumbnails
@@ -380,7 +381,7 @@ class Controller():
 
     def hideSelected(self):
         for fo in self._selectedFOs():
-            fo.Active = False
+            fo.active = False
         self.onFileListChanged()
 
     def _deleteFile(self, Filename):
@@ -484,8 +485,7 @@ class Controller():
             for afo in fo:
                 afo._Thumbnail = ImageTk.PhotoImage(thumb)
 
-    def setImageHashes(self, hashName="ahash"):
+    def setImageHashes(self, hashName=None):
         self._showInStatusbar("Calculating Images Hashes, please be patient")
         POOL.GetImageHashes(self.FODict, hashName, self.DBConnection)
-        #clear messages from the statusbar
         self._showInStatusbar("...")

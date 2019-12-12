@@ -7,41 +7,41 @@ class ImageFrame(tk.Frame):
 
         self.Ctrl = Ctrl
         self.ThumbSize = Ctrl.Cfg.get('thumbnailsize')
-        self.BorderWidth = Ctrl.Cfg.get('thumbnailborderwidth')
+        BorderWidth = Ctrl.Cfg.get('thumbnailborderwidth')
         self.md5 = md5
         self.selected = False
         self.X = X
         self.Y = Y
         
-        #self.config(relief="groove",borderwidth=self.BorderWidth)
+        #self.config(relief="groove",borderwidth=BorderWidth)
         self.thumb_canvas = tk.Canvas(self,
                                       width=self.ThumbSize,
                                       height=self.ThumbSize,
                                       bg="white",
                                       relief="groove",
-                                      borderwidth=self.BorderWidth)
+                                      borderwidth=BorderWidth)
         self.thumb_canvas.bind("<Button-1>", self._click)
 
         if self.md5:
             self.thumb_canvas.create_image(
-                self.BorderWidth+self.ThumbSize/2,
-                self.BorderWidth+self.ThumbSize/2,
+                BorderWidth+self.ThumbSize/2,
+                BorderWidth+self.ThumbSize/2,
                 anchor='center',
                 image=Ctrl.FODict[self.md5][0].Thumbnail()
             )
             if len(Ctrl.FODict[self.md5]) > 1:
                 self.thumb_canvas.config(highlightbackground="green", highlightthickness=2)
 
-        self.hide_button = tk.Button(self, text="Hide", command=self._hide, pady=0)
-        self.delete_button = tk.Button(self, text="Delete", command=self._delete, pady=0)
+        hide_button = tk.Button(self, text="Hide", command=self._hide, pady=0)
+        delete_button = tk.Button(self, text="Delete", command=self._delete, pady=0)
 
         self.thumb_canvas.pack(side=tk.TOP)
-        self.hide_button.pack(side=tk.LEFT)
-        self.delete_button.pack(side=tk.RIGHT)
+        hide_button.pack(side=tk.LEFT)
+        delete_button.pack(side=tk.RIGHT)
 
     def _hide(self):
         for fo in self.Ctrl.FODict[self.md5]:
-            fo.Active = False
+            fo.active = False
             self.Ctrl.onFileListChanged()
 
     def _delete(self):
