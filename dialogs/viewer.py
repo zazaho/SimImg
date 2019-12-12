@@ -1,6 +1,5 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-import classes.tooltip as TT
 
 class viewer(tk.Toplevel):
     "A viewer window to display the selected pictures"
@@ -18,7 +17,6 @@ class viewer(tk.Toplevel):
         self.canvas.update_idletasks()
         self.canvas.bind("<Button>", self._click)
         self.bind("<Key>", self._key)
-        TT.Tooltip(self, text='Press F1 for help')
         self.ImgDict = {}
         self.ImgIndex = 0
         self.protocol("WM_DELETE_WINDOW", self._exitViewer)
@@ -87,7 +85,7 @@ class viewer(tk.Toplevel):
             anchor='center',
             image=self.ImgDict[self.ImgIndex][1]
         )
-        self.title("SIMilar IMaGe viewer: %s" % self.ImgDict[self.ImgIndex][0])
+        self.title("SIMilar IMaGe viewer: %s --- Press F1 for Help" % self.ImgDict[self.ImgIndex][0])
 
     def _showNext(self):
         self.ImgIndex += 1

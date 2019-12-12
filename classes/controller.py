@@ -333,11 +333,13 @@ class Controller():
         activeMD5s = [md5 for md5, FO in self.FODict.items() if FO[0].active]
         if not activeMD5s:
             return
-        
+        activeMD5s.sort()
+
         activePairs = list(itertools.combinations(activeMD5s,2))
         if not activePairs:
             return
-        
+        activePairs.sort()
+
         self._getMatchingGroups(activePairs)
 
         self._displayMatchingGroups()
