@@ -1,8 +1,5 @@
 # SIMilar IMaGe finder (SIMIMG)
 
-## One minute demo video
-<video src="demo.ogv" width="320" height="200" controls preload></video>
-
 # Description:
 This is a python GUI for displaying pictures grouped according to
 similarity. The main aim of the program is to help identify groups of
