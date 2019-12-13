@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import font as tkfont
 
 class Tooltip:
     '''
@@ -23,12 +24,11 @@ class Tooltip:
 
     def __init__(self, widget,
                  *,
-                 bg='#FFFFEA',
-                 pad=(5, 3, 5, 3),
+                 bg='#FFFFE1',
                  text='widget info',
                  waittime=400,
                  wraplength=250):
-
+        
         self.waittime = waittime  # in miliseconds, originally 500
         self.wraplength = wraplength  # in pixels, originally 180
         self.widget = widget
@@ -37,9 +37,9 @@ class Tooltip:
         self.widget.bind("<Leave>", self.onLeave)
         self.widget.bind("<ButtonPress>", self.onLeave)
         self.bg = bg
-        self.pad = pad
         self.id = None
         self.tw = None
+        self.myfont = tkfont.Font(family='Helvetica', size=11)
 
     def onEnter(self, event=None):
         self.schedule()
@@ -61,14 +61,13 @@ class Tooltip:
     def show(self):
         def tip_pos_calculator(widget, label,
                                *,
-                               tip_delta=(10, 5), pad=(5, 3, 5, 3)):
+                               tip_delta=(10, 5)):
 
             w = widget
 
             s_width, s_height = w.winfo_screenwidth(), w.winfo_screenheight()
 
-            width, height = (pad[0] + label.winfo_reqwidth() + pad[2],
-                             pad[1] + label.winfo_reqheight() + pad[3])
+            width, height = (label.winfo_reqwidth(),label.winfo_reqheight())
 
             mouse_x, mouse_y = w.winfo_pointerxy()
 
@@ -106,7 +105,6 @@ class Tooltip:
             return x1, y1
 
         bg = self.bg
-        pad = self.pad
         widget = self.widget
 
         # creates a toplevel window
@@ -119,16 +117,17 @@ class Tooltip:
                        background=bg,
                        borderwidth=0)
         label = tk.Label(win,
-                          text=self.text,
-                          justify=tk.LEFT,
-                          background=bg,
-                          relief=tk.SOLID,
-                          borderwidth=0,
-                          wraplength=self.wraplength)
+                         text=self.text,
+                         justify=tk.LEFT,
+                         background=bg,
+                         relief=tk.SOLID,
+                         borderwidth=1,
+                         font=self.myfont,
+                         padx=5,
+                         pady=5,
+                         wraplength=self.wraplength)
 
-        label.grid(padx=(pad[0], pad[2]),
-                   pady=(pad[1], pad[3]),
-                   sticky=tk.NSEW)
+        label.grid(sticky=tk.NSEW)
         win.grid()
 
         x, y = tip_pos_calculator(widget, label)

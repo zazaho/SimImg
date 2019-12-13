@@ -24,16 +24,20 @@ class Toolbar(tk.Frame):
         self.settingsImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "settings.png")))
         self.uncheckImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "uncheck.png")))
 
-        self.addButton = tk.Button(self, image=self.addImg, relief="flat", command=self.Ctrl.addFolder)
-        self.deleteButton = tk.Button(self, image=self.deleteImg, relief="flat", command=self.Ctrl.deleteSelected)
         self.exitButton = tk.Button(self, image=self.exitImg, relief="flat", command=self.Ctrl.exitProgram)
-        self.hideButton = tk.Button(self, image=self.hideImg, relief="flat", command=self.Ctrl.hideSelected)
-        self.infoButton = tk.Button(self, image=self.infoImg, relief="flat", command=IW.showInfoDialog)
-        self.openButton = tk.Button(self, image=self.openImg, relief="flat", command=self.Ctrl.openFolder)
-        self.playButton = tk.Button(self, image=self.playImg, relief="flat", command=self.Ctrl.viewSelected)
-        self.refreshButton = tk.Button(self, image=self.refreshImg, relief="flat", command=self.Ctrl.resetThumbnails)
         self.settingsButton = tk.Button(self, image=self.settingsImg, relief="flat", command=self.Ctrl.configureProgram)
+        #
+        self.infoButton = tk.Button(self, image=self.infoImg, relief="flat", command=IW.showInfoDialog)
+
+        self.openButton = tk.Button(self, image=self.openImg, relief="flat", command=self.Ctrl.openFolder)
+        self.addButton = tk.Button(self, image=self.addImg, relief="flat", command=self.Ctrl.addFolder)
+        #
+        self.refreshButton = tk.Button(self, image=self.refreshImg, relief="flat", command=self.Ctrl.resetThumbnails)
+
         self.uncheckButton = tk.Button(self, image=self.uncheckImg, relief="flat", command=self.Ctrl.unselectThumbnails)
+        self.deleteButton = tk.Button(self, image=self.deleteImg, relief="flat", command=self.Ctrl.deleteSelected)
+        self.hideButton = tk.Button(self, image=self.hideImg, relief="flat", command=self.Ctrl.hideSelected)
+        self.playButton = tk.Button(self, image=self.playImg, relief="flat", command=self.Ctrl.viewSelected)
 
         self.exitButton.grid(column=0, row=0)
         self.settingsButton.grid(column=1, row=0)

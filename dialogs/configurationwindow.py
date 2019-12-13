@@ -28,6 +28,8 @@ class CfgWindow(tk.Toplevel):
         self.doGzip.set(self.Cfg.get('gzipinsteadofdelete'))
         self.saveSettings = tk.BooleanVar()
         self.saveSettings.set(self.Cfg.get('savesettings'))
+        self.showButtons = tk.BooleanVar()
+        self.showButtons.set(self.Cfg.get('showbuttons'))
         self.thumbSize = tk.IntVar()
         self.thumbSize.set(self.Cfg.get('thumbnailsize'))
         self.startupDir = tk.StringVar()
@@ -56,8 +58,10 @@ class CfgWindow(tk.Toplevel):
         startentry.pack(pady=5,side=tk.LEFT)
         openbutton.pack(side=tk.LEFT)
         msg = '''Folder to read upon starting the application.
-. means the directory from which the script was started
-leave empty to start without reading files.'''
+
+. Means the directory from which the script was started.
+
+Leave empty to start without reading files.'''
         TT.Tooltip(startlabel, text=msg)
         TT.Tooltip(startentry, text=msg)
         TT.Tooltip(openbutton, text='Select Startup Folder')
@@ -121,10 +125,20 @@ leave empty to start without reading files.'''
                              font=myfont,
                              variable=self.saveSettings
         )
+
+        shb = tk.Checkbutton(toggleFrame,
+                             text="Show Hide/Delete buttons",
+                             font=myfont,
+                             variable=self.showButtons
+        )
+        msg = '''Show the individual Hide/Delete buttons with each thumbnail.'''
+        TT.Tooltip(shb, text=msg)
+
         subdir.pack(pady=5, anchor='w')
         cnfrm.pack(pady=5, anchor='w')
         gzp.pack(pady=5, anchor='w')
         svs.pack(pady=5, anchor='w')
+        shb.pack(pady=5, anchor='w')
 
         btnFrame = tk.Frame(self)
         btnFrame.pack(fill='x')
@@ -163,6 +177,7 @@ leave empty to start without reading files.'''
         self.Cfg.set('confirmdelete', self.confirmDel.get())
         self.Cfg.set('gzipinsteadofdelete', self.doGzip.get())
         self.Cfg.set('savesettings', self.saveSettings.get())
+        self.Cfg.set('showbuttons', self.showButtons.get())
         try:
             ts = self.thumbSize.get()
         except tk.TclError:

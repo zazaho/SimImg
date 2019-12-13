@@ -104,8 +104,9 @@ class Controller():
     
     def configureProgram(self):
         oldThumbsize = self.Cfg.get('thumbnailsize')
+        oldShowButtons = self.Cfg.get('showbuttons')
         CW.CfgWindow(self.TopWindow, Controller=self)
-        if self.Cfg.get('thumbnailsize') != oldThumbsize:
+        if self.Cfg.get('thumbnailsize') != oldThumbsize or self.Cfg.get('showbuttons') != oldShowButtons:
             self._setThumbnails()
             self._onThumbnailsChanged()
 
@@ -156,6 +157,7 @@ class Controller():
         if Replace:
             pathList = [Replace]
             oldFiles = []
+            self.FODict = {}
         # from add folder    
         if Add:
             pathList = [Add]
@@ -165,6 +167,7 @@ class Controller():
         if not Replace and not Add:
             pathList = self.Cfg.get('cmdlinearguments')
             oldFiles = []
+            self.FODict = {}
 
         # from startup without arguments
         if not pathList:
@@ -197,12 +200,15 @@ class Controller():
 
     def _createFileobjects(self):
 
-        #reset FODict
-        self.FODict = {}
-
         # Make list of image file objects with all files the installed PIL can read
         ImageFileObjectList = []
-        for FilePath in self.fileList:
+        # dont create FOs for files that already have a FODict
+        existingfiles = []
+        for fol in self.FODict.values():
+            existingfiles.extend([fo.FullPath for fo in fol])
+            
+        missingfilelist = list(set(self.fileList) - set(existingfiles))
+        for FilePath in missingfilelist:
             ThisFileObject = FO.FileObject(self,
                                            FullPath=FilePath,
                                            MD5HashesDict=self.MD5HashesDict
@@ -216,8 +222,9 @@ class Controller():
             return
 
         # transform into a dict based on uniq md5
-        self.FODict = HF.pairListToDict([(i.md5(), i) for i in ImageFileObjectList])
-
+        newFODict = HF.pairListToDict([(i.md5(), i) for i in ImageFileObjectList])
+        self.FODict.update(newFODict)
+        
     def _createViewWithoutConditions(self):
         'Create an overview of all images without conditions'
         self._removeAllThumbs()
@@ -473,7 +480,7 @@ class Controller():
     # some routines related to expensive calculations done in a
     # multiprocessing pool
     def _getMD5Hashes(self):
-        self.MD5HashesDict = POOL.GetMD5Hashes(self.fileList)
+        self.MD5HashesDict = POOL.GetMD5Hashes(self.fileList, self.MD5HashesDict)
 
     def _setThumbnails(self):
         MD5ThumbDict = POOL.GetMD5Thumbnails(

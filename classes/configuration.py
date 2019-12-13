@@ -34,6 +34,7 @@ class Configuration():
         self.ConfigurationDict['confirmdelete'] = True
         self.ConfigurationDict['gzipinsteadofdelete'] = False
         self.ConfigurationDict['savesettings'] = True
+        self.ConfigurationDict['showbuttons'] = True
         self.ConfigurationDict['thumbnailsize'] = 150
         self.ConfigurationDict['startupfolder'] = '.'
         self.ConfigurationDict['findergeometry'] = '1200x800+0+0'
@@ -48,6 +49,7 @@ class Configuration():
             confirmdelete = default.get('confirmdelete', 'yes')
             doGzip = default.get('gzipinsteadofdelete', 'no')
             savesettings = default.get('savesettings', 'yes')
+            showbuttons = default.get('showbuttons', 'yes')
             thumbSize = default.getint('thumbnailsize', 150)
             startupDir = default.get('startupfolder', '.')
             finderGeometry = default.get('findergeometry', '1200x800+0+0')
@@ -57,6 +59,7 @@ class Configuration():
             self.ConfigurationDict['confirmdelete'] = HF.str2bool(confirmdelete, default=True)
             self.ConfigurationDict['gzipinsteadofdelete'] = HF.str2bool(doGzip, default=True)
             self.ConfigurationDict['savesettings'] = HF.str2bool(savesettings, default=True)
+            self.ConfigurationDict['showbuttons'] = HF.str2bool(showbuttons, default=True)
             self.ConfigurationDict['thumbnailsize'] = thumbSize
             self.ConfigurationDict['startupfolder'] = startupDir
             self.ConfigurationDict['findergeometry'] = finderGeometry
@@ -75,6 +78,7 @@ class Configuration():
             'confirmdelete':self.ConfigurationDict['confirmdelete'],
             'gzipinsteadofdelete':self.ConfigurationDict['gzipinsteadofdelete'],
             'savesettings':self.ConfigurationDict['savesettings'],
+            'showbuttons':self.ConfigurationDict['showbuttons'],
             'thumbnailsize':self.ConfigurationDict['thumbnailsize'],
             'startupfolder':self.ConfigurationDict['startupfolder'],
             'findergeometry':self.ConfigurationDict['findergeometry'],

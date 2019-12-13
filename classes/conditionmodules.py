@@ -95,21 +95,31 @@ class HashCondition(ConditionFrame):
             width=8,
         )
         self.Combo.set(self.method)
-        self.Combo.bind("<<ComboboxSelected>>", self._somethingChanged)
+        self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
         self.Scale = tk.Scale(self,
                               from_= 1, to=50,
                               label='Limit',
                               variable=self.limitVar,
+                              takefocus=1,
                               orient=tk.HORIZONTAL
         )
-        self.Scale.bind("<ButtonRelease-1>", self._somethingChanged)
+        self.Scale.bind("<ButtonRelease-1>", self._scaleChanged)
+        self.Scale.bind("<Key>", self._scaleChanged)
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
         
     def _somethingChanged(self, *args):
+        self.Ctrl.onConditionChanged()
+
+    def _comboChanged(self, *args):
         self.method = self.Combo.get()
+        self.Combo.focus_set()
+        self.Ctrl.onConditionChanged()
+
+    def _scaleChanged(self, *args):
         self.limit = self.limitVar.get()
+        self.Scale.focus_set()
         self.Ctrl.onConditionChanged()
 
     def matchingGroups(self, candidates):
@@ -186,21 +196,30 @@ class HSVCondition(ConditionFrame):
             width=8,
         )
         self.Combo.set(self.method)
-        self.Combo.bind("<<ComboboxSelected>>", self._somethingChanged)
+        self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
         self.Scale = tk.Scale(self,
                               from_= 1, to=50,
                               label='Limit',
                               variable=self.limitVar,
                               orient=tk.HORIZONTAL
         )
-        self.Scale.bind("<ButtonRelease-1>", self._somethingChanged)
+        self.Scale.bind("<ButtonRelease-1>", self._scaleChanged)
+        self.Scale.bind("<Key>", self._scaleChanged)
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
 
     def _somethingChanged(self, *args):
+        self.Ctrl.onConditionChanged()
+
+    def _comboChanged(self, *args):
         self.method = self.Combo.get()
+        self.Combo.focus_set()
+        self.Ctrl.onConditionChanged()
+
+    def _scaleChanged(self, *args):
         self.limit = self.limitVar.get()
+        self.Scale.focus_set()
         self.Ctrl.onConditionChanged()
 
     def matchingGroups(self, candidates):
@@ -368,7 +387,7 @@ class DateCondition(ConditionFrame):
                                                 textLabels=self.scalelabels,
                                                 topLabel='Maximum Difference',
                                                 initialInt=self.initialIndex,
-                                                onChange=self._somethingChanged,
+                                                onChange=self._scaleChanged,
                                                 orient=tk.HORIZONTAL
         )
         self.timeDifferenceScale.pack()
@@ -376,7 +395,11 @@ class DateCondition(ConditionFrame):
 
     def _somethingChanged(self, *args):
         self.missing = self.missingVar.get()
+        self.Ctrl.onConditionChanged()
+
+    def _scaleChanged(self, *args):
         self.timeDifferenceInSec = self.scaleSeconds[self.timeDifferenceScale.textValue]
+        self.timeDifferenceScale.focus_set()
         self.Ctrl.onConditionChanged()
 
     def matchingGroups(self, candidates):

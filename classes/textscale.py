@@ -40,6 +40,9 @@ class TextScale(tk.Frame):
         self.TSValueLabel.config(text=self.textValue)
         self.onChange()
 
+    def focus_set(self):
+        self.TSScale.focus_set()
+        
     def config(self, state = None, *args, **kwargs):
         super().config()
         if state:

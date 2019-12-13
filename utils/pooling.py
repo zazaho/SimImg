@@ -14,11 +14,11 @@ def CalculateMD5Hash(file):
         hasher.update(afile.read())
     return (file, hasher.hexdigest())
 
-def GetMD5Hashes(filelist):
+def GetMD5Hashes(filelist, hashValueDict):
     '''return md5 hashing value for each file the list.'''
-    hashValueDict = {} ## filename,md5
+    missingfilelist = list(set(filelist) - set(hashValueDict.keys()))
     with Pool() as pool:
-        calculatedHashes = pool.map(CalculateMD5Hash, filelist)
+        calculatedHashes = pool.map(CalculateMD5Hash, missingfilelist)
     hashValueDict.update(calculatedHashes)
     return hashValueDict
 

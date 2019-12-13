@@ -32,12 +32,12 @@ class ImageFrame(tk.Frame):
             if len(Ctrl.FODict[self.md5]) > 1:
                 self.thumb_canvas.config(highlightbackground="green", highlightthickness=2)
 
-        hide_button = tk.Button(self, text="Hide", command=self._hide, pady=0)
-        delete_button = tk.Button(self, text="Delete", command=self._delete, pady=0)
-
         self.thumb_canvas.pack(side=tk.TOP)
-        hide_button.pack(side=tk.LEFT)
-        delete_button.pack(side=tk.RIGHT)
+        if Ctrl.Cfg.get('showbuttons'):
+            hide_button = tk.Button(self, text="Hide", command=self._hide, pady=0)
+            delete_button = tk.Button(self, text="Delete", command=self._delete, pady=0)
+            hide_button.pack(side=tk.LEFT)
+            delete_button.pack(side=tk.RIGHT)
 
     def _hide(self):
         for fo in self.Ctrl.FODict[self.md5]:
