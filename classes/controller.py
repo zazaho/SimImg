@@ -237,7 +237,7 @@ class Controller():
         
         # maximum nx*ny thumbs to show
         thumbToShow = 0
-        for md5 in self.FODict:
+        for md5 in HF.sortMd5sByFilename(self.FODict.keys(), self.MD5HashesDict):
             if not self.FODict[md5][0].active:
                 continue
             X = thumbToShow % nx
@@ -325,7 +325,8 @@ class Controller():
         #clear messages from the statusbar
         self._showInStatusbar("...")
         for Y, group in enumerate(self.matchingGroups):
-            for X, md5 in enumerate(group):
+            md5s = HF.sortMd5sByFilename(group, self.MD5HashesDict)
+            for X, md5 in enumerate(md5s):
                 self._showThumbXY(md5, X, Y)
             if X*Y > self.maxThumbnails:
                 self._showInStatusbar("Warning too many matches: truncated to ~%s" % self.maxThumbnails)

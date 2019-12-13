@@ -124,3 +124,16 @@ def applyMMGroupLists(GList, ListGList):
         GList[i] = dummy
 
     return GList
+
+def sortMd5sByFilename(md5s, FilenameMd5Dict):
+    #get md5s sorted by filename:
+    # only one time
+    result = []
+    for f in sorted(FilenameMd5Dict):
+        md5 = FilenameMd5Dict[f]
+        if md5 in result:
+            continue
+        if not md5 in md5s:
+            continue
+        result.append(md5)
+    return result
