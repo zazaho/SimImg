@@ -1,7 +1,7 @@
 # SIMilar IMaGe finder (SIMIMG)
 ![Screenshot of SIMIMG in action](doc/SIMIMG_screenshot.png)
 
-# Description:
+# Description
 This is a python GUI for displaying pictures grouped according to
 similarity. The main aim of the program is to help identify groups of
 holiday snaps that resemble each-other and efficiently inspect those
@@ -136,7 +136,7 @@ image properties will not be recalculated.
 It attempts to do the most expensive calculations in parallel making
 optimal use of the CPU capabilities.
 
-# Credit:
+# Credit
 This project uses the following open source packages:
 
 * [Python](https://www.python.org/): version 3
