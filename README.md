@@ -1,7 +1,7 @@
 # SIMilar IMaGe finder (SIMIMG)
 
 ## One minute demo video
-<video src="doc/demo.ogv" controls preload></video>
+<video src="doc/demo.ogv" width="320" height="200" controls preload></video>
 
 # Description:
 This is a python GUI for displaying pictures grouped according to
