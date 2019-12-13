@@ -58,7 +58,8 @@ class ImageFrame(tk.Frame):
         else:
             self.thumb_canvas.config(bg="white")
             self.Ctrl.lastSelectedXY = None
-
+        self.focus_set()
+        
     def _click(self, event):
         if (event.state & 0x4) != 0:
             self.Ctrl.toggleSelectRow(self.Y, not self.selected)

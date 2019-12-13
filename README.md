@@ -101,7 +101,7 @@ images. Pressing the little red check-mark button in the toolbar area
 Pressing Ctrl+a selects all thumbnails.
 
 ## Actions for selected thumbnails
-The *Play* button  in the toolbar will show a window that allows
+The *Play* button ![](icons/play.png)  in the toolbar will show a window that allows
 to view the selected images in larger versions (Ctrl+v).
 
 The *Minus* button will hide all selected thumbnails (Ctrl+h)
