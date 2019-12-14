@@ -1,5 +1,5 @@
 # SIMilar IMaGe finder (SIMIMG)
-![Screenshot of SIMIMG in action](doc/SIMIMG_screenshot.png)
+![SIMIMG in action](doc/demo.gif)
 
 # Description
 This is a python GUI for displaying pictures grouped according to
