@@ -153,13 +153,16 @@ def GetImageHashes(FODict, hashName, db_connection=None):
 
 def getOneThumb(arg):
     md5, filename, tsize = arg
-    img = Image.open(filename)
-    ratio = max(img.size[0]/tsize, img.size[1]/tsize)
-    img = img.resize(
-        (int(img.size[0]/ratio), int(img.size[1]/ratio)),
-        Image.ANTIALIAS
-    )
-    return (md5, img)
+    try:
+        img = Image.open(filename)
+        ratio = max(img.size[0]/tsize, img.size[1]/tsize)
+        img = img.resize(
+            (int(img.size[0]/ratio), int(img.size[1]/ratio)),
+            Image.ANTIALIAS
+        )
+        return (md5, img)
+    except OSError:
+        return (md5, None)
 
 def GetMD5Thumbnails(FODict, Thumbsize=150):
     '''return thumbnail for each md5 in FODict.'''

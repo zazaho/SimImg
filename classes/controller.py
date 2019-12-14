@@ -57,7 +57,8 @@ class Controller():
             CM.HashCondition(self.TopWindow.ModulePane, Controller=self),
             CM.HSVCondition(self.TopWindow.ModulePane, Controller=self),
             CM.DateCondition(self.TopWindow.ModulePane, Controller=self),
-            CM.CameraCondition(self.TopWindow.ModulePane, Controller=self)
+            CM.CameraCondition(self.TopWindow.ModulePane, Controller=self),
+            CM.ShapeCondition(self.TopWindow.ModulePane, Controller=self),
         ]
         for cm in self.CMList:
             cm.pack(side=tk.TOP, fill='x')
@@ -491,6 +492,9 @@ class Controller():
         if not MD5ThumbDict:
             return
         for md5, thumb in MD5ThumbDict.items():
+            if not thumb:
+                del self.FODict[md5]
+                continue
             fo = self.FODict[md5]
             for afo in fo:
                 afo._Thumbnail = ImageTk.PhotoImage(thumb)

@@ -19,8 +19,7 @@ class TextScale(tk.Frame):
         self.textLabelsDict = {key: value for key, value in enumerate(textLabels) }
         self.onChange = onChange
         self.TSScaleIntVar = tk.IntVar()
-        self.TSScaleIntVar.set(1)
-        self.TSTopLabel = tk.Label(self, text=topLabel)
+        self.TSScaleIntVar.set(initialInt)
         self.TSValueLabel = tk.Label(self, text=self.textValue)
         self.TSScale = tk.Scale(self,
                                 from_=min(self.textLabelsDict),
@@ -31,7 +30,9 @@ class TextScale(tk.Frame):
                                 command=self._command,
                                 *args, **kwargs
         )
-        self.TSTopLabel.pack()
+        if topLabel:
+            self.TSTopLabel = tk.Label(self, text=topLabel)
+            self.TSTopLabel.pack()
         self.TSValueLabel.pack()
         self.TSScale.pack()
 

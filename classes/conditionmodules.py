@@ -32,7 +32,7 @@ class ConditionFrame(tk.Frame):
         self._makeBaseWidgets()
         self.setActive(False)
         self._candidates = {}
-        
+
     def _makeBaseWidgets(self):
         self.label = tk.Label(self, text=self.name, anchor='w')
         self.label.bind('<Button-1>', self._activeToggled)
@@ -82,7 +82,7 @@ class HashCondition(ConditionFrame):
         self.limit = 14
         self.limitVar = tk.IntVar()
         self.limitVar.set(self.limit)
-        self.currentConfig = {'method':'', 'limit':0}
+        self.currentConfig = {'method':'', 'limit':-1}
         self.currentMatchingGroups = []
         self._makeAdditionalWidgets()
         self.setActive(False)
@@ -451,3 +451,192 @@ class DateCondition(ConditionFrame):
 
         self.currentMatchingGroups.sort()
         return self.currentMatchingGroups
+
+class HSVCondition(ConditionFrame):
+    name = 'COLOR DISTANCE'
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.Combo = None
+        self.Scale = None
+        self.method = "hsvhash"
+        self.limit = 10
+        self.limitVar = tk.IntVar()
+        self.limitVar.set(self.limit)
+        self.currentConfig = {'method':'', 'limit':-1}
+        self.currentMatchingGroups = []
+        self._makeAdditionalWidgets()
+        self.setActive(False)
+
+    def _makeAdditionalWidgets(self):
+        self.Combo = ttk.Combobox(
+            self,
+            values=["hsvhash","hsv5hash"],
+            state=tk.DISABLED,
+            width=8,
+        )
+        self.Combo.set(self.method)
+        self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
+        self.Scale = tk.Scale(self,
+                              from_= 1, to=50,
+                              label='Limit',
+                              variable=self.limitVar,
+                              orient=tk.HORIZONTAL
+        )
+        self.Scale.bind("<ButtonRelease-1>", self._scaleChanged)
+        self.Scale.bind("<Key>", self._scaleChanged)
+        self.Combo.pack()
+        self.Scale.pack()
+        self.childWidgets.extend([self.Combo, self.Scale])
+
+    def _somethingChanged(self, *args):
+        self.Ctrl.onConditionChanged()
+
+    def _comboChanged(self, *args):
+        self.method = self.Combo.get()
+        self.Combo.focus_set()
+        self.Ctrl.onConditionChanged()
+
+    def _scaleChanged(self, *args):
+        self.limit = self.limitVar.get()
+        self.Scale.focus_set()
+        self.Ctrl.onConditionChanged()
+
+    def matchingGroups(self, candidates):
+        def theymatch(md5a, md5b):
+            foa = self.Ctrl.FODict[md5a][0]
+            if not self.method in foa.hashDict:
+                print('Warning: requested a hash that is not available')
+                return False
+            foaHash = foa.hashDict[self.method]
+            fob = self.Ctrl.FODict[md5b][0]
+            if not self.method in fob.hashDict:
+                print('Warning: requested a hash that is not available')
+                return False
+            fobHash = fob.hashDict[self.method]
+            return stats.mean(
+                [abs(foaHash[i]-fobHash[i]) for i,_ in enumerate(foaHash)]
+            )/2.56 <= self.limit
+
+        # check that the widget parameters are different from before
+        # if not simply return the matchingGroupsList from before
+        # check that the widget parameters are different from before
+        # if not simply return the matchingGroupsList from before
+        if (
+                self._candidates == set(candidates) and
+                self.method == self.currentConfig['method'] and
+                self.limit == self.currentConfig['limit']
+        ):
+            return self.currentMatchingGroups
+
+        self._candidates = set(candidates)
+        self.currentConfig['method'] = self.method
+        self.currentConfig['limit'] = self.limit
+        
+        #Call this to make sure the hash values for this method are available
+        self.Ctrl.setImageHashes(hashName=self.method)
+
+        md5s = []
+        for a, b in candidates:
+            md5s.append(a)
+            md5s.append(b)
+        md5s = list(set(md5s))
+        md5s.sort()
+
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
+
+        self.currentMatchingGroups = []
+        for thismd5 in md5s:
+            # put atleast the first image in each matchingGroups
+            dummy = [thismd5]
+            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy = list(set(dummy))
+            dummy.sort()
+            self.currentMatchingGroups.append(dummy)
+
+        self.currentMatchingGroups.sort()
+        return self.currentMatchingGroups
+
+class ShapeCondition(ConditionFrame):
+    name = 'PICTURE SHAPE'
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.Scale = None
+        self.initialIndex = 0
+        self.scalelabels = ['Portrait/Landscape', 'Exact', '<5%', '<10%', '<20%', '<30%', '<50%']
+        self.scalevalues = {
+            'Portrait/Landscape':-1,
+            'Exact':0,
+            '<5%':5,
+            '<10%':10,
+            '<20%':20,
+            '<30%':30,
+            '<50%':50
+        }
+        self.limit = self.scalevalues[self.scalelabels[self.initialIndex]]
+
+        self.currentConfig = {'limit':-666}
+        self.currentMatchingGroups = []
+        self._makeAdditionalWidgets()
+        self.setActive(False)
+        
+    def _makeAdditionalWidgets(self):
+        self.Scale = TS.TextScale(self,
+                                  textLabels=self.scalelabels,
+                                  topLabel='',
+                                  initialInt=self.initialIndex,
+                                  onChange=self._scaleChanged,
+                                  orient=tk.HORIZONTAL
+        )
+        self.Scale.bind("<ButtonRelease-1>", self._scaleChanged)
+        self.Scale.bind("<Key>", self._scaleChanged)
+        self.Scale.pack()
+        self.childWidgets.extend([self.Scale])
+        
+    def _somethingChanged(self, *args):
+        self.Ctrl.onConditionChanged()
+
+    def _scaleChanged(self, *args):
+        self.limit = self.scalevalues[self.Scale.textValue]
+        self.Scale.focus_set()
+        self.Ctrl.onConditionChanged()
+
+    def matchingGroups(self, candidates):
+        def theymatch(md5a, md5b):
+            foaval = self.Ctrl.FODict[md5a][0].ShapeParameter()
+            fobval = self.Ctrl.FODict[md5b][0].ShapeParameter()
+            if self.limit == -1:
+                return foaval*fobval > 0.0 or fobval == 0.0
+            return abs(foaval - fobval) <= self.limit
+
+        # check that the widget parameters are different from before
+        # if not simply return the matchingGroupsList from before
+        if (
+                self._candidates == set(candidates) and
+                self.limit == self.currentConfig['limit']
+        ):
+            return self.currentMatchingGroups
+
+        self._candidates = set(candidates)
+        self.currentConfig['limit'] = self.limit
+        
+        md5s = []
+        for a, b in candidates:
+            md5s.append(a)
+            md5s.append(b)
+        md5s = list(set(md5s))
+        md5s.sort()
+
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
+
+        self.currentMatchingGroups = []
+        for thismd5 in md5s:
+            # put atleast the first image in each matchingGroups
+            dummy = [thismd5]
+            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy = list(set(dummy))
+            dummy.sort()
+            self.currentMatchingGroups.append(dummy)
+
+        self.currentMatchingGroups.sort()
+        return self.currentMatchingGroups
+

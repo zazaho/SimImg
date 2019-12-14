@@ -30,6 +30,7 @@ class FileObject():
         self._ExifTags = None
         self._Thumbnail = None
         self._DateTime = None
+        self._Size = None
 
         #It this file active
         self.active = True
@@ -38,8 +39,10 @@ class FileObject():
         ' Set IsImage to True if the file can be read by PIL '
         if self._IsImage is None:
             try:
-                Image.open(self.FullPath)
+                img = Image.open(self.FullPath)
                 self._IsImage = True
+                # do this here to save time
+                self._Size = img.size
             except IOError:
                 self._IsImage = False
         return self._IsImage
@@ -101,6 +104,19 @@ class FileObject():
             except ValueError:
                 self._DateTime = 'Missing'
         return self._DateTime
+
+    def Size(self):
+        if self._Size is None:
+            self._Size = (0, 0)
+            with Image.open(self.FullPath) as image:
+                self._Size = image.size
+        return self._Size
+
+    def ShapeParameter(self):
+        w, h = self.Size()
+        # (width-height)/(width+height)*100
+        # positive for landscape, negative for portait
+        return (w-h)/(w+h)*100
 
     def Thumbnail(self):
         if self._Thumbnail is None:
