@@ -325,8 +325,10 @@ class Controller():
     def _displayMatchingGroups(self):
         #clear messages from the statusbar
         self._showInStatusbar("...")
-        for Y, group in enumerate(self.matchingGroups):
-            md5s = HF.sortMd5sByFilename(group, self.MD5HashesDict)
+        sortedGroupsList = HF.sortMd5ListsByFilename(self.matchingGroups, self.MD5HashesDict)
+        for Y, group in enumerate(sortedGroupsList):
+            md5s = [group[0]]
+            md5s.extend(HF.sortMd5sByFilename(group[1:], self.MD5HashesDict))
             for X, md5 in enumerate(md5s):
                 self._showThumbXY(md5, X, Y)
             if X*Y > self.maxThumbnails:

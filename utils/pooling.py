@@ -55,15 +55,26 @@ def hsv5hash(Img, **kwargs):
 
     values = []
     for box in boxes:
-        Hsub = subImage(H, box)
+        Hsub = list(subImage(H, box))
+        medianH = round(stats.median(Hsub))
+        Hsub = [(h-medianH+128) % 255 for h in Hsub]
         Ssub = subImage(S, box)
         Vsub = subImage(V, box)
         quantH = stats.quantiles(Hsub)
         quantS = stats.quantiles(Ssub)
         quantV = stats.quantiles(Vsub)
-        values.extend(quantH)
-        values.extend(quantS)
-        values.extend(quantV)
+
+        values.extend([
+            round(medianH),
+            round(quantH[1]-quantH[0]),
+            round(quantH[2]-quantH[1]),
+            round(quantS[1]),
+            round(quantS[1]-quantS[0]),
+            round(quantS[2]-quantS[1]),
+            round(quantV[1]),
+            round(quantV[1]-quantV[0]),
+            round(quantV[2]-quantV[1])
+        ])
 
     return values
 
@@ -73,19 +84,32 @@ def hsvhash(Img, **kwargs):
     # open and convert to HSV
     # resample to speed up the calculation
     HSV = Img.convert("HSV").resize((100,100), Image.NEAREST)
-    H = HSV.getchannel('H').getdata()
+
+    # for each LAYER (H,S,L) record some information about
+    # the position of the peak and the width of the distribution
+    # H needs special treatment because if is circular wrapping around
+    # from 255 back to 0
+    H = list(HSV.getchannel('H').getdata())
+    # center the mode on 128 and take the modulus
+    medianH = stats.median(H)
+    H = [(h-medianH+128) % 255 for h in H]
     S = HSV.getchannel('S').getdata()
     V = HSV.getchannel('V').getdata()
-    # for each LAYER (H,S,L) record quantiles (three x three values)
     quantH = stats.quantiles(H)
     quantS = stats.quantiles(S)
     quantV = stats.quantiles(V)
 
-    values = []
-    values.extend(quantH)
-    values.extend(quantS)
-    values.extend(quantV)
-
+    values = [
+        round(medianH),
+        round(quantH[1]-quantH[0]),
+        round(quantH[2]-quantH[1]),
+        round(quantS[1]),
+        round(quantS[1]-quantS[0]),
+        round(quantS[2]-quantS[1]),
+        round(quantV[1]),
+        round(quantV[1]-quantV[0]),
+        round(quantV[2]-quantV[1])
+    ]
     return values
 
 def CalculateImageHash(args):

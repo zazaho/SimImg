@@ -71,7 +71,6 @@ class ConditionFrame(tk.Frame):
     def matchingGroups(self, candidates):
         pass
 
-
 class HashCondition(ConditionFrame):
     name = 'HASHING DISTANCE'
     def __init__(self, parent, *args, **kwargs):
@@ -86,6 +85,7 @@ class HashCondition(ConditionFrame):
         self.currentMatchingGroups = []
         self._makeAdditionalWidgets()
         self.setActive(False)
+        self._mouseIsPressed = False
         
     def _makeAdditionalWidgets(self):
         self.Combo = ttk.Combobox(
@@ -98,13 +98,13 @@ class HashCondition(ConditionFrame):
         self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
         self.Scale = tk.Scale(self,
                               from_= 1, to=50,
-                              label='Limit',
                               variable=self.limitVar,
                               takefocus=1,
+                              command=self._scaleChanged,
                               orient=tk.HORIZONTAL
         )
-        self.Scale.bind("<ButtonRelease-1>", self._scaleChanged)
-        self.Scale.bind("<Key>", self._scaleChanged)
+        self.Scale.bind("<ButtonPress-1>", self._scalePressed)
+        self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
@@ -117,7 +117,17 @@ class HashCondition(ConditionFrame):
         self.Combo.focus_set()
         self.Ctrl.onConditionChanged()
 
+    def _scalePressed(self, *args):
+        self._mouseIsPressed = True
+
+    def _scaleReleased(self, *args):
+        self._mouseIsPressed = False
+        self._scaleChanged()
+        
     def _scaleChanged(self, *args):
+        # do nothing while the mouse is down
+        if self._mouseIsPressed:
+            return
         self.limit = self.limitVar.get()
         self.Scale.focus_set()
         self.Ctrl.onConditionChanged()
@@ -187,6 +197,7 @@ class HSVCondition(ConditionFrame):
         self.currentMatchingGroups = []
         self._makeAdditionalWidgets()
         self.setActive(False)
+        self._mouseIsPressed = False
 
     def _makeAdditionalWidgets(self):
         self.Combo = ttk.Combobox(
@@ -199,12 +210,12 @@ class HSVCondition(ConditionFrame):
         self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
         self.Scale = tk.Scale(self,
                               from_= 1, to=50,
-                              label='Limit',
                               variable=self.limitVar,
+                              command=self._scaleChanged,
                               orient=tk.HORIZONTAL
         )
-        self.Scale.bind("<ButtonRelease-1>", self._scaleChanged)
-        self.Scale.bind("<Key>", self._scaleChanged)
+        self.Scale.bind("<ButtonPress-1>", self._scalePressed)
+        self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
@@ -217,7 +228,17 @@ class HSVCondition(ConditionFrame):
         self.Combo.focus_set()
         self.Ctrl.onConditionChanged()
 
+    def _scalePressed(self, *args):
+        self._mouseIsPressed = True
+
+    def _scaleReleased(self, *args):
+        self._mouseIsPressed = False
+        self._scaleChanged()
+        
     def _scaleChanged(self, *args):
+        # do nothing while the mouse is down
+        if self._mouseIsPressed:
+            return
         self.limit = self.limitVar.get()
         self.Scale.focus_set()
         self.Ctrl.onConditionChanged()
@@ -234,9 +255,16 @@ class HSVCondition(ConditionFrame):
                 print('Warning: requested a hash that is not available')
                 return False
             fobHash = fob.hashDict[self.method]
-            return stats.mean(
-                [abs(foaHash[i]-fobHash[i]) for i,_ in enumerate(foaHash)]
-            )/2.56 <= self.limit
+            # we need to take care of the median hue value (0, 9, .. th element)
+            # when calculating distance because this is value that wraps at 255
+            # back to 0 the correct distance is the minimum of (h1-h2) % 255 and (h2-h1) % 255
+            # in all other cases use abs(v1 -v2)
+            distArr = [
+                abs(foaHash[i]-fobHash[i]) if i % 9
+                else min((foaHash[i]-fobHash[i]) % 255, (fobHash[i]-foaHash[i]) % 255)
+                for i in range(len(foaHash))
+            ]
+            return stats.mean(distArr)/2.56 <= self.limit
 
         # check that the widget parameters are different from before
         # if not simply return the matchingGroupsList from before
@@ -356,7 +384,7 @@ class DateCondition(ConditionFrame):
         self.missingMatchesCheck = None
         self.missingVar = tk.BooleanVar()
         self.missing = False
-        self.timeDifferenceScale = None
+        self.Scale = None
         
         self.initialIndex = 1
         self.scalelabels = ['1 minute','10 minutes','1 hour','1 day','1 week','4 weeks','1 year']
@@ -375,6 +403,7 @@ class DateCondition(ConditionFrame):
         self.currentMatchingGroups = []
         self._makeAdditionalWidgets()
         self.setActive(False)
+        self._mouseIsPressed = False
 
     def _makeAdditionalWidgets(self):
         self.missingMatchesCheck = tk.Checkbutton(self,
@@ -383,23 +412,34 @@ class DateCondition(ConditionFrame):
                                                   command=self._somethingChanged,
                                                   anchor='w')
         self.missingMatchesCheck.pack()
-        self.timeDifferenceScale = TS.TextScale(self,
-                                                textLabels=self.scalelabels,
-                                                topLabel='Maximum Difference',
-                                                initialInt=self.initialIndex,
-                                                onChange=self._scaleChanged,
-                                                orient=tk.HORIZONTAL
+        self.Scale = TS.TextScale(self,
+                                  textLabels=self.scalelabels,
+                                  initialInt=self.initialIndex,
+                                  onChange=self._scaleChanged,
+                                  orient=tk.HORIZONTAL
         )
-        self.timeDifferenceScale.pack()
-        self.childWidgets.extend([self.missingMatchesCheck, self.timeDifferenceScale])
+        self.Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
+        self.Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self.Scale.pack()
+        self.childWidgets.extend([self.missingMatchesCheck, self.Scale])
 
     def _somethingChanged(self, *args):
         self.missing = self.missingVar.get()
         self.Ctrl.onConditionChanged()
 
+    def _scalePressed(self, *args):
+        self._mouseIsPressed = True
+
+    def _scaleReleased(self, *args):
+        self._mouseIsPressed = False
+        self._scaleChanged()
+        
     def _scaleChanged(self, *args):
-        self.timeDifferenceInSec = self.scaleSeconds[self.timeDifferenceScale.textValue]
-        self.timeDifferenceScale.focus_set()
+        # do nothing while the mouse is down
+        if self._mouseIsPressed:
+            return
+        self.timeDifferenceInSec = self.scaleSeconds[self.Scale.textValue]
+        self.Scale.focus_set()
         self.Ctrl.onConditionChanged()
 
     def matchingGroups(self, candidates):
@@ -452,110 +492,6 @@ class DateCondition(ConditionFrame):
         self.currentMatchingGroups.sort()
         return self.currentMatchingGroups
 
-class HSVCondition(ConditionFrame):
-    name = 'COLOR DISTANCE'
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-        self.Combo = None
-        self.Scale = None
-        self.method = "hsvhash"
-        self.limit = 10
-        self.limitVar = tk.IntVar()
-        self.limitVar.set(self.limit)
-        self.currentConfig = {'method':'', 'limit':-1}
-        self.currentMatchingGroups = []
-        self._makeAdditionalWidgets()
-        self.setActive(False)
-
-    def _makeAdditionalWidgets(self):
-        self.Combo = ttk.Combobox(
-            self,
-            values=["hsvhash","hsv5hash"],
-            state=tk.DISABLED,
-            width=8,
-        )
-        self.Combo.set(self.method)
-        self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
-        self.Scale = tk.Scale(self,
-                              from_= 1, to=50,
-                              label='Limit',
-                              variable=self.limitVar,
-                              orient=tk.HORIZONTAL
-        )
-        self.Scale.bind("<ButtonRelease-1>", self._scaleChanged)
-        self.Scale.bind("<Key>", self._scaleChanged)
-        self.Combo.pack()
-        self.Scale.pack()
-        self.childWidgets.extend([self.Combo, self.Scale])
-
-    def _somethingChanged(self, *args):
-        self.Ctrl.onConditionChanged()
-
-    def _comboChanged(self, *args):
-        self.method = self.Combo.get()
-        self.Combo.focus_set()
-        self.Ctrl.onConditionChanged()
-
-    def _scaleChanged(self, *args):
-        self.limit = self.limitVar.get()
-        self.Scale.focus_set()
-        self.Ctrl.onConditionChanged()
-
-    def matchingGroups(self, candidates):
-        def theymatch(md5a, md5b):
-            foa = self.Ctrl.FODict[md5a][0]
-            if not self.method in foa.hashDict:
-                print('Warning: requested a hash that is not available')
-                return False
-            foaHash = foa.hashDict[self.method]
-            fob = self.Ctrl.FODict[md5b][0]
-            if not self.method in fob.hashDict:
-                print('Warning: requested a hash that is not available')
-                return False
-            fobHash = fob.hashDict[self.method]
-            return stats.mean(
-                [abs(foaHash[i]-fobHash[i]) for i,_ in enumerate(foaHash)]
-            )/2.56 <= self.limit
-
-        # check that the widget parameters are different from before
-        # if not simply return the matchingGroupsList from before
-        # check that the widget parameters are different from before
-        # if not simply return the matchingGroupsList from before
-        if (
-                self._candidates == set(candidates) and
-                self.method == self.currentConfig['method'] and
-                self.limit == self.currentConfig['limit']
-        ):
-            return self.currentMatchingGroups
-
-        self._candidates = set(candidates)
-        self.currentConfig['method'] = self.method
-        self.currentConfig['limit'] = self.limit
-        
-        #Call this to make sure the hash values for this method are available
-        self.Ctrl.setImageHashes(hashName=self.method)
-
-        md5s = []
-        for a, b in candidates:
-            md5s.append(a)
-            md5s.append(b)
-        md5s = list(set(md5s))
-        md5s.sort()
-
-        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
-
-        self.currentMatchingGroups = []
-        for thismd5 in md5s:
-            # put atleast the first image in each matchingGroups
-            dummy = [thismd5]
-            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
-            dummy = list(set(dummy))
-            dummy.sort()
-            self.currentMatchingGroups.append(dummy)
-
-        self.currentMatchingGroups.sort()
-        return self.currentMatchingGroups
-
 class ShapeCondition(ConditionFrame):
     name = 'PICTURE SHAPE'
     def __init__(self, parent, *args, **kwargs):
@@ -578,6 +514,7 @@ class ShapeCondition(ConditionFrame):
         self.currentMatchingGroups = []
         self._makeAdditionalWidgets()
         self.setActive(False)
+        self._mouseIsPressed = False
         
     def _makeAdditionalWidgets(self):
         self.Scale = TS.TextScale(self,
@@ -587,15 +524,25 @@ class ShapeCondition(ConditionFrame):
                                   onChange=self._scaleChanged,
                                   orient=tk.HORIZONTAL
         )
-        self.Scale.bind("<ButtonRelease-1>", self._scaleChanged)
-        self.Scale.bind("<Key>", self._scaleChanged)
+        self.Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
+        self.Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
         self.Scale.pack()
         self.childWidgets.extend([self.Scale])
         
     def _somethingChanged(self, *args):
         self.Ctrl.onConditionChanged()
 
+    def _scalePressed(self, *args):
+        self._mouseIsPressed = True
+
+    def _scaleReleased(self, *args):
+        self._mouseIsPressed = False
+        self._scaleChanged()
+        
     def _scaleChanged(self, *args):
+        # do nothing while the mouse is down
+        if self._mouseIsPressed:
+            return
         self.limit = self.scalevalues[self.Scale.textValue]
         self.Scale.focus_set()
         self.Ctrl.onConditionChanged()
@@ -632,11 +579,10 @@ class ShapeCondition(ConditionFrame):
         for thismd5 in md5s:
             # put atleast the first image in each matchingGroups
             dummy = [thismd5]
-            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy.extend([md5b for md5a, md5b in matches if md5a == thismd5])
             dummy = list(set(dummy))
             dummy.sort()
             self.currentMatchingGroups.append(dummy)
 
         self.currentMatchingGroups.sort()
         return self.currentMatchingGroups
-
