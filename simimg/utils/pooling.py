@@ -2,10 +2,20 @@ import hashlib
 import statistics as stats
 from multiprocessing import Pool
 from PIL import Image
-from imagehash import dhash
-from imagehash import average_hash
-from imagehash import phash
-from imagehash import whash
+try:
+    from imagehash import dhash
+    from imagehash import average_hash
+    from imagehash import phash
+    from imagehash import whash
+except ModuleNotFoundError:
+    def dhash():
+        pass
+    def average_hash():
+        pass
+    def phash():
+        pass
+    def whash():
+        pass
 from simimg.utils import database as DB
 
 def CalculateMD5Hash(file):

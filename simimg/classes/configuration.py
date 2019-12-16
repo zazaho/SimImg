@@ -24,6 +24,12 @@ class Configuration():
         self._setDefaultConfiguration()
         self._readConfiguration()
 
+        try:
+            import imagehash
+            self.ConfigurationDict['haveimagehash']=True
+        except ModuleNotFoundError:
+            self.ConfigurationDict['haveimagehash']=False
+            
     def _setDefaultConfiguration(self):
         'Default configuration parameters'
         # not yet? configurable

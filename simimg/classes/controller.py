@@ -53,13 +53,16 @@ class Controller():
 
         # create the condition modules in the self.TopWindow.ModulePane
         # put them in a list so that we can easily iterate over them
-        self.CMList = [
-            CM.HashCondition(self.TopWindow.ModulePane, Controller=self),
+        self.CMList = []
+        if self.Cfg.get('haveimagehash'):
+            self.CMList.append(CM.HashCondition(self.TopWindow.ModulePane, Controller=self))
+
+        self.CMList.extend([
             CM.HSVCondition(self.TopWindow.ModulePane, Controller=self),
             CM.DateCondition(self.TopWindow.ModulePane, Controller=self),
             CM.CameraCondition(self.TopWindow.ModulePane, Controller=self),
             CM.ShapeCondition(self.TopWindow.ModulePane, Controller=self),
-        ]
+        ])
         for cm in self.CMList:
             cm.pack(side=tk.TOP, fill='x')
 

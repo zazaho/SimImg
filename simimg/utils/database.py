@@ -1,6 +1,10 @@
 import os
 import sqlite3
-from imagehash import hex_to_hash
+try:
+    from imagehash import hex_to_hash
+except ModuleNotFoundError:
+    def hex_to_hash():
+        pass
 import simimg.utils.handyfunctions as HF
 
 def CreateDBConnection(db_file):

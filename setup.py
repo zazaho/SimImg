@@ -20,7 +20,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3',
-    install_requires=['pillow', 'ImageHash'],
+    install_requires=['pillow'],
+    extras_require = {
+        'imagehashing':  ["ImageHashing"]
+    },
     entry_points={
         'console_scripts': ['simimg=simimg.simimg:main'],
         }

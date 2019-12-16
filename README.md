@@ -23,7 +23,7 @@ two pictures are. These are the panels in the left section of the
 finder window. You can activate a condition by clicking on it name.
 For now the following options exist:
 
-* Some similarity metrics from ImageHash.
+* Some similarity metrics from ImageHash (optional).
 
 * I have also implemented a measurement of how similar the colours are
 between two images, as well as between 5 regions (the four corners and
@@ -147,10 +147,8 @@ should normally come with your python
 * [pillow](https://python-pillow.org/) for image reading and processing.
 
 * [imageHash](https://github.com/JohannesBuchner/imagehash) for
-calculating image hashes as a means to compare images.
-
-* [pysqlite3](https://github.com/coleifer/pysqlite3) for storing and
-  reading values from an sqlite database.
+calculating image hashes as a means to compare images. If this package
+is available additional conditions can be used.
 
 * The tooltip code is adapted from an example found on
   [Daniweb](https://www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter).

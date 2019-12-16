@@ -1,2 +1,4 @@
 pillow
+
+[imagehashing]
 ImageHash
