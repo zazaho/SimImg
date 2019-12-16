@@ -205,7 +205,7 @@ class HSVCondition(ConditionFrame):
     def _makeAdditionalWidgets(self):
         self.Combo = ttk.Combobox(
             self,
-            values=["hsvhash","hsv5hash"],
+            values=["hsvhash", "hsv5hash"],
             width=8,
             state="readonly",
         )
@@ -258,12 +258,12 @@ class HSVCondition(ConditionFrame):
                 print('Warning: requested a hash that is not available')
                 return False
             fobHash = fob.hashDict[self.method]
-            # we need to take care of the median hue value (0, 9, .. th element)
-            # when calculating distance because this is value that wraps at 255
+            # we need to take care of the median hue value (0, 6, .. th element)
+            # when calculating distance because this is a measure that wraps at 255
             # back to 0 the correct distance is the minimum of (h1-h2) % 255 and (h2-h1) % 255
             # in all other cases use abs(v1 -v2)
             distArr = [
-                abs(foaHash[i]-fobHash[i]) if i % 9
+                abs(foaHash[i]-fobHash[i]) if i % 6
                 else min((foaHash[i]-fobHash[i]) % 255, (fobHash[i]-foaHash[i]) % 255)
                 for i in range(len(foaHash))
             ]

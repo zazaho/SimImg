@@ -15,12 +15,6 @@ class FileObject():
         #dummy, self.FileExtension = os.path.splitext(self.FileName)
 
         self.hashDict = {}
-        # self.ahash = None
-        # self.dhash = None
-        # self.phash = None
-        # self.whash = None
-        # self.hsvhash = None
-        # self.hsv5hash = None
 
         # These are private variables that allow to call the corresponding method
         # If the variable is None we calculate the value

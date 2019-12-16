@@ -76,14 +76,11 @@ def hsv5hash(Img, **kwargs):
 
         values.extend([
             round(medianH),
-            round(quantH[1]-quantH[0]),
-            round(quantH[2]-quantH[1]),
+            round(quantH[2]-quantH[0]),
             round(quantS[1]),
-            round(quantS[1]-quantS[0]),
-            round(quantS[2]-quantS[1]),
+            round(quantS[2]-quantS[0]),
             round(quantV[1]),
-            round(quantV[1]-quantV[0]),
-            round(quantV[2]-quantV[1])
+            round(quantV[2]-quantV[0]),
         ])
 
     return values
@@ -111,14 +108,11 @@ def hsvhash(Img, **kwargs):
 
     values = [
         round(medianH),
-        round(quantH[1]-quantH[0]),
-        round(quantH[2]-quantH[1]),
+        round(quantH[2]-quantH[0]),
         round(quantS[1]),
-        round(quantS[1]-quantS[0]),
-        round(quantS[2]-quantS[1]),
+        round(quantS[2]-quantS[0]),
         round(quantV[1]),
-        round(quantV[1]-quantV[0]),
-        round(quantV[2]-quantV[1])
+        round(quantV[2]-quantV[0]),
     ]
     return values
 
@@ -130,7 +124,7 @@ def CalculateImageHash(args):
         'phash': phash,
         'whash': whash,
         'hsvhash': hsvhash,
-        'hsv5hash': hsv5hash
+        'hsv5hash': hsv5hash,
         }
     return (md5, funcdict[hashName](Image.open(FullPath), hash_size=8))
 
