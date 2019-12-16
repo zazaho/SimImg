@@ -4,9 +4,9 @@ import os
 from tkinter import PhotoImage
 # import sys
 import tkinter as tk
-import classes.configuration as CONF
-import classes.controller as CTRL
-import classes.scrollframe as SF
+from simimg.classes import configuration as CONF
+from simimg.classes import controller as CTRL
+from simimg.classes import scrollframe as SF
 
 class simim_app(tk.Tk):
     ''' Main window for sorting and managing pictures'''
@@ -41,8 +41,7 @@ class simim_app(tk.Tk):
         # and the display of those data
         self.Ctrl = CTRL.Controller(self)
 
-# Main routine, shim, do all work inside simim_app
-if __name__ == "__main__":
+def main():
     scriptpath = os.path.join(os.path.dirname(os.path.realpath(__file__)))
     app = simim_app(ScriptPath=scriptpath)
     app.mainloop()

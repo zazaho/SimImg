@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from imagehash import hex_to_hash
-import utils.handyfunctions as HF
+import simimg.utils.handyfunctions as HF
 
 def CreateDBConnection(db_file):
     'Create a connection to the DataBase'

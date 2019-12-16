@@ -9,17 +9,17 @@ import itertools
 import tkinter as tk
 from tkinter import filedialog as tkfiledialog
 from PIL import ImageTk
-import classes.conditionmodules as CM
-import classes.fileobject as FO
-import classes.imageframe as IF
-import classes.toolbar as TB
-import dialogs.confirmdeletedialog as CDD
-import dialogs.configurationwindow as CW
-import dialogs.infowindow as IW
-import dialogs.viewer as VI
-import utils.database as DB
-import utils.handyfunctions as HF
-import utils.pooling as POOL
+import simimg.classes.conditionmodules as CM
+import simimg.classes.fileobject as FO
+import simimg.classes.imageframe as IF
+import simimg.classes.toolbar as TB
+import simimg.dialogs.confirmdeletedialog as CDD
+import simimg.dialogs.configurationwindow as CW
+import simimg.dialogs.infowindow as IW
+import simimg.dialogs.viewer as VI
+import simimg.utils.database as DB
+import simimg.utils.handyfunctions as HF
+import simimg.utils.pooling as POOL
 
 class Controller():
     'Controller object that initializes the program and reacts to events.'

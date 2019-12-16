@@ -6,7 +6,7 @@ from imagehash import dhash
 from imagehash import average_hash
 from imagehash import phash
 from imagehash import whash
-from utils import database as DB
+from simimg.utils import database as DB
 
 def CalculateMD5Hash(file):
     hasher = hashlib.md5()

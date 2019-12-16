@@ -2,8 +2,8 @@
 import os
 import tkinter as tk
 from PIL import ImageTk, Image
-import classes.tooltip as TT
-import dialogs.infowindow as IW
+import simimg.classes.tooltip as TT
+import simimg.dialogs.infowindow as IW
 
 class Toolbar(tk.Frame):
     " A toolbar frame that holds the action buttons"

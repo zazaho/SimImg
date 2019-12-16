@@ -9,7 +9,7 @@
 import statistics as stats
 import tkinter as tk
 from tkinter import ttk
-import classes.textscale as TS
+import simimg.classes.textscale as TS
 
 class ConditionFrame(tk.Frame):
     name = ''

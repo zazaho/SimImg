@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import filedialog as tkfiledialog
 from PIL import ImageTk, Image
-import classes.tooltip as TT
+import simimg.classes.tooltip as TT
 
 class CfgWindow(tk.Toplevel):
     def __init__(self, parent, Controller=None):
