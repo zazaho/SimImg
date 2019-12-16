@@ -36,13 +36,13 @@ class Configuration():
         self.ConfigurationDict['thumbnailborderwidth'] = 3
         self.ConfigurationDict['maxthumbnails'] = 300
         # can be overwritten from ini file
-        self.ConfigurationDict['searchinsubfolders'] = True
+        self.ConfigurationDict['searchinsubfolders'] = False
         self.ConfigurationDict['confirmdelete'] = True
         self.ConfigurationDict['gzipinsteadofdelete'] = False
         self.ConfigurationDict['savesettings'] = True
         self.ConfigurationDict['showbuttons'] = True
         self.ConfigurationDict['thumbnailsize'] = 150
-        self.ConfigurationDict['startupfolder'] = '.'
+        self.ConfigurationDict['startupfolder'] = ''
         self.ConfigurationDict['findergeometry'] = '1200x800+0+0'
         self.ConfigurationDict['viewergeometry'] = '1200x800+50+0'
 
