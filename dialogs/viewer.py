@@ -85,7 +85,7 @@ class viewer(tk.Toplevel):
             anchor='center',
             image=self.ImgDict[self.ImgIndex][1]
         )
-        self.title("SIMilar IMaGe viewer: %s --- Press F1 for Help" % self.ImgDict[self.ImgIndex][0])
+        self.title("Similar Image Viewer: %s --- Press F1 for Help" % self.ImgDict[self.ImgIndex][0])
 
     def _showNext(self):
         self.ImgIndex += 1

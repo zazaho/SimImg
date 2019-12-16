@@ -52,11 +52,14 @@ class ConditionFrame(tk.Frame):
         if self.active:
             self.config(relief="raised")
             for widget in self.childWidgets:
-                widget.config(state=tk.NORMAL)
+                if widget.winfo_class() == 'TCombobox':
+                    widget.config(state="readonly")
+                else:
+                    widget.config(state="normal")
         else:
             self.config(relief="sunken")
             for widget in self.childWidgets:
-                widget.config(state=tk.DISABLED)
+                widget.config(state="disabled")
                 
     def _activeToggled(self,event):
         self.setActive(not self.active)
@@ -91,8 +94,8 @@ class HashCondition(ConditionFrame):
         self.Combo = ttk.Combobox(
             self,
             values=["ahash","dhash","phash","whash"],
-            state=tk.DISABLED,
             width=8,
+            state="readonly",
         )
         self.Combo.set(self.method)
         self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
@@ -101,7 +104,7 @@ class HashCondition(ConditionFrame):
                               variable=self.limitVar,
                               takefocus=1,
                               command=self._scaleChanged,
-                              orient=tk.HORIZONTAL
+                              orient="horizontal"
         )
         self.Scale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
@@ -203,8 +206,8 @@ class HSVCondition(ConditionFrame):
         self.Combo = ttk.Combobox(
             self,
             values=["hsvhash","hsv5hash"],
-            state=tk.DISABLED,
             width=8,
+            state="readonly",
         )
         self.Combo.set(self.method)
         self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
@@ -212,7 +215,7 @@ class HSVCondition(ConditionFrame):
                               from_= 1, to=50,
                               variable=self.limitVar,
                               command=self._scaleChanged,
-                              orient=tk.HORIZONTAL
+                              orient="horizontal"
         )
         self.Scale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
@@ -264,7 +267,7 @@ class HSVCondition(ConditionFrame):
                 else min((foaHash[i]-fobHash[i]) % 255, (fobHash[i]-foaHash[i]) % 255)
                 for i in range(len(foaHash))
             ]
-            return stats.mean(distArr)/2.56 <= self.limit
+            return stats.mean(distArr) <= self.limit
 
         # check that the widget parameters are different from before
         # if not simply return the matchingGroupsList from before
@@ -416,7 +419,7 @@ class DateCondition(ConditionFrame):
                                   textLabels=self.scalelabels,
                                   initialInt=self.initialIndex,
                                   onChange=self._scaleChanged,
-                                  orient=tk.HORIZONTAL
+                                  orient="horizontal"
         )
         self.Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
@@ -522,7 +525,7 @@ class ShapeCondition(ConditionFrame):
                                   topLabel='',
                                   initialInt=self.initialIndex,
                                   onChange=self._scaleChanged,
-                                  orient=tk.HORIZONTAL
+                                  orient="horizontal"
         )
         self.Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)

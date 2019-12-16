@@ -1,5 +1,5 @@
-# SIMilar IMaGe finder (SIMIMG)
-![SIMIMG in action](doc/demo.gif)
+# Similar Image Finder (Simimg)
+![Simimg in action](doc/demo.gif)
 
 # Description
 This is a python GUI for displaying pictures grouped according to
@@ -11,7 +11,7 @@ The program is **not** designed to identify the same but modified pictures
 (recompressed jpgs, cropped images or adapted colours, etc.). Although
 it can be used for this there are many and better solutions available.
 
-Upon starting SIMIMG from the command line, by default it will load
+Upon starting Simimg from the command line, by default it will load
 the pictures it finds in the startup directory and sub-directories
 into the GUI. These are settings that can be changed within the GUI by
 clicking on settings. *In particular in the case you want to use the
@@ -127,7 +127,7 @@ The follow actions are available in the viewer window:
 * escape of q: quit the viewer
 
 ## Technical remarks
-Some of the calculations can be time consuming and SIMIMG tries to be
+Some of the calculations can be time consuming and Simimg tries to be
 clever about not recalculating. It will store the calculated values in
 a database for future use. It recognises the pictures files by their
 MD5-hash which means that even if you move files or rename them, their

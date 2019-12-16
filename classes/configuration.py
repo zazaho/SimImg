@@ -11,15 +11,15 @@ class Configuration():
             os.environ.get('APPDATA') or
             os.environ.get('XDG_CONFIG_HOME') or
             os.path.join(os.environ['HOME'], '.config'),
-            "SIMIMG"
+            "simimg"
         )
-        self.IniPath = os.path.join(ConfigPath, 'SIMIMG.ini')
+        self.IniPath = os.path.join(ConfigPath, 'simimg.ini')
 
         # dict to store all settings
         self.ConfigurationDict = {
             'cmdlinearguments':sys.argv[1:],
             'iconpath':os.path.join(ScriptPath, 'icons'),
-            'databasename':os.path.join(ConfigPath,'SIMIMG.db')
+            'databasename':os.path.join(ConfigPath,'simimg.db')
         }
         self._setDefaultConfiguration()
         self._readConfiguration()
@@ -44,7 +44,7 @@ class Configuration():
         '''Function to get configurable parameters from SimImg.ini.'''
         config = configparser.ConfigParser()
         if config.read(self.IniPath):
-            default = config['SIMIMG']
+            default = config['simimg']
             doRecursive = default.get('searchinsubfolders', 'yes')
             confirmdelete = default.get('confirmdelete', 'yes')
             doGzip = default.get('gzipinsteadofdelete', 'no')
@@ -73,7 +73,7 @@ class Configuration():
             return
 
         config = configparser.ConfigParser()
-        config['SIMIMG'] = {
+        config['simimg'] = {
             'searchinsubfolders':self.ConfigurationDict['searchinsubfolders'],
             'confirmdelete':self.ConfigurationDict['confirmdelete'],
             'gzipinsteadofdelete':self.ConfigurationDict['gzipinsteadofdelete'],

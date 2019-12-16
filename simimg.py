@@ -24,9 +24,9 @@ class simim_app(tk.Tk):
 
         appIcon = os.path.join(
             self.Cfg.get('iconpath'),
-            'SIMIMG.png'
+            'simimg.png'
         )
-        self.title("SIMilar IMaGe finder")
+        self.title("Similar Image Finder")
         self.tk.call('wm', 'iconphoto', self._w, PhotoImage(file=appIcon))
         self.geometry(self.Cfg.get('findergeometry'))
 
@@ -37,11 +37,9 @@ class simim_app(tk.Tk):
         self.ThumbPane = SF.ScrollFrame(self)
         self.ThumbPane.pack(side=tk.RIGHT, fill="both", expand=True)
 
-        #self.update_idletasks()
         # The object responsible for dealing with the data
         # and the display of those data
         self.Ctrl = CTRL.Controller(self)
-        #self.Ctrl.createViewWithoutConditions()
 
 # Main routine, shim, do all work inside simim_app
 if __name__ == "__main__":

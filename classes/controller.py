@@ -142,7 +142,9 @@ class Controller():
         self._showInStatusbar("...")
 
         # calculate md5s in multiprocessing
+        self._showInStatusbar("Calculating File Hash values, please be patient")
         self._getMD5Hashes()
+        self._showInStatusbar("...")
 
         self._createFileobjects()
         if not self.FODict:
@@ -502,6 +504,6 @@ class Controller():
                 afo._Thumbnail = ImageTk.PhotoImage(thumb)
 
     def setImageHashes(self, hashName=None):
-        self._showInStatusbar("Calculating Images Hashes, please be patient")
+        self._showInStatusbar("Calculating Image Hash values, please be patient")
         POOL.GetImageHashes(self.FODict, hashName, self.DBConnection)
         self._showInStatusbar("...")
