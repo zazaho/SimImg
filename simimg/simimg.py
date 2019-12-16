@@ -45,3 +45,6 @@ def main():
     scriptpath = os.path.join(os.path.dirname(os.path.realpath(__file__)))
     app = simim_app(ScriptPath=scriptpath)
     app.mainloop()
+
+if __name__ == "__main__":
+    main()

@@ -1,4 +1,4 @@
 #!/usr/bin/python3
-from simimg import main
+from simimg import simimg
 if __name__ == "__main__":
-    main.main()
+    simimg.main()
