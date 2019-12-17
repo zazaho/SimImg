@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="simimg", # Replace with your own username
-    version="0.4",
+    version="0.4.1",
     author="Sacha Hony",
     author_email="zazahohonini@gmail.com",
     description="Similar Image Finder",
@@ -20,9 +20,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3',
-    install_requires=['pillow'],
+    install_requires=['Pillow'],
     extras_require = {
-        'imagehashing':  ["ImageHashing"]
+        'imagehashing':  ["ImageHash"]
     },
     entry_points={
         'console_scripts': ['simimg=simimg.simimg:main'],

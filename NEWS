@@ -1,0 +1,7 @@
+version 0.4.1 (SH Dec 17 2019):
+- small bugs in the requirements specifications
+- added NEWS file
+
+version 0.4 (SH Dec 16 2019):
+- first functional version uploaded to PyPi
+
