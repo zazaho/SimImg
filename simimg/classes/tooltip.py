@@ -104,6 +104,8 @@ class Tooltip:
 
             return x1, y1
 
+        if not self.text:
+            return
         bg = self.bg
         widget = self.widget
 

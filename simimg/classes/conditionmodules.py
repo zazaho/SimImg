@@ -6,10 +6,12 @@
     A method to do something when _somethingChanged
     A method to determine which imagepairs from a list of pairs match
 '''
+import math
 import statistics as stats
 import tkinter as tk
 from tkinter import ttk
 import simimg.classes.textscale as TS
+import simimg.classes.tooltip as TT
 
 class ConditionFrame(tk.Frame):
     name = ''
@@ -80,6 +82,7 @@ class HashCondition(ConditionFrame):
         super().__init__(parent, *args, **kwargs)
         self.Combo = None
         self.Scale = None
+        self.ScaleTip = None
         self.method = "ahash"
         self.limit = 14
         self.limitVar = tk.IntVar()
@@ -108,6 +111,7 @@ class HashCondition(ConditionFrame):
         )
         self.Scale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self.ScaleTip = TT.Tooltip(self.Scale,text='')
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
@@ -136,7 +140,7 @@ class HashCondition(ConditionFrame):
         self.Ctrl.onConditionChanged()
 
     def matchingGroups(self, candidates):
-        def theymatch(md5a, md5b):
+        def theymatch(md5a, md5b, values=None):
             foa = self.Ctrl.FODict[md5a][0]
             if not self.method in foa.hashDict:
                 print('Warning: requested a hash that is not available')
@@ -147,7 +151,9 @@ class HashCondition(ConditionFrame):
                 print('Warning: requested a hash that is not available')
                 return False
             fobHash = fob.hashDict[self.method]
-            return abs(foaHash - fobHash) <= self.limit
+            absdiff = abs(foaHash - fobHash)
+            values.append(absdiff)
+            return absdiff <= self.limit
 
         # check that the widget parameters are different from before
         # if not simply return the matchingGroupsList from before
@@ -172,7 +178,11 @@ class HashCondition(ConditionFrame):
         md5s = list(set(md5s))
         md5s.sort()
 
-        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
+        mVals = []
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b, values=mVals)]
+        mVals.sort()
+        myTip = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9])) if len(mVals) > 9 else 'Min: %d' % (math.ceil(min(mVals)))
+        self.ScaleTip.text=myTip
 
         self.currentMatchingGroups = []
         for thismd5 in md5s:
@@ -192,6 +202,7 @@ class HSVCondition(ConditionFrame):
         super().__init__(parent, *args, **kwargs)
         self.Combo = None
         self.Scale = None
+        self.ScaleTip = None
         self.method = "hsvhash"
         self.limit = 10
         self.limitVar = tk.IntVar()
@@ -219,6 +230,7 @@ class HSVCondition(ConditionFrame):
         )
         self.Scale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self.ScaleTip = TT.Tooltip(self.Scale,text='')
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
@@ -247,7 +259,7 @@ class HSVCondition(ConditionFrame):
         self.Ctrl.onConditionChanged()
 
     def matchingGroups(self, candidates):
-        def theymatch(md5a, md5b):
+        def theymatch(md5a, md5b, values=None):
             foa = self.Ctrl.FODict[md5a][0]
             if not self.method in foa.hashDict:
                 print('Warning: requested a hash that is not available')
@@ -267,7 +279,9 @@ class HSVCondition(ConditionFrame):
                 else min((foaHash[i]-fobHash[i]) % 255, (fobHash[i]-foaHash[i]) % 255)
                 for i in range(len(foaHash))
             ]
-            return stats.mean(distArr) <= self.limit
+            val = stats.mean(distArr)
+            values.append(val)
+            return val <= self.limit
 
         # check that the widget parameters are different from before
         # if not simply return the matchingGroupsList from before
@@ -294,7 +308,11 @@ class HSVCondition(ConditionFrame):
         md5s = list(set(md5s))
         md5s.sort()
 
-        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
+        mVals = []
+        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b, values=mVals)]
+        mVals.sort()
+        myTip = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9])) if len(mVals) > 9 else 'Min: %d' % (math.ceil(min(mVals)))
+        self.ScaleTip.text=myTip
 
         self.currentMatchingGroups = []
         for thismd5 in md5s:

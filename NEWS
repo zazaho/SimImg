@@ -1,3 +1,8 @@
+version 0.4.2 (SH Dec 19 2019):
+- use get/set consistently for configuration module
+- fix bug not showing last remaining photo
+- added some tool tips to inform about hashing values
+
 version 0.4.1 (SH Dec 17 2019):
 - small bugs in the requirements specifications
 - added NEWS file
