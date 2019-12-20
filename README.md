@@ -15,13 +15,13 @@ Upon starting Simimg from the command line, by default it will load
 the pictures it finds in the startup directory and sub-directories
 into the GUI. These are settings that can be changed within the GUI by
 clicking on settings. *In particular in the case you want to use the
-program by clicking on it's icon, you may want to set an empty startup
+program by clicking on its icon, you may want to set an empty startup
 directory.*
 
 You can play with different options that take into account how similar
 two pictures are. These are the panels in the left section of the
 finder window. You can activate a condition by clicking on it name.
-For now the following options exist:
+The following options exist:
 
 * Some similarity metrics from ImageHash (optional).
 
@@ -32,10 +32,18 @@ the central part).
 * You can further select the maximum allowed time-span between the
 moments the pictures were taken in order to be considered a match.
 
-* Finally you can match on camera model. This means that to pictures
+* You can match on camera model. This means that to pictures
   are considered to be a match if they were taken with the same
   camera.
   
+* Finally you can match on image shape. You can choose:
+
+	* portrait/landscape: width smaller/larger or equal to height
+
+	* exact: width/height are identical
+
+	* some percentage difference allowed
+
 Some of the selection criteria have additional parameters that you can
 play with.
 
@@ -73,7 +81,7 @@ will not be shown twice. Instead one thumbnail will be shown with a
 green border around it.
 
 Note that for reasons of speed, the maximum number of thumbnails that
-will be show will not exceed about 300.
+will be shown will not exceed about 300.
 
 # Available functions
 ## Thumbnail buttons
@@ -127,7 +135,7 @@ The follow actions are available in the viewer window:
 * escape of q: quit the viewer
 
 ## Technical remarks
-Some of the calculations can be time consuming and Simimg tries to be
+Some of the calculations can be time-consuming and Simimg tries to be
 clever about not recalculating. It will store the calculated values in
 a database for future use. It recognises the pictures files by their
 MD5-hash which means that even if you move files or rename them, their
@@ -135,6 +143,21 @@ image properties will not be recalculated.
 
 It attempts to do the most expensive calculations in parallel making
 optimal use of the CPU capabilities.
+
+I have seen quite a variety of 'success', meaning that some algorithm
+detects matches that I myself would also call a match. It depends a
+lot on the set of images that one uses as input. I find it useful to
+play around a bit with selecting different algorithms and playing with
+the numerical limits. To help with this, the tooltip of the limit
+selectors will tell you at which value the first match happens and at
+which value more than 10 matches are found. 
+
+In my experience, for the purpose of detecting the most interesting
+similar holiday pictures the "ahash" and "phash" algorithms can be useful
+but the "hvs5hash" in the similar colours gives the best results.
+
+The other conditions should be considered optional to further limit
+the shown matches.
 
 # Credit
 This project uses the following open source packages:
