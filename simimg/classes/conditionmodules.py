@@ -111,11 +111,16 @@ class HashCondition(ConditionFrame):
         )
         self.Scale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self.Scale.bind("<Control-a>", self._doSelectAll)
         self.ScaleTip = TT.Tooltip(self.Scale,text='')
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
-        
+
+    def _doSelectAll(self, *args):
+        self.Ctrl.selectAllThumbnails()
+        return "break"
+
     def _somethingChanged(self, *args):
         self.Ctrl.onConditionChanged()
 
@@ -230,10 +235,15 @@ class HSVCondition(ConditionFrame):
         )
         self.Scale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self.Scale.bind("<Control-a>", self._doSelectAll)
         self.ScaleTip = TT.Tooltip(self.Scale,text='')
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
+
+    def _doSelectAll(self, *args):
+        self.Ctrl.selectAllThumbnails()
+        return "break"
 
     def _somethingChanged(self, *args):
         self.Ctrl.onConditionChanged()
@@ -441,8 +451,13 @@ class DateCondition(ConditionFrame):
         )
         self.Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self.Scale.bind("<Control-a>", self._doSelectAll)
         self.Scale.pack()
         self.childWidgets.extend([self.missingMatchesCheck, self.Scale])
+
+    def _doSelectAll(self, *args):
+        self.Ctrl.selectAllThumbnails()
+        return "break"
 
     def _somethingChanged(self, *args):
         self.missing = self.missingVar.get()
@@ -547,9 +562,14 @@ class ShapeCondition(ConditionFrame):
         )
         self.Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self.Scale.TSScale.bind("<Control-a>", self._doSelectAll)
         self.Scale.pack()
         self.childWidgets.extend([self.Scale])
         
+    def _doSelectAll(self, *args):
+        self.Ctrl.selectAllThumbnails()
+        return "break"
+
     def _somethingChanged(self, *args):
         self.Ctrl.onConditionChanged()
 
