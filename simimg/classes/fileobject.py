@@ -116,6 +116,10 @@ class FileObject():
         if self._Thumbnail is None:
             ThumbSize = self.Cfg.get('thumbnailsize')
             image = Image.open(self.FullPath)
+            # trick to make 8 bit displayable image)
+            if image.format == 'PNG' and max(image.getdata()) > 255:
+                table=[ i/256 for i in range(65536) ]
+                image = image.point(table,'L')
             resize_ratio_x = image.size[0]/ThumbSize
             resize_ratio_y = image.size[1]/ThumbSize
             resize_ratio = max(resize_ratio_x,resize_ratio_y)

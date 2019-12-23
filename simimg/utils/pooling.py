@@ -184,6 +184,9 @@ def getOneThumb(arg):
     try:
         img = Image.open(filename)
         ratio = max(img.size[0]/tsize, img.size[1]/tsize)
+        if img.format == 'PNG' and max(img.getdata()) > 255:
+            table=[i/256 for i in range(65536)]
+            img = img.point(table, 'L')
         img = img.resize(
             (int(img.size[0]/ratio), int(img.size[1]/ratio)),
             Image.ANTIALIAS
