@@ -16,7 +16,8 @@ except ModuleNotFoundError:
         pass
     def whash():
         pass
-from simimg.utils import database as DB
+import simimg.utils.database as DB
+import simimg.utils.pillowplus as PP
 
 def CalculateMD5Hash(file):
     hasher = hashlib.md5()
@@ -126,7 +127,7 @@ def CalculateImageHash(args):
         'hsvhash': hsvhash,
         'hsv5hash': hsv5hash,
         }
-    return (md5, funcdict[hashName](Image.open(FullPath), hash_size=8))
+    return (md5, funcdict[hashName](pp.imageOpen(FullPath), hash_size=8))
 
 def GetImageHashes(FODict, hashName, db_connection=None):
     '''return hashing value according to selected hashName method
@@ -181,19 +182,9 @@ def GetImageHashes(FODict, hashName, db_connection=None):
 
 def getOneThumb(arg):
     md5, filename, tsize = arg
-    try:
-        img = Image.open(filename)
-        ratio = max(img.size[0]/tsize, img.size[1]/tsize)
-        if img.format == 'PNG' and max(img.getdata()) > 255:
-            table=[i/256 for i in range(65536)]
-            img = img.point(table, 'L')
-        img = img.resize(
-            (int(img.size[0]/ratio), int(img.size[1]/ratio)),
-            Image.ANTIALIAS
-        )
-        return (md5, img)
-    except OSError:
-        return (md5, None)
+    img = PP.imageOpen(filename)
+    img = PP.imageResizeToFit(img, tsize, tsize)
+    return (md5, img)
 
 def GetMD5Thumbnails(FODict, Thumbsize=150):
     '''return thumbnail for each md5 in FODict.'''

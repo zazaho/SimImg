@@ -1,5 +1,6 @@
 import tkinter as tk
 from PIL import Image, ImageTk
+import simimg.utils.pillowplus as PP
 
 class viewer(tk.Toplevel):
     "A viewer window to display the selected pictures"
@@ -40,15 +41,12 @@ class viewer(tk.Toplevel):
 
         # if we get here, we need to create and image tuple
         File = self.Filenames[Index]
-        Img = Image.open(File)
+        Img = PP.imageOpen(File)
         W = Img.size[0]
         H = Img.size[1]
         # scale down if too large
         if W > maxW or H > maxH:
-            ratioX = W/maxW
-            ratioY = H/maxH
-            ratio = max(ratioX, ratioY)
-            Img = Img.resize((round(W/ratio), round(H/ratio)),Image.ANTIALIAS)
+            Img = PP.imageResizeToFit(Img, maxW, maxH)
         self.ImgDict[Index] = (File, ImageTk.PhotoImage(Img), W, H, maxW, maxH)
 
     # clicks

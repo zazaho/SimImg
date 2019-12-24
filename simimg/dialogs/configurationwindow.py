@@ -5,6 +5,7 @@ from tkinter import font as tkfont
 from tkinter import filedialog as tkfiledialog
 from PIL import ImageTk, Image
 import simimg.classes.tooltip as TT
+import simimg.utils.pillowplus as PP
 
 class CfgWindow(tk.Toplevel):
     def __init__(self, parent, Controller=None):
@@ -47,7 +48,7 @@ class CfgWindow(tk.Toplevel):
             font=myfont,
             textvariable=self.startupDir
         )
-        self.openImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "open.png")))
+        self.openImg = PP.photoImageOpen(os.path.join(iconpath, "open.png"))
         openbutton = tk.Button(
             startupFrame,
             image=self.openImg,
@@ -82,7 +83,7 @@ Leave empty to start without reading files.'''
 
         clearDBFrame = tk.Frame(self)
         clearDBFrame.pack(fill='x', padx=5)
-        self.clearDBImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "refresh.png")))
+        self.clearDBImg = PP.photoImageOpen(os.path.join(iconpath, "refresh.png"))
         clearDBbutton = tk.Button(
             clearDBFrame,
             image=self.clearDBImg,

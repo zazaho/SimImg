@@ -3,6 +3,7 @@ import os
 import hashlib
 from datetime import datetime
 from PIL import ImageTk, Image, ExifTags
+import simimg.utils.pillowplus as PP
 
 class FileObject():
     ' File object that contains all information relating to one file on disk '
@@ -115,19 +116,7 @@ class FileObject():
     def Thumbnail(self):
         if self._Thumbnail is None:
             ThumbSize = self.Cfg.get('thumbnailsize')
-            image = Image.open(self.FullPath)
-            # trick to make 8 bit displayable image)
-            if image.format == 'PNG' and max(image.getdata()) > 255:
-                table=[ i/256 for i in range(65536) ]
-                image = image.point(table,'L')
-            resize_ratio_x = image.size[0]/ThumbSize
-            resize_ratio_y = image.size[1]/ThumbSize
-            resize_ratio = max(resize_ratio_x,resize_ratio_y)
-            new_image_height = int(image.size[0] / resize_ratio)
-            new_image_length = int(image.size[1] / resize_ratio)
-            image = image.resize(
-                (new_image_height, new_image_length),
-                Image.ANTIALIAS
-            )
+            image = PP.imageOpen(self.FullPath)
+            image = PP.imageResizeToFit(image, ThumbSize, ThumbSize)
             self._Thumbnail = ImageTk.PhotoImage(image)
         return self._Thumbnail

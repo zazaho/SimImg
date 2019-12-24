@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 ''' Project to display similar images from an image catalog '''
+import builtins
 import os
 from tkinter import PhotoImage
 # import sys
 import tkinter as tk
-from simimg.classes import configuration as CONF
-from simimg.classes import controller as CTRL
-from simimg.classes import scrollframe as SF
+import simimg.classes.configuration as CONF
+import simimg.classes.controller as CTRL
+import simimg.classes.scrollframe as SF
 
 class simim_app(tk.Tk):
     ''' Main window for sorting and managing pictures'''
@@ -42,6 +43,8 @@ class simim_app(tk.Tk):
         self.Ctrl = CTRL.Controller(self)
 
 def main():
+    # avoid defining this many times for 16bit pngs
+    builtins.table16bit = [i/256 for i in range(65536)]
     scriptpath = os.path.join(os.path.dirname(os.path.realpath(__file__)))
     app = simim_app(ScriptPath=scriptpath)
     app.mainloop()

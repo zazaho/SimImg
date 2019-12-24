@@ -4,6 +4,7 @@ import tkinter as tk
 from PIL import ImageTk, Image
 import simimg.classes.tooltip as TT
 import simimg.dialogs.infowindow as IW
+import simimg.utils.pillowplus as PP
 
 class Toolbar(tk.Frame):
     " A toolbar frame that holds the action buttons"
@@ -13,16 +14,16 @@ class Toolbar(tk.Frame):
         self.config(bd=1, relief="raised")
         iconpath = self.Ctrl.Cfg.get('iconpath')
 
-        self.addImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "add.png")))
-        self.deleteImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "delete.png")))
-        self.exitImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "exit.png")))
-        self.hideImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "hide.png")))
-        self.infoImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "info.png")))
-        self.openImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "open.png")))
-        self.playImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "play.png")))
-        self.refreshImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "refresh.png")))
-        self.settingsImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "settings.png")))
-        self.uncheckImg = ImageTk.PhotoImage(Image.open(os.path.join(iconpath, "uncheck.png")))
+        self.addImg = PP.photoImageOpen(os.path.join(iconpath, "add.png"))
+        self.deleteImg = PP.photoImageOpen(os.path.join(iconpath, "delete.png"))
+        self.exitImg = PP.photoImageOpen(os.path.join(iconpath, "exit.png"))
+        self.hideImg = PP.photoImageOpen(os.path.join(iconpath, "hide.png"))
+        self.infoImg = PP.photoImageOpen(os.path.join(iconpath, "info.png"))
+        self.openImg = PP.photoImageOpen(os.path.join(iconpath, "open.png"))
+        self.playImg = PP.photoImageOpen(os.path.join(iconpath, "play.png"))
+        self.refreshImg = PP.photoImageOpen(os.path.join(iconpath, "refresh.png"))
+        self.settingsImg = PP.photoImageOpen(os.path.join(iconpath, "settings.png"))
+        self.uncheckImg = PP.photoImageOpen(os.path.join(iconpath, "uncheck.png"))
 
         self.exitButton = tk.Button(self, image=self.exitImg, relief="flat", command=self.Ctrl.exitProgram)
         self.settingsButton = tk.Button(self, image=self.settingsImg, relief="flat", command=self.Ctrl.configureProgram)
