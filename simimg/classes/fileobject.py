@@ -1,8 +1,7 @@
 ''' The basic object that represents one file '''
-import os
 import hashlib
 from datetime import datetime
-from PIL import ImageTk, Image, ExifTags
+from PIL import Image, ExifTags
 import simimg.utils.pillowplus as PP
 
 class FileObject():
@@ -116,7 +115,5 @@ class FileObject():
     def Thumbnail(self):
         if self._Thumbnail is None:
             ThumbSize = self.Cfg.get('thumbnailsize')
-            image = PP.imageOpen(self.FullPath)
-            image = PP.imageResizeToFit(image, ThumbSize, ThumbSize)
-            self._Thumbnail = ImageTk.PhotoImage(image)
+            self._Thumbnail = PP.photoImageOpenAndResizeToFit(self.FullPath, ThumbSize, ThumbSize)
         return self._Thumbnail

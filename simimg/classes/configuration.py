@@ -95,8 +95,9 @@ class Configuration():
 
     def get(self, parameter):
         'Return one value of the configuration'
-        if parameter in self.ConfigurationDict:
-            return self.ConfigurationDict[parameter]
+        if not parameter in self.ConfigurationDict:
+            return None
+        return self.ConfigurationDict[parameter]
 
     def set(self, param, value):
         'Add/Change a configuration parameter'

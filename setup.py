@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="simimg",
-    version="0.4.2",
+    version="0.4.3",
     author="Sacha Hony",
     author_email="zazahohonini@gmail.com",
     description="Similar Image Finder",

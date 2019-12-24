@@ -3,7 +3,6 @@ import os
 import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import filedialog as tkfiledialog
-from PIL import ImageTk, Image
 import simimg.classes.tooltip as TT
 import simimg.utils.pillowplus as PP
 

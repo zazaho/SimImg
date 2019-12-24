@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 ''' Project to display similar images from an image catalog '''
-import builtins
 import os
 from tkinter import PhotoImage
-# import sys
 import tkinter as tk
 import simimg.classes.configuration as CONF
 import simimg.classes.controller as CTRL
@@ -43,8 +41,6 @@ class simim_app(tk.Tk):
         self.Ctrl = CTRL.Controller(self)
 
 def main():
-    # avoid defining this many times for 16bit pngs
-    builtins.table16bit = [i/256 for i in range(65536)]
     scriptpath = os.path.join(os.path.dirname(os.path.realpath(__file__)))
     app = simim_app(ScriptPath=scriptpath)
     app.mainloop()

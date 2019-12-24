@@ -127,7 +127,7 @@ def CalculateImageHash(args):
         'hsvhash': hsvhash,
         'hsv5hash': hsv5hash,
         }
-    return (md5, funcdict[hashName](pp.imageOpen(FullPath), hash_size=8))
+    return (md5, funcdict[hashName](PP.imageOpen(FullPath), hash_size=8))
 
 def GetImageHashes(FODict, hashName, db_connection=None):
     '''return hashing value according to selected hashName method
@@ -182,8 +182,7 @@ def GetImageHashes(FODict, hashName, db_connection=None):
 
 def getOneThumb(arg):
     md5, filename, tsize = arg
-    img = PP.imageOpen(filename)
-    img = PP.imageResizeToFit(img, tsize, tsize)
+    img = PP.imageOpenAndResizeToFit(filename, tsize, tsize)
     return (md5, img)
 
 def GetMD5Thumbnails(FODict, Thumbsize=150):

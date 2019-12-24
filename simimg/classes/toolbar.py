@@ -1,7 +1,6 @@
 ''' Modules that defines a oolbar with action items'''
 import os
 import tkinter as tk
-from PIL import ImageTk, Image
 import simimg.classes.tooltip as TT
 import simimg.dialogs.infowindow as IW
 import simimg.utils.pillowplus as PP
@@ -10,10 +9,9 @@ class Toolbar(tk.Frame):
     " A toolbar frame that holds the action buttons"
     def __init__(self, parent, Controller=None):
         super().__init__(parent)
-        self.Ctrl = Controller
         self.config(bd=1, relief="raised")
-        iconpath = self.Ctrl.Cfg.get('iconpath')
 
+        iconpath = Controller.Cfg.get('iconpath')
         self.addImg = PP.photoImageOpen(os.path.join(iconpath, "add.png"))
         self.deleteImg = PP.photoImageOpen(os.path.join(iconpath, "delete.png"))
         self.exitImg = PP.photoImageOpen(os.path.join(iconpath, "exit.png"))
@@ -25,20 +23,20 @@ class Toolbar(tk.Frame):
         self.settingsImg = PP.photoImageOpen(os.path.join(iconpath, "settings.png"))
         self.uncheckImg = PP.photoImageOpen(os.path.join(iconpath, "uncheck.png"))
 
-        self.exitButton = tk.Button(self, image=self.exitImg, relief="flat", command=self.Ctrl.exitProgram)
-        self.settingsButton = tk.Button(self, image=self.settingsImg, relief="flat", command=self.Ctrl.configureProgram)
+        self.exitButton = tk.Button(self, image=self.exitImg, relief="flat", command=Controller.exitProgram)
+        self.settingsButton = tk.Button(self, image=self.settingsImg, relief="flat", command=Controller.configureProgram)
         #
         self.infoButton = tk.Button(self, image=self.infoImg, relief="flat", command=IW.showInfoDialog)
 
-        self.openButton = tk.Button(self, image=self.openImg, relief="flat", command=self.Ctrl.openFolder)
-        self.addButton = tk.Button(self, image=self.addImg, relief="flat", command=self.Ctrl.addFolder)
+        self.openButton = tk.Button(self, image=self.openImg, relief="flat", command=Controller.openFolder)
+        self.addButton = tk.Button(self, image=self.addImg, relief="flat", command=Controller.addFolder)
         #
-        self.refreshButton = tk.Button(self, image=self.refreshImg, relief="flat", command=self.Ctrl.resetThumbnails)
+        self.refreshButton = tk.Button(self, image=self.refreshImg, relief="flat", command=Controller.resetThumbnails)
 
-        self.uncheckButton = tk.Button(self, image=self.uncheckImg, relief="flat", command=self.Ctrl.unselectThumbnails)
-        self.deleteButton = tk.Button(self, image=self.deleteImg, relief="flat", command=self.Ctrl.deleteSelected)
-        self.hideButton = tk.Button(self, image=self.hideImg, relief="flat", command=self.Ctrl.hideSelected)
-        self.playButton = tk.Button(self, image=self.playImg, relief="flat", command=self.Ctrl.viewSelected)
+        self.uncheckButton = tk.Button(self, image=self.uncheckImg, relief="flat", command=Controller.unselectThumbnails)
+        self.deleteButton = tk.Button(self, image=self.deleteImg, relief="flat", command=Controller.deleteSelected)
+        self.hideButton = tk.Button(self, image=self.hideImg, relief="flat", command=Controller.hideSelected)
+        self.playButton = tk.Button(self, image=self.playImg, relief="flat", command=Controller.viewSelected)
 
         self.exitButton.grid(column=0, row=0)
         self.settingsButton.grid(column=1, row=0)

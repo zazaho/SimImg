@@ -27,17 +27,17 @@ class Controller():
 
         self.TopWindow = parent
         self.Cfg = parent.Cfg
-        self.maxThumbnails = self.Cfg.get('maxthumbnails')
+        self._maxThumbnails = self.Cfg.get('maxthumbnails')
 
         # empty starting values
-        self.DBConnection = None
-        self.fileList = []
-        self.filenameCommon = ""
-        self.filenameUniqueDict = {}
         self.FODict = {}
-        self.TPPositionDict = {}
-        self.matchingGroups = []
-        self.MD5HashesDict = {}
+        self._DBConnection = None
+        self._fileList = []
+        self._filenameCommon = ""
+        self._filenameUniqueDict = {}
+        self._TPPositionDict = {}
+        self._matchingGroups = []
+        self._MD5HashesDict = {}
         self.lastSelectedXY = None
 
         # call the exitProgram function when the user clicks the X
@@ -53,17 +53,17 @@ class Controller():
 
         # create the condition modules in the self.TopWindow.ModulePane
         # put them in a list so that we can easily iterate over them
-        self.CMList = []
+        self._CMList = []
         if self.Cfg.get('haveimagehash'):
-            self.CMList.append(CM.HashCondition(self.TopWindow.ModulePane, Controller=self))
+            self._CMList.append(CM.HashCondition(self.TopWindow.ModulePane, Controller=self))
 
-        self.CMList.extend([
+        self._CMList.extend([
             CM.HSVCondition(self.TopWindow.ModulePane, Controller=self),
             CM.DateCondition(self.TopWindow.ModulePane, Controller=self),
             CM.CameraCondition(self.TopWindow.ModulePane, Controller=self),
             CM.ShapeCondition(self.TopWindow.ModulePane, Controller=self),
         ])
-        for cm in self.CMList:
+        for cm in self._CMList:
             cm.pack(side=tk.TOP, fill='x')
 
         self.startDatabase()
@@ -88,17 +88,17 @@ class Controller():
                 return
 
     def startDatabase(self, clear=None):
-        self.DBConnection = DB.CreateDBConnection(
+        self._DBConnection = DB.CreateDBConnection(
             self.Cfg.get('databasename')
         )
-        if not self.DBConnection:
+        if not self._DBConnection:
             sys.exit(1)
 
-        if not DB.CreateDBTables(self.DBConnection, clear=clear):
+        if not DB.CreateDBTables(self._DBConnection, clear=clear):
             sys.exit(1)
 
     def stopDatabase(self):
-        DB.CloseDBConnection(self.DBConnection)
+        DB.CloseDBConnection(self._DBConnection)
 
     def exitProgram(self):
         self.stopDatabase()
@@ -167,7 +167,7 @@ class Controller():
         # from add folder    
         if Add:
             pathList = [Add]
-            oldFiles = self.fileList
+            oldFiles = self._fileList
 
         # from startup
         if not Replace and not Add:
@@ -181,7 +181,7 @@ class Controller():
             startupFolder = self.Cfg.get('startupfolder')
             # start empty
             if not startupFolder:
-                self.fileList = []
+                self._fileList = []
                 return
             pathList = [startupFolder]
 
@@ -194,15 +194,15 @@ class Controller():
                 candidates.extend(glob.glob(arg+'/**', recursive=doRecurse))
             else:
                 candidates.append(arg)
-        self.fileList = [c for c in candidates if os.path.isfile(c)]
-        self.fileList.extend(oldFiles)
-        self.fileList = list(set(self.fileList))
-        self.fileList.sort()
+        self._fileList = [c for c in candidates if os.path.isfile(c)]
+        self._fileList.extend(oldFiles)
+        self._fileList = list(set(self._fileList))
+        self._fileList.sort()
 
-        # split the fileList into a common and a unique part
-        self.filenameCommon, filenameUniqueList = HF.stringList2CommonUnique(self.fileList)
-        self.filenameUniqueDict = {}
-        self.filenameUniqueDict.update(zip(self.fileList, filenameUniqueList))
+        # split the _fileList into a common and a unique part
+        self._filenameCommon, filenameUniqueList = HF.stringList2CommonUnique(self._fileList)
+        self._filenameUniqueDict = {}
+        self._filenameUniqueDict.update(zip(self._fileList, filenameUniqueList))
 
     def _createFileobjects(self):
 
@@ -213,11 +213,11 @@ class Controller():
         for fol in self.FODict.values():
             existingfiles.extend([fo.FullPath for fo in fol])
             
-        missingfilelist = list(set(self.fileList) - set(existingfiles))
+        missingfilelist = list(set(self._fileList) - set(existingfiles))
         for FilePath in missingfilelist:
             ThisFileObject = FO.FileObject(self,
                                            FullPath=FilePath,
-                                           MD5HashesDict=self.MD5HashesDict
+                                           MD5HashesDict=self._MD5HashesDict
             )
             if ThisFileObject.IsImage():
                 ImageFileObjectList.append(ThisFileObject)
@@ -243,14 +243,14 @@ class Controller():
         
         # maximum nx*ny thumbs to show
         thumbToShow = 0
-        for md5 in HF.sortMd5sByFilename(self.FODict.keys(), self.MD5HashesDict):
+        for md5 in HF.sortMd5sByFilename(self.FODict.keys(), self._MD5HashesDict):
             if not self.FODict[md5][0].active:
                 continue
             X = thumbToShow % nx
             Y = thumbToShow // nx
             self._showThumbXY(md5, X, Y)
             thumbToShow += 1
-            if thumbToShow >= self.maxThumbnails:
+            if thumbToShow >= self._maxThumbnails:
                 break
         
     def _showThumbXY(self, md5, X, Y):
@@ -267,28 +267,28 @@ class Controller():
         )
         # show the new one
         ThisThumb.grid(column=X, row=Y)
-        # add thisthumb to the TPPositionDict
-        self.TPPositionDict[(X, Y)] = ThisThumb
+        # add thisthumb to the _TPPositionDict
+        self._TPPositionDict[(X, Y)] = ThisThumb
 
     def _removeThumbXY(self, X, Y):
-        ThisThumb = self.TPPositionDict[(X,Y)] if (X,Y) in self.TPPositionDict else None
+        ThisThumb = self._TPPositionDict[(X,Y)] if (X,Y) in self._TPPositionDict else None
         if ThisThumb:
-            del self.TPPositionDict[(X, Y)]
+            del self._TPPositionDict[(X, Y)]
             ThisThumb.destroy()
 
     def _removeAllThumbs(self):
-        for ThisThumb in self.TPPositionDict.values():
+        for ThisThumb in self._TPPositionDict.values():
             ThisThumb.destroy()
-        self.TPPositionDict = {}
+        self._TPPositionDict = {}
 
     def _getMatchingGroups(self, activePairs):
         ''' given the matching groups returned by each active condition module
            make a master list of image groups '''
 
-        self.matchingGroups = []
+        self._matchingGroups = []
         matchingGroupsList = []
         MMMatchingGroupsList = []
-        for cm in self.CMList:
+        for cm in self._CMList:
             if not cm.active:
                 continue
             thisMatchingGroups = cm.matchingGroups(activePairs)
@@ -324,25 +324,25 @@ class Controller():
             if not HF.existsAsSubGroup(MG, uniqueMatchingGroups):
                 uniqueMatchingGroups.append(MG)
 
-        self.matchingGroups = uniqueMatchingGroups
-        self.matchingGroups.sort()
+        self._matchingGroups = uniqueMatchingGroups
+        self._matchingGroups.sort()
 
     def _displayMatchingGroups(self):
         #clear messages from the statusbar
         self._showInStatusbar("...")
-        sortedGroupsList = HF.sortMd5ListsByFilename(self.matchingGroups, self.MD5HashesDict)
+        sortedGroupsList = HF.sortMd5ListsByFilename(self._matchingGroups, self._MD5HashesDict)
         for Y, group in enumerate(sortedGroupsList):
             md5s = [group[0]]
-            md5s.extend(HF.sortMd5sByFilename(group[1:], self.MD5HashesDict))
+            md5s.extend(HF.sortMd5sByFilename(group[1:], self._MD5HashesDict))
             for X, md5 in enumerate(md5s):
                 self._showThumbXY(md5, X, Y)
-            if X*Y > self.maxThumbnails:
-                self._showInStatusbar("Warning too many matches: truncated to ~%s" % self.maxThumbnails)
+            if X*Y > self._maxThumbnails:
+                self._showInStatusbar("Warning too many matches: truncated to ~%s" % self._maxThumbnails)
                 return
 
     def onConditionChanged(self):
         # put everything to default
-        self.matchingGroups = []
+        self._matchingGroups = []
         # make sure to clean the interface
         self._removeAllThumbs()
 
@@ -362,7 +362,7 @@ class Controller():
     def _onThumbnailsChanged(self):
         # check if any conditions are active
         someCMActive = False
-        for cm in self.CMList:
+        for cm in self._CMList:
             if cm.active:
                 someCMActive = True
                 break
@@ -380,7 +380,7 @@ class Controller():
     # functions related to the selected thumbnails
     def _selectedFOs(self, firstFOOnly = False):
         lst = []
-        for tp in self.TPPositionDict.values():
+        for tp in self._TPPositionDict.values():
             if tp.selected:
                 if firstFOOnly:
                     lst.append(self.FODict[tp.md5][0])
@@ -410,7 +410,7 @@ class Controller():
         onlyOneFO = len(FOs) == 1
         for fo in FOs:
             filename = fo.FullPath
-            uniqueFilename = self.filenameUniqueDict[filename]
+            uniqueFilename = self._filenameUniqueDict[filename]
             md5 = fo.md5()
             if mustconfirm:
                 answer = CDD.CDDialog(
@@ -441,17 +441,17 @@ class Controller():
         self.deleteFOs(self._selectedFOs(), Owner=self.TopWindow)
                 
     def unselectThumbnails(self, *args):
-        for tp in self.TPPositionDict.values():
+        for tp in self._TPPositionDict.values():
             tp.select(False)
         self.lastSelectedXY = None
 
     def selectAllThumbnails(self, *args):
-        for tp in self.TPPositionDict.values():
+        for tp in self._TPPositionDict.values():
             tp.select(True)
         self.lastSelectedXY = None
 
     def toggleSelectRow(self, Y, value):
-        for tp in self.TPPositionDict.values():
+        for tp in self._TPPositionDict.values():
             if tp.Y == Y:
                 tp.select(value)
 
@@ -475,7 +475,7 @@ class Controller():
         if gridXYLargerOrEqual(fromXY, toXY):
             fromXY, toXY = toXY, fromXY
 
-        for tp in self.TPPositionDict.values():
+        for tp in self._TPPositionDict.values():
             if (
                     gridXYLargerOrEqual((tp.X, tp.Y), fromXY) and
                     gridXYLargerOrEqual(toXY, (tp.X, tp.Y))
@@ -485,7 +485,7 @@ class Controller():
     # some routines related to expensive calculations done in a
     # multiprocessing pool
     def _getMD5Hashes(self):
-        self.MD5HashesDict = POOL.GetMD5Hashes(self.fileList, self.MD5HashesDict)
+        self._MD5HashesDict = POOL.GetMD5Hashes(self._fileList, self._MD5HashesDict)
 
     def _setThumbnails(self):
         MD5ThumbDict = POOL.GetMD5Thumbnails(
@@ -504,5 +504,5 @@ class Controller():
 
     def setImageHashes(self, hashName=None):
         self._showInStatusbar("Calculating Image Hash values, please be patient")
-        POOL.GetImageHashes(self.FODict, hashName, self.DBConnection)
+        POOL.GetImageHashes(self.FODict, hashName, self._DBConnection)
         self._showInStatusbar("...")

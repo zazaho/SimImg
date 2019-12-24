@@ -2,12 +2,12 @@ import tkinter as tk
 
 class TextScale(tk.Frame):
     "A scale widget (slider) with text rather than numerical labels"
-    def __init__(self, parent,
+    def __init__(self, parent, *args,
                  topLabel='',
                  textLabels=None,
                  onChange=None,
                  initialInt=None,
-                 *args, **kwargs):
+                 **kwargs):
         super().__init__(parent)
 
         # eventhough this is a scale widget we need a Frame to hold both
