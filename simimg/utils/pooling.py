@@ -19,6 +19,17 @@ except ModuleNotFoundError:
 import simimg.utils.database as DB
 import simimg.utils.pillowplus as PP
 
+# size of boxes that has ~equal amount over overlap between the boxes
+# and the amount of unsampled area
+hsv2x = 0.46
+hsv5boxes = [
+    (0.0, 0.0,  hsv2x,    hsv2x),
+    (0.0, 1-hsv2x,  hsv2x,  1.0),
+    (1-hsv2x, 0.0, 1.0,   hsv2x),
+    (1-hsv2x, 1-hsv2x, 1.0, 1.0),
+    (0.5-hsv2x/2.0, 0.5-hsv2x/2.0, 0.5+hsv2x/2.0, 0.5+hsv2x/2.0)
+]
+
 def CalculateMD5Hash(file):
     hasher = hashlib.md5()
     with open(file, 'rb') as afile:
@@ -46,17 +57,6 @@ def hsv5hash(Img, **kwargs):
     ''' Calculate a hash that stores info about the colour histogram 
     after having split the image in 5 regions'''
 
-    # size of boxes that has ~equal amount over overlap between the boxes
-    # and the amount of unsampled area
-    x = 0.46
-    boxes = [
-        (0.0, 0.0,  x,    x),
-        (0.0, 1-x,  x,  1.0),
-        (1-x, 0.0, 1.0,   x),
-        (1-x, 1-x, 1.0, 1.0),
-        (0.5-x/2.0, 0.5-x/2.0, 0.5+x/2.0, 0.5+x/2.0)
-    ]
-
     # open and convert to HSV
     # resample to speed up the calculation
     HSV = Img.convert("HSV").resize((100,100), Image.NEAREST)
@@ -65,7 +65,7 @@ def hsv5hash(Img, **kwargs):
     V = HSV.getchannel('V').getdata()
 
     values = []
-    for box in boxes:
+    for box in hsv5boxes:
         Hsub = list(subImage(H, box))
         medianH = round(stats.median(Hsub))
         Hsub = [(h-medianH+128) % 255 for h in Hsub]
@@ -185,7 +185,7 @@ def getOneThumb(arg):
     img = PP.imageOpenAndResizeToFit(filename, tsize, tsize)
     return (md5, img)
 
-def GetMD5Thumbnails(FODict, Thumbsize=150):
+def GetMD5Thumbnails(FODict, Thumbsize=None):
     '''return thumbnail for each md5 in FODict.'''
     args = [(md5, fo[0].FullPath, Thumbsize) for md5, fo in FODict.items()]
     ThumbDict = {} ## md5, thumbnail

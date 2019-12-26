@@ -75,7 +75,7 @@ class viewer(tk.Toplevel):
         keyDict[event.keysym]()
 
     def _showImage(self, *args):
-        self.canvas.delete(tk.ALL)
+        self.canvas.delete("all")
         self._fillImgDict(self.ImgIndex)
         self.canvas.create_image(
             self.canvas.winfo_width()/2,

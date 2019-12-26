@@ -48,7 +48,7 @@ class FileObject():
                 hasher.update(afile.read())
                 self._md5 = hasher.hexdigest()
         return self._md5
-            
+
     def ExifTags(self):
         if self._ExifTags is None:
             # default to empty basic values

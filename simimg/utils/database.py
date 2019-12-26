@@ -58,8 +58,8 @@ def GetHashValueFromDataBase(md5, hashname, db_connection=None):
         'dhash':hex_to_hash,
         'phash':hex_to_hash,
         'whash':hex_to_hash,
-        'hsvhash':HF.hexstring_to_array,
-        'hsv5hash':HF.hexstring_to_array,
+        'hsvhash':HF.hexstring2array,
+        'hsv5hash':HF.hexstring2array,
         }
     try:
         db_cursor = db_connection.cursor()
@@ -87,8 +87,8 @@ def SetHashValues(Md5HashValueTuples, hashname, db_connection=None):
         'dhash':str,
         'phash':str,
         'whash':str,
-        'hsvhash':HF.array_to_hexstring,
-        'hsv5hash':HF.array_to_hexstring,
+        'hsvhash':HF.array2hexstring,
+        'hsv5hash':HF.array2hexstring,
         }
 
     tupled_data = [(md5, hashname, convDict[hashname](imagehashvalue)) for md5, imagehashvalue in Md5HashValueTuples]

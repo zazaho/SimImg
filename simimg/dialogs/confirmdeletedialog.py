@@ -22,7 +22,7 @@ class CDDialog(tk.Toplevel):
             text="Yes",
             width=10,
             command=self._yes,
-            default=tk.ACTIVE
+            default="active"
         ).grid(column=0, row=1, padx=10)
         tk.Button(
             self,
@@ -50,11 +50,11 @@ class CDDialog(tk.Toplevel):
 
         self.grab_set()
         self.wait_window(self)
-        
+
     def _yes(self, *args):
         self.result = "yes"
         self._returntoparent()
-        
+
     def _yes_to_all(self, *args):
         self.result = "yestoall"
         self._returntoparent()

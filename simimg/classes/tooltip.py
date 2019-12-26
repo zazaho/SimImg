@@ -28,7 +28,7 @@ class Tooltip:
                  text='widget info',
                  waittime=400,
                  wraplength=250):
-        
+
         self.waittime = waittime  # in miliseconds, originally 500
         self.wraplength = wraplength  # in pixels, originally 180
         self.widget = widget
@@ -120,16 +120,16 @@ class Tooltip:
                        borderwidth=0)
         label = tk.Label(win,
                          text=self.text,
-                         justify=tk.LEFT,
+                         justify="left",
                          background=bg,
-                         relief=tk.SOLID,
+                         relief="solid",
                          borderwidth=1,
                          font=self.myfont,
                          padx=5,
                          pady=5,
                          wraplength=self.wraplength)
 
-        label.grid(sticky=tk.NSEW)
+        label.grid(sticky="nsew")
         win.grid()
 
         x, y = tip_pos_calculator(widget, label)

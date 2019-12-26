@@ -30,7 +30,7 @@ class ConditionFrame(tk.Frame):
 
         self.currentConfig = {}
         self.currentMatchingGroups = []
-        
+
         self._makeBaseWidgets()
         self.setActive(False)
         self._candidates = {}
@@ -62,8 +62,8 @@ class ConditionFrame(tk.Frame):
             self.config(relief="sunken")
             for widget in self.childWidgets:
                 widget.config(state="disabled")
-                
-    def _activeToggled(self,event):
+
+    def _activeToggled(self, event):
         self.setActive(not self.active)
         self._somethingChanged()
         
@@ -96,7 +96,7 @@ class HashCondition(ConditionFrame):
     def _makeAdditionalWidgets(self):
         self.Combo = ttk.Combobox(
             self,
-            values=["ahash","dhash","phash","whash"],
+            values=["ahash", "dhash", "phash", "whash"],
             width=8,
             state="readonly",
         )
@@ -112,7 +112,7 @@ class HashCondition(ConditionFrame):
         self.Scale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
         self.Scale.bind("<Control-a>", self._doSelectAll)
-        self.ScaleTip = TT.Tooltip(self.Scale,text='')
+        self.ScaleTip = TT.Tooltip(self.Scale, text='')
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
@@ -135,7 +135,7 @@ class HashCondition(ConditionFrame):
     def _scaleReleased(self, *args):
         self._mouseIsPressed = False
         self._scaleChanged()
-        
+
     def _scaleChanged(self, *args):
         # do nothing while the mouse is down
         if self._mouseIsPressed:
@@ -146,17 +146,10 @@ class HashCondition(ConditionFrame):
 
     def matchingGroups(self, candidates):
         def theymatch(md5a, md5b, values=None):
-            foa = self.Ctrl.FODict[md5a][0]
-            if not self.method in foa.hashDict:
-                print('Warning: requested a hash that is not available')
-                return False
-            foaHash = foa.hashDict[self.method]
-            fob = self.Ctrl.FODict[md5b][0]
-            if not self.method in fob.hashDict:
-                print('Warning: requested a hash that is not available')
-                return False
-            fobHash = fob.hashDict[self.method]
-            absdiff = abs(foaHash - fobHash)
+            absdiff = abs(
+                self.Ctrl.FODict[md5a][0].hashDict[self.method] -
+                self.Ctrl.FODict[md5b][0].hashDict[self.method]
+            )
             values.append(absdiff)
             return absdiff <= self.limit
 
@@ -172,7 +165,7 @@ class HashCondition(ConditionFrame):
         self._candidates = set(candidates)
         self.currentConfig['method'] = self.method
         self.currentConfig['limit'] = self.limit
-        
+
         #Call this to make sure the hash values for this method are available
         self.Ctrl.setImageHashes(hashName=self.method)
 
@@ -236,7 +229,7 @@ class HSVCondition(ConditionFrame):
         self.Scale.bind("<ButtonPress-1>", self._scalePressed)
         self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
         self.Scale.bind("<Control-a>", self._doSelectAll)
-        self.ScaleTip = TT.Tooltip(self.Scale,text='')
+        self.ScaleTip = TT.Tooltip(self.Scale, text='')
         self.Combo.pack()
         self.Scale.pack()
         self.childWidgets.extend([self.Combo, self.Scale])
@@ -259,7 +252,7 @@ class HSVCondition(ConditionFrame):
     def _scaleReleased(self, *args):
         self._mouseIsPressed = False
         self._scaleChanged()
-        
+
     def _scaleChanged(self, *args):
         # do nothing while the mouse is down
         if self._mouseIsPressed:
@@ -270,16 +263,8 @@ class HSVCondition(ConditionFrame):
 
     def matchingGroups(self, candidates):
         def theymatch(md5a, md5b, values=None):
-            foa = self.Ctrl.FODict[md5a][0]
-            if not self.method in foa.hashDict:
-                print('Warning: requested a hash that is not available')
-                return False
-            foaHash = foa.hashDict[self.method]
-            fob = self.Ctrl.FODict[md5b][0]
-            if not self.method in fob.hashDict:
-                print('Warning: requested a hash that is not available')
-                return False
-            fobHash = fob.hashDict[self.method]
+            foaHash = self.Ctrl.FODict[md5a][0].hashDict[self.method]
+            fobHash = self.Ctrl.FODict[md5b][0].hashDict[self.method]
             # we need to take care of the median hue value (0, 6, .. th element)
             # when calculating distance because this is a measure that wraps at 255
             # back to 0 the correct distance is the minimum of (h1-h2) % 255 and (h2-h1) % 255
@@ -307,7 +292,7 @@ class HSVCondition(ConditionFrame):
         self._candidates = set(candidates)
         self.currentConfig['method'] = self.method
         self.currentConfig['limit'] = self.limit
-        
+
         #Call this to make sure the hash values for this method are available
         self.Ctrl.setImageHashes(hashName=self.method)
 
@@ -416,7 +401,7 @@ class DateCondition(ConditionFrame):
         self.missingVar = tk.BooleanVar()
         self.missing = False
         self.Scale = None
-        
+
         self.initialIndex = 1
         self.scalelabels = ['1 minute','10 minutes','1 hour','1 day','1 week','4 weeks','1 year']
         self.scaleSeconds = {
@@ -469,7 +454,7 @@ class DateCondition(ConditionFrame):
     def _scaleReleased(self, *args):
         self._mouseIsPressed = False
         self._scaleChanged()
-        
+
     def _scaleChanged(self, *args):
         # do nothing while the mouse is down
         if self._mouseIsPressed:
@@ -551,7 +536,7 @@ class ShapeCondition(ConditionFrame):
         self._makeAdditionalWidgets()
         self.setActive(False)
         self._mouseIsPressed = False
-        
+
     def _makeAdditionalWidgets(self):
         self.Scale = TS.TextScale(self,
                                   textLabels=self.scalelabels,
@@ -565,7 +550,7 @@ class ShapeCondition(ConditionFrame):
         self.Scale.TSScale.bind("<Control-a>", self._doSelectAll)
         self.Scale.pack()
         self.childWidgets.extend([self.Scale])
-        
+
     def _doSelectAll(self, *args):
         self.Ctrl.selectAllThumbnails()
         return "break"
@@ -579,7 +564,7 @@ class ShapeCondition(ConditionFrame):
     def _scaleReleased(self, *args):
         self._mouseIsPressed = False
         self._scaleChanged()
-        
+
     def _scaleChanged(self, *args):
         # do nothing while the mouse is down
         if self._mouseIsPressed:
@@ -606,7 +591,7 @@ class ShapeCondition(ConditionFrame):
 
         self._candidates = set(candidates)
         self.currentConfig['limit'] = self.limit
-        
+
         md5s = []
         for a, b in candidates:
             md5s.append(a)

@@ -12,7 +12,7 @@ class ImageFrame(tk.Frame):
         self.selected = False
         self.X = X
         self.Y = Y
-        
+
         #self.config(relief="groove",borderwidth=BorderWidth)
         self.thumb_canvas = tk.Canvas(self,
                                       width=self.ThumbSize,
@@ -32,12 +32,12 @@ class ImageFrame(tk.Frame):
             if len(Ctrl.FODict[self.md5]) > 1:
                 self.thumb_canvas.config(highlightbackground="green", highlightthickness=2)
 
-        self.thumb_canvas.pack(side=tk.TOP)
+        self.thumb_canvas.pack(side="top")
         if Ctrl.Cfg.get('showbuttons'):
             hide_button = tk.Button(self, text="Hide", command=self._hide, pady=0)
             delete_button = tk.Button(self, text="Delete", command=self._delete, pady=0)
-            hide_button.pack(side=tk.LEFT)
-            delete_button.pack(side=tk.RIGHT)
+            hide_button.pack(side="left")
+            delete_button.pack(side="right")
 
     def _hide(self):
         for fo in self.Ctrl.FODict[self.md5]:
@@ -59,7 +59,7 @@ class ImageFrame(tk.Frame):
             self.thumb_canvas.config(bg="white")
             self.Ctrl.lastSelectedXY = None
         self.focus_set()
-        
+
     def _click(self, event):
         if (event.state & 0x4) != 0:
             self.Ctrl.toggleSelectRow(self.Y, not self.selected)

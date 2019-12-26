@@ -3,11 +3,11 @@ import os
 import gzip
 import shutil
 
-def hexstring_to_array(hexstring):
+def hexstring2array(hexstring):
     '''convert a hexstring (each pair of letters represents one element) <255 to an array'''
     return [int(hexstring[i:i+2], 16) for i in range(0, len(hexstring), 2)]
 
-def array_to_hexstring(array):
+def array2hexstring(array):
     '''convert an array to a hexstring (each pair of letters represents one element)'''
     return ''.join(format(round(i), 'x').zfill(2) for i in array)
 
@@ -26,7 +26,7 @@ def existsAsSubGroup(E, GL):
             return True
     return False
 
-def pairListToDict(lst):
+def pairlist2dict(lst):
     '''take a list containing key,values pairs and return
     a dict where each key hold a list of matching values.
     '''
@@ -38,7 +38,7 @@ def pairListToDict(lst):
             dct[ky] = [vle]
     return dct
 
-def stringList2CommonUnique(sl):
+def stringlist2commonunique(sl):
     '''convert a list of strings (filenames) into a common part and unique part.
     like ["/home/user/pictures/pic1.jpg", "/home/user/pictures/pic2.jpg"]
     =>

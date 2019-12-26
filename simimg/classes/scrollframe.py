@@ -16,7 +16,7 @@ class ScrollFrame(tk.Frame):
         self.canvas.configure(xscrollcommand=self.hsb.set)
         self.canvas.configure(yscrollcommand=self.vsb.set)
         self.canvas_window = self.canvas.create_window(
-            (0,0),
+            (0, 0),
             window=self.viewPort,
             anchor="nw",
             tags="self.viewPort"

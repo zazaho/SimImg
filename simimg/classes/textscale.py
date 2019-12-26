@@ -14,7 +14,7 @@ class TextScale(tk.Frame):
         # the label and the values. We reuse the orginal label to show the values
         if not initialInt:
             initialInt=0
-            
+
         self.textValue = textLabels[initialInt]
         self.textLabelsDict = {key: value for key, value in enumerate(textLabels) }
         self.onChange = onChange
@@ -43,8 +43,8 @@ class TextScale(tk.Frame):
 
     def focus_set(self):
         self.TSScale.focus_set()
-        
-    def config(self, state = None, *args, **kwargs):
+
+    def config(self, state=None, *args, **kwargs):
         super().config()
         if state:
             self.TSScale.config(state=state)

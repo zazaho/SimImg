@@ -29,12 +29,12 @@ class simim_app(tk.Tk):
         self.tk.call('wm', 'iconphoto', self._w, PhotoImage(file=appIcon))
         self.geometry(self.Cfg.get('findergeometry'))
 
-        self.Statusbar = tk.Label(self,text="...", bd=1, relief=tk.SUNKEN, anchor=tk.W)
-        self.Statusbar.pack(side=tk.BOTTOM, fill='x')
+        self.Statusbar = tk.Label(self,text="...", bd=1, relief="sunken", anchor="w")
+        self.Statusbar.pack(side="bottom", fill='x')
         self.ModulePane = tk.Frame(self)
-        self.ModulePane.pack(side=tk.LEFT, fill='y')
+        self.ModulePane.pack(side="left", fill='y')
         self.ThumbPane = SF.ScrollFrame(self)
-        self.ThumbPane.pack(side=tk.RIGHT, fill="both", expand=True)
+        self.ThumbPane.pack(side="right", fill="both", expand=True)
 
         # The object responsible for dealing with the data
         # and the display of those data

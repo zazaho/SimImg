@@ -1,3 +1,8 @@
+version 0.4.3 (SH Dec 26 2019)
+- whitespace fixes
+- allow showing 16bit grayscal pngs
+- some code cleaning
+
 version 0.4.2 (SH Dec 19 2019):
 - use get/set consistently for configuration module
 - fix bug not showing last remaining photo

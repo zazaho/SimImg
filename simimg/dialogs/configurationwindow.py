@@ -54,9 +54,9 @@ class CfgWindow(tk.Toplevel):
             relief="flat",
             command=self._openFolder
         )
-        startlabel.pack(pady=5,side=tk.LEFT)
-        startentry.pack(pady=5,side=tk.LEFT)
-        openbutton.pack(side=tk.LEFT)
+        startlabel.pack(pady=5,side="left")
+        startentry.pack(pady=5,side="left")
+        openbutton.pack(side="left")
         msg = '''Folder to read upon starting the application.
 
 . Means the directory from which the script was started.
@@ -68,17 +68,17 @@ Leave empty to start without reading files.'''
 
         thumbSizeFrame = tk.Frame(self)
         thumbSizeFrame.pack(fill='x', padx=5)
-        
+
         tk.Label(
             thumbSizeFrame,
             font=myfont,
             text="Thumbnail Size"
-        ).pack(pady=5,side=tk.LEFT)
+        ).pack(pady=5,side="left")
         tk.Entry(
             thumbSizeFrame,
             font=myfont,
             textvariable=self.thumbSize
-        ).pack(pady=5,side=tk.LEFT)
+        ).pack(pady=5,side="left")
 
         clearDBFrame = tk.Frame(self)
         clearDBFrame.pack(fill='x', padx=5)
@@ -90,7 +90,7 @@ Leave empty to start without reading files.'''
             compound="left",
             command=self._clearDB
         )
-        clearDBbutton.pack(side=tk.LEFT)
+        clearDBbutton.pack(side="left")
         msg = '''Empty the database that holds the calculated image properties.'''
         TT.Tooltip(clearDBbutton, text=msg)
 
@@ -147,13 +147,13 @@ Leave empty to start without reading files.'''
             text="Ok",
             width=15,
             command=self._ok
-        ).pack(padx=10, side=tk.LEFT)
+        ).pack(padx=10, side="left")
         tk.Button(
             btnFrame,
             text="Cancel",
             width=15,
             command=self._cancel
-        ).pack(padx=10, side=tk.RIGHT)
+        ).pack(padx=10, side="right")
 
         self.bind("<Escape>", self._cancel)
         self.protocol("WM_DELETE_WINDOW", self._cancel)
@@ -185,7 +185,7 @@ Leave empty to start without reading files.'''
         self.Cfg.set('thumbnailsize', ts)
         self.Cfg.set('startupfolder', self.startupDir.get())
         self._returntoparent()
-        
+
     def _cancel(self, *args):
         self._returntoparent()
 

@@ -6,7 +6,6 @@ import sys
 import os
 import glob
 import itertools
-import tkinter as tk
 from tkinter import filedialog as tkfiledialog
 from PIL import ImageTk
 import simimg.classes.conditionmodules as CM
@@ -49,7 +48,7 @@ class Controller():
 
         # put the toolbar in the self.TopWindow.ModulePane
         Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
-        Toolbar.pack(side=tk.TOP, fill='x')
+        Toolbar.pack(side="top", fill='x')
 
         # create the condition modules in the self.TopWindow.ModulePane
         # put them in a list so that we can easily iterate over them
@@ -64,13 +63,13 @@ class Controller():
             CM.ShapeCondition(self.TopWindow.ModulePane, Controller=self),
         ])
         for cm in self._CMList:
-            cm.pack(side=tk.TOP, fill='x')
+            cm.pack(side="top", fill='x')
 
         self.startDatabase()
         self._getFileList()
         self._processFilelist()
         self.onFileListChanged()
-        
+
     def _onKeyPress(self, event):
         if event.keysym == 'F1':
             IW.showInfoDialog()
@@ -105,7 +104,7 @@ class Controller():
         self.Cfg.set('findergeometry', self.TopWindow.geometry())
         self.Cfg.writeConfiguration()
         self.TopWindow.quit()
-    
+
     def configureProgram(self):
         oldThumbsize = self.Cfg.get('thumbnailsize')
         oldShowButtons = self.Cfg.get('showbuttons')
@@ -123,7 +122,7 @@ class Controller():
         self._getFileList(Add=selectedFolder)
         self._processFilelist()
         self.onFileListChanged()
-        
+
     def openFolder(self):
         selectedFolder = tkfiledialog.askdirectory()
         if not selectedFolder:
@@ -145,9 +144,7 @@ class Controller():
         self._showInStatusbar("...")
 
         # calculate md5s in multiprocessing
-        self._showInStatusbar("Calculating File Hash values, please be patient")
         self._getMD5Hashes()
-        self._showInStatusbar("...")
 
         self._createFileobjects()
         if not self.FODict:
@@ -155,7 +152,7 @@ class Controller():
 
         # calculate thumbnails in multiprocessing
         self._setThumbnails()
-        
+
     def _getFileList(self, Replace=None, Add=None):
         pathList = []
         #determine which mode we are called
@@ -200,19 +197,18 @@ class Controller():
         self._fileList.sort()
 
         # split the _fileList into a common and a unique part
-        self._filenameCommon, filenameUniqueList = HF.stringList2CommonUnique(self._fileList)
+        self._filenameCommon, filenameUniqueList = HF.stringlist2commonunique(self._fileList)
         self._filenameUniqueDict = {}
         self._filenameUniqueDict.update(zip(self._fileList, filenameUniqueList))
 
     def _createFileobjects(self):
-
         # Make list of image file objects with all files the installed PIL can read
         ImageFileObjectList = []
         # dont create FOs for files that already have a FODict
         existingfiles = []
         for fol in self.FODict.values():
             existingfiles.extend([fo.FullPath for fo in fol])
-            
+
         missingfilelist = list(set(self._fileList) - set(existingfiles))
         for FilePath in missingfilelist:
             ThisFileObject = FO.FileObject(self,
@@ -228,9 +224,9 @@ class Controller():
             return
 
         # transform into a dict based on uniq md5
-        newFODict = HF.pairListToDict([(i.md5(), i) for i in ImageFileObjectList])
+        newFODict = HF.pairlist2dict([(i.md5(), i) for i in ImageFileObjectList])
         self.FODict.update(newFODict)
-        
+
     def _createViewWithoutConditions(self):
         'Create an overview of all images without conditions'
         self._removeAllThumbs()
@@ -240,7 +236,7 @@ class Controller():
         maxW = self.TopWindow.ThumbPane.winfo_width()
         thumbW = 2 * self.Cfg.get('thumbnailborderwidth') + self.Cfg.get('thumbnailsize')
         nx = maxW // thumbW
-        
+
         # maximum nx*ny thumbs to show
         thumbToShow = 0
         for md5 in HF.sortMd5sByFilename(self.FODict.keys(), self._MD5HashesDict):
@@ -252,7 +248,7 @@ class Controller():
             thumbToShow += 1
             if thumbToShow >= self._maxThumbnails:
                 break
-        
+
     def _showThumbXY(self, md5, X, Y):
         # make sure that if a thumb is currently shown it is removed
         # and deleted
@@ -331,12 +327,14 @@ class Controller():
         #clear messages from the statusbar
         self._showInStatusbar("...")
         sortedGroupsList = HF.sortMd5ListsByFilename(self._matchingGroups, self._MD5HashesDict)
+        numThumbsShown = 0
         for Y, group in enumerate(sortedGroupsList):
             md5s = [group[0]]
             md5s.extend(HF.sortMd5sByFilename(group[1:], self._MD5HashesDict))
             for X, md5 in enumerate(md5s):
                 self._showThumbXY(md5, X, Y)
-            if X*Y > self._maxThumbnails:
+                numThumbsShown += 1
+            if numThumbsShown > self._maxThumbnails:
                 self._showInStatusbar("Warning too many matches: truncated to ~%s" % self._maxThumbnails)
                 return
 
@@ -376,7 +374,7 @@ class Controller():
             for fo in foList:
                 fo.active = True
         self.onFileListChanged()
-    
+
     # functions related to the selected thumbnails
     def _selectedFOs(self, firstFOOnly = False):
         lst = []
@@ -387,7 +385,7 @@ class Controller():
                 else:
                     lst.extend(self.FODict[tp.md5])
         return lst
-        
+
     def viewSelected(self):
         fileinfo = [(fo.md5(), fo.FullPath) for fo in self._selectedFOs(firstFOOnly = True)]
         if fileinfo:
@@ -403,7 +401,7 @@ class Controller():
             HF.gzipfile(Filename)
         else:
             os.remove(Filename)
-    
+
     def deleteFOs(self, FOs, Owner=None):
         somethingDeleted = False
         mustconfirm = self.Cfg.get('confirmdelete')
@@ -436,10 +434,10 @@ class Controller():
         if somethingDeleted:
             self.onFileListChanged()
         return somethingDeleted
-    
+
     def deleteSelected(self):
         self.deleteFOs(self._selectedFOs(), Owner=self.TopWindow)
-                
+
     def unselectThumbnails(self, *args):
         for tp in self._TPPositionDict.values():
             tp.select(False)
@@ -466,7 +464,7 @@ class Controller():
             if x1 < x2:
                 return False
             return True
-            
+
         if not self.lastSelectedXY:
             return
 
@@ -485,13 +483,17 @@ class Controller():
     # some routines related to expensive calculations done in a
     # multiprocessing pool
     def _getMD5Hashes(self):
+        self._showInStatusbar("Calculating File Hash values, please be patient")
         self._MD5HashesDict = POOL.GetMD5Hashes(self._fileList, self._MD5HashesDict)
+        self._showInStatusbar("...")
 
     def _setThumbnails(self):
+        self._showInStatusbar("Making file thumbnails, please be patient")
         MD5ThumbDict = POOL.GetMD5Thumbnails(
             self.FODict,
             Thumbsize=self.Cfg.get('thumbnailsize')
         )
+        self._showInStatusbar("...")
         if not MD5ThumbDict:
             return
         for md5, thumb in MD5ThumbDict.items():
