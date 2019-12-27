@@ -37,7 +37,7 @@ class FileObject():
                 self._IsImage = True
                 # do this here to save time
                 self._Size = img.size
-            except IOError:
+            except:
                 self._IsImage = False
         return self._IsImage
 
@@ -95,7 +95,7 @@ class FileObject():
                 return self._DateTime
             try:
                 self._DateTime = datetime.strptime(thisDateString ,'%Y:%m:%d %H:%M:%S')
-            except ValueError:
+            except:
                 self._DateTime = 'Missing'
         return self._DateTime
 

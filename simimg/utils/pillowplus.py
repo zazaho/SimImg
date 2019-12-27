@@ -13,14 +13,13 @@ def imageOpen(fn):
         ):
             img = img.point(pillowplus_table16, 'L')
         return img
-    except OSError:
+    except:
         return None
 
 def imageResize(img, w, h):
     try:
         res=img.resize((w, h), Image.ANTIALIAS)
-    except IOError as e:
-        print(e)
+    except:
         res=None
     return res
 

@@ -1,3 +1,8 @@
+version 0.5.0 (SH Dec 27 2019)
+- fully functional version
+- adapted some text to be more user friendly and less technical
+- merged color matching routines
+
 version 0.4.3 (SH Dec 26 2019)
 - whitespace fixes
 - allow showing 16bit grayscal pngs

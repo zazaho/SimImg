@@ -57,7 +57,7 @@ class Controller():
             self._CMList.append(CM.HashCondition(self.TopWindow.ModulePane, Controller=self))
 
         self._CMList.extend([
-            CM.HSVCondition(self.TopWindow.ModulePane, Controller=self),
+            CM.ColorCondition(self.TopWindow.ModulePane, Controller=self),
             CM.DateCondition(self.TopWindow.ModulePane, Controller=self),
             CM.CameraCondition(self.TopWindow.ModulePane, Controller=self),
             CM.ShapeCondition(self.TopWindow.ModulePane, Controller=self),

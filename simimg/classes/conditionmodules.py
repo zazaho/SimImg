@@ -1,7 +1,7 @@
 ''' Classes that implement different criteria for selecting matching images.
     It should have at least:
     A name label
-    A active swtich (click on the name label)
+    A active switch (click on the name label)
     A switch to make this criterion obligatory (must match)
     A method to do something when _somethingChanged
     A method to determine which imagepairs from a list of pairs match
@@ -83,7 +83,7 @@ class HashCondition(ConditionFrame):
         self.Combo = None
         self.Scale = None
         self.ScaleTip = None
-        self.method = "ahash"
+        self.method = "Average"
         self.limit = 14
         self.limitVar = tk.IntVar()
         self.limitVar.set(self.limit)
@@ -96,8 +96,8 @@ class HashCondition(ConditionFrame):
     def _makeAdditionalWidgets(self):
         self.Combo = ttk.Combobox(
             self,
-            values=["ahash", "dhash", "phash", "whash"],
-            width=8,
+            values=["Average", "Difference", "Perception", "Wavelet"],
+            width=15,
             state="readonly",
         )
         self.Combo.set(self.method)
@@ -194,14 +194,14 @@ class HashCondition(ConditionFrame):
         self.currentMatchingGroups.sort()
         return self.currentMatchingGroups
 
-class HSVCondition(ConditionFrame):
+class ColorCondition(ConditionFrame):
     name = 'COLOR DISTANCE'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.Combo = None
         self.Scale = None
         self.ScaleTip = None
-        self.method = "hsvhash"
+        self.method = "HSV (5 regions)"
         self.limit = 10
         self.limitVar = tk.IntVar()
         self.limitVar.set(self.limit)
@@ -214,8 +214,8 @@ class HSVCondition(ConditionFrame):
     def _makeAdditionalWidgets(self):
         self.Combo = ttk.Combobox(
             self,
-            values=["hsvhash", "hsv5hash"],
-            width=8,
+            values=["HSV", "HSV (5 regions)","RGB", "RGB (5 regions)", "Luminosity", "Luminosity (5 regions)"],
+            width=15,
             state="readonly",
         )
         self.Combo.set(self.method)
@@ -269,11 +269,14 @@ class HSVCondition(ConditionFrame):
             # when calculating distance because this is a measure that wraps at 255
             # back to 0 the correct distance is the minimum of (h1-h2) % 255 and (h2-h1) % 255
             # in all other cases use abs(v1 -v2)
-            distArr = [
-                abs(foaHash[i]-fobHash[i]) if i % 6
-                else min((foaHash[i]-fobHash[i]) % 255, (fobHash[i]-foaHash[i]) % 255)
-                for i in range(len(foaHash))
-            ]
+            if self.method in ['HSV', 'HSV (5 regions)']:
+                distArr = [
+                    abs(foaHash[i]-fobHash[i]) if i % 6
+                    else min((foaHash[i]-fobHash[i]) % 255, (fobHash[i]-foaHash[i]) % 255)
+                    for i in range(len(foaHash))
+                ]
+            else:
+                distArr = [abs(foaHash[i]-fobHash[i]) for i in range(len(foaHash))]
             val = stats.mean(distArr)
             values.append(val)
             return val <= self.limit

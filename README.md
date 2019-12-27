@@ -153,8 +153,8 @@ selectors will tell you at which value the first match happens and at
 which value more than 10 matches are found. 
 
 In my experience, for the purpose of detecting the most interesting
-similar holiday pictures the "ahash" and "phash" algorithms can be useful
-but the "hvs5hash" in the similar colours gives the best results.
+similar holiday pictures the "Average" and "Perception" algorithms can be useful
+but the "HSV (5 regions)" in the Colours Conditions gives the best results.
 
 The other conditions should be considered optional to further limit
 the shown matches.

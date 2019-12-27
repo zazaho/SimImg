@@ -4,30 +4,39 @@ from multiprocessing import Pool
 from PIL import Image
 try:
     from imagehash import dhash
-    from imagehash import average_hash
-    from imagehash import phash
-    from imagehash import whash
 except ModuleNotFoundError:
     def dhash():
         pass
+try:
+    from imagehash import average_hash
+except ModuleNotFoundError:
     def average_hash():
         pass
+try:
+    from imagehash import phash
+except ModuleNotFoundError:
     def phash():
         pass
+try:
+    from imagehash import whash
+except ModuleNotFoundError:
     def whash():
         pass
 import simimg.utils.database as DB
 import simimg.utils.pillowplus as PP
 
+# box that contains the whole image
+onebox = [(0.0, 0.0, 1.0, 1.0)]
+
 # size of boxes that has ~equal amount over overlap between the boxes
 # and the amount of unsampled area
-hsv2x = 0.46
-hsv5boxes = [
-    (0.0, 0.0,  hsv2x,    hsv2x),
-    (0.0, 1-hsv2x,  hsv2x,  1.0),
-    (1-hsv2x, 0.0, 1.0,   hsv2x),
-    (1-hsv2x, 1-hsv2x, 1.0, 1.0),
-    (0.5-hsv2x/2.0, 0.5-hsv2x/2.0, 0.5+hsv2x/2.0, 0.5+hsv2x/2.0)
+fiveboxsize = 0.46
+fiveboxes = [
+    (0.0, 0.0,  fiveboxsize,    fiveboxsize),
+    (0.0, 1-fiveboxsize,  fiveboxsize,  1.0),
+    (1-fiveboxsize, 0.0, 1.0,   fiveboxsize),
+    (1-fiveboxsize, 1-fiveboxsize, 1.0, 1.0),
+    (0.5-fiveboxsize/2.0, 0.5-fiveboxsize/2.0, 0.5+fiveboxsize/2.0, 0.5+fiveboxsize/2.0)
 ]
 
 def CalculateMD5Hash(file):
@@ -53,79 +62,73 @@ def subImage(Img, FracBox):
     top = round(height*FracBox[3])
     return Img.crop((left, bottom, right, top))
 
-def hsv5hash(Img, **kwargs):
-    ''' Calculate a hash that stores info about the colour histogram 
-    after having split the image in 5 regions'''
+def colhash(Img, colorspace=None, five=False):
+    ''' Regrouped colour hashing function to avoid repeating code.'''
 
-    # open and convert to HSV
+    #requested colorspace defaults to HSV
+    cspace = colorspace if colorspace else 'HSV'
+    # one box or five boxes requested
+    boxes = fiveboxes if five else onebox
+
+    # The image is not in the requested mode, convert
+    if not Img.mode == cspace:
+        Img = Img.convert(cspace)
+
     # resample to speed up the calculation
-    HSV = Img.convert("HSV").resize((100,100), Image.NEAREST)
-    H = HSV.getchannel('H').getdata()
-    S = HSV.getchannel('S').getdata()
-    V = HSV.getchannel('V').getdata()
+    Img = Img.resize((100,100), Image.NEAREST)
+
+    # split in bands
+    channels = [ch.getdata() for ch in Img.split()]
 
     values = []
-    for box in hsv5boxes:
-        Hsub = list(subImage(H, box))
-        medianH = round(stats.median(Hsub))
-        Hsub = [(h-medianH+128) % 255 for h in Hsub]
-        Ssub = subImage(S, box)
-        Vsub = subImage(V, box)
-        quantH = stats.quantiles(Hsub)
-        quantS = stats.quantiles(Ssub)
-        quantV = stats.quantiles(Vsub)
-
-        values.extend([
-            round(medianH),
-            round(quantH[2]-quantH[0]),
-            round(quantS[1]),
-            round(quantS[2]-quantS[0]),
-            round(quantV[1]),
-            round(quantV[2]-quantV[0]),
-        ])
-
+    # get measurements for each box
+    for bx in boxes:
+        # get a measurement for each channel
+        for idx, ch in enumerate(channels):
+            data = subImage(ch, bx)
+            if cspace == 'HSV' and idx == 1:
+                data = list(data)
+                medianH = stats.median(data)
+                quant = stats.quantiles([(h-medianH+128) % 255 for h in data])
+                values.append(round(medianH))
+                values.append(round(quant[2] - quant[0]))
+            else:
+                quant = stats.quantiles(data)
+                values.append(round(quant[1]))
+                values.append(round(quant[2] - quant[0]))
     return values
 
 def hsvhash(Img, **kwargs):
-    ''' Calculate a hash that stores info about the colour histogram'''
+    return colhash(Img, colorspace='HSV', five=False)
 
-    # open and convert to HSV
-    # resample to speed up the calculation
-    HSV = Img.convert("HSV").resize((100,100), Image.NEAREST)
+def hsv5hash(Img, **kwargs):
+    return colhash(Img, colorspace='HSV', five=True)
 
-    # for each LAYER (H,S,L) record some information about
-    # the position of the peak and the width of the distribution
-    # H needs special treatment because if is circular wrapping around
-    # from 255 back to 0
-    H = list(HSV.getchannel('H').getdata())
-    # center the mode on 128 and take the modulus
-    medianH = stats.median(H)
-    H = [(h-medianH+128) % 255 for h in H]
-    S = HSV.getchannel('S').getdata()
-    V = HSV.getchannel('V').getdata()
-    quantH = stats.quantiles(H)
-    quantS = stats.quantiles(S)
-    quantV = stats.quantiles(V)
+def rgbhash(Img, **kwargs):
+    return colhash(Img, colorspace='RGB', five=False)
 
-    values = [
-        round(medianH),
-        round(quantH[2]-quantH[0]),
-        round(quantS[1]),
-        round(quantS[2]-quantS[0]),
-        round(quantV[1]),
-        round(quantV[2]-quantV[0]),
-    ]
-    return values
+def rgb5hash(Img, **kwargs):
+    return colhash(Img, colorspace='RGB', five=True)
+
+def lhash(Img, **kwargs):
+    return colhash(Img, colorspace='L', five=False)
+
+def l5hash(Img, **kwargs):
+    return colhash(Img, colorspace='L', five=True)
 
 def CalculateImageHash(args):
     md5, FullPath, hashName = args
     funcdict = {
-        'ahash': average_hash,
-        'dhash': dhash,
-        'phash': phash,
-        'whash': whash,
-        'hsvhash': hsvhash,
-        'hsv5hash': hsv5hash,
+        'Average': average_hash,
+        'Difference': dhash,
+        'Perception': phash,
+        'Wavelet': whash,
+        'HSV': hsvhash,
+        'HSV (5 regions)': hsv5hash,
+        'RGB': rgbhash,
+        'RGB (5 regions)': rgb5hash,
+        'Luminosity': lhash,
+        'Luminosity (5 regions)': l5hash,
         }
     return (md5, funcdict[hashName](PP.imageOpen(FullPath), hash_size=8))
 
