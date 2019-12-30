@@ -23,11 +23,14 @@ two pictures are. These are the panels in the left section of the
 finder window. You can activate a condition by clicking on it name.
 The following options exist:
 
-* Some similarity metrics from ImageHash (optional).
+* Some gradient metrics adapted from ImageHash (dhash). Basically these
+  measure whether two images have similar patterns of brighter and
+  darker regions.
 
-* I have also implemented a measurement of how similar the colours are
+* I have also implemented measurements of how similar the colours are
 between two images, as well as between 5 regions (the four corners and
-the central part).
+the central part). The measurement in HSV (hue-saturation-value) is
+supposed the best reflect how human perceive image information.
 
 * You can further select the maximum allowed time-span between the
 moments the pictures were taken in order to be considered a match.
@@ -169,12 +172,11 @@ should normally come with your python
 
 * [pillow](https://python-pillow.org/) for image reading and processing.
 
-* [imageHash](https://github.com/JohannesBuchner/imagehash) for
-calculating image hashes as a means to compare images. If this package
-is available additional conditions can be used.
-
 * The tooltip code is adapted from an example found on
   [Daniweb](https://www.daniweb.com/programming/software-development/code/484591/a-tooltip-class-for-tkinter).
   
 Some of the algorithms used have been inspired by code found at
-[imagedupes](https://github.com/ghemsley/imagedupes) and [pyimagesearch](https://www.pyimagesearch.com/2014/12/01/complete-guide-building-image-search-engine-python-opencv/)
+[imagedupes](https://github.com/ghemsley/imagedupes), 
+[pyimagesearch](https://www.pyimagesearch.com/2014/12/01/complete-guide-building-image-search-engine-python-opencv/)
+and [imageHash](https://github.com/JohannesBuchner/imagehash).
+

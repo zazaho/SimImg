@@ -1,3 +1,7 @@
+version 0.5.1 (SH Dec 30 2019)
+- removed ImageHash dependency
+- replaced dhash (horizontal and vertical) versions by my own pure python version
+
 version 0.5.0 (SH Dec 27 2019)
 - fully functional version
 - adapted some text to be more user friendly and less technical
@@ -19,4 +23,3 @@ version 0.4.1 (SH Dec 17 2019):
 
 version 0.4 (SH Dec 16 2019):
 - first functional version uploaded to PyPi
-

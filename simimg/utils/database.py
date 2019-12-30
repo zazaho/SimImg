@@ -1,10 +1,5 @@
 import os
 import sqlite3
-try:
-    from imagehash import hex_to_hash
-except ModuleNotFoundError:
-    def hex_to_hash():
-        pass
 import simimg.utils.handyfunctions as HF
 
 def CreateDBConnection(db_file):
@@ -54,16 +49,14 @@ def CloseDBConnection(db_connection):
 def GetHashValueFromDataBase(md5, hashname, db_connection=None):
     # which function to use to translate the string to hash
     convDict = {
-        'Average':hex_to_hash,
-        'Difference':hex_to_hash,
-        'Perception':hex_to_hash,
-        'Wavelet':hex_to_hash,
         'HSV':HF.hexstring2array,
         'HSV (5 regions)':HF.hexstring2array,
         'RGB':HF.hexstring2array,
         'RGB (5 regions)':HF.hexstring2array,
         'Luminosity':HF.hexstring2array,
         'Luminosity (5 regions)':HF.hexstring2array,
+        'Horizontal':HF.hexstring2array,
+        'Vertical':HF.hexstring2array,
         }
     try:
         db_cursor = db_connection.cursor()
@@ -87,16 +80,14 @@ def SetHashValues(Md5HashValueTuples, hashname, db_connection=None):
 
     # which function to use to translate the hash to string
     convDict = {
-        'Average':str,
-        'Difference':str,
-        'Perception':str,
-        'Wavelet':str,
         'HSV':HF.array2hexstring,
         'HSV (5 regions)':HF.array2hexstring,
         'RGB':HF.array2hexstring,
         'RGB (5 regions)':HF.array2hexstring,
         'Luminosity':HF.array2hexstring,
         'Luminosity (5 regions)':HF.array2hexstring,
+        'Horizontal':HF.array2hexstring,
+        'Vertical':HF.array2hexstring,
         }
 
     tupled_data = [(md5, hashname, convDict[hashname](imagehashvalue)) for md5, imagehashvalue in Md5HashValueTuples]

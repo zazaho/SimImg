@@ -1,4 +1,1 @@
 pillow
-
-[imagehashing]
-ImageHash

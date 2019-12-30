@@ -8,6 +8,8 @@
 '''
 import math
 import statistics as stats
+from operator import add
+import functools
 import tkinter as tk
 from tkinter import ttk
 import simimg.classes.textscale as TS
@@ -76,14 +78,14 @@ class ConditionFrame(tk.Frame):
     def matchingGroups(self, candidates):
         pass
 
-class HashCondition(ConditionFrame):
-    name = 'HASHING DISTANCE'
+class GradientCondition(ConditionFrame):
+    name = 'GRADIENTS'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.Combo = None
         self.Scale = None
         self.ScaleTip = None
-        self.method = "Average"
+        self.method = "Horizontal"
         self.limit = 14
         self.limitVar = tk.IntVar()
         self.limitVar.set(self.limit)
@@ -96,7 +98,7 @@ class HashCondition(ConditionFrame):
     def _makeAdditionalWidgets(self):
         self.Combo = ttk.Combobox(
             self,
-            values=["Average", "Difference", "Perception", "Wavelet"],
+            values=["Horizontal", "Vertical"],
             width=15,
             state="readonly",
         )
@@ -146,12 +148,14 @@ class HashCondition(ConditionFrame):
 
     def matchingGroups(self, candidates):
         def theymatch(md5a, md5b, values=None):
-            absdiff = abs(
-                self.Ctrl.FODict[md5a][0].hashDict[self.method] -
-                self.Ctrl.FODict[md5b][0].hashDict[self.method]
+            hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
+            hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
+            dist = functools.reduce(
+                add,
+                [format(hashA[i]^hashB[i], 'b').count('1') for i in range(len(hashA))]
             )
-            values.append(absdiff)
-            return absdiff <= self.limit
+            values.append(dist)
+            return dist <= self.limit
 
         # check that the widget parameters are different from before
         # if not simply return the matchingGroupsList from before
@@ -179,7 +183,10 @@ class HashCondition(ConditionFrame):
         mVals = []
         matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b, values=mVals)]
         mVals.sort()
-        myTip = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9])) if len(mVals) > 9 else 'Min: %d' % (math.ceil(min(mVals)))
+        if mVals:
+            myTip = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9])) if len(mVals) > 9 else 'Min: %d' % (math.ceil(min(mVals)))
+        else:
+            myTip = ''
         self.ScaleTip.text=myTip
 
         self.currentMatchingGroups = []
@@ -263,20 +270,20 @@ class ColorCondition(ConditionFrame):
 
     def matchingGroups(self, candidates):
         def theymatch(md5a, md5b, values=None):
-            foaHash = self.Ctrl.FODict[md5a][0].hashDict[self.method]
-            fobHash = self.Ctrl.FODict[md5b][0].hashDict[self.method]
+            hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
+            hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
             # we need to take care of the median hue value (0, 6, .. th element)
             # when calculating distance because this is a measure that wraps at 255
             # back to 0 the correct distance is the minimum of (h1-h2) % 255 and (h2-h1) % 255
             # in all other cases use abs(v1 -v2)
             if self.method in ['HSV', 'HSV (5 regions)']:
                 distArr = [
-                    abs(foaHash[i]-fobHash[i]) if i % 6
-                    else min((foaHash[i]-fobHash[i]) % 255, (fobHash[i]-foaHash[i]) % 255)
-                    for i in range(len(foaHash))
+                    abs(hashA[i]-hashB[i]) if i % 6
+                    else min((hashA[i]-hashB[i]) % 255, (hashB[i]-hashA[i]) % 255)
+                    for i in range(len(hashA))
                 ]
             else:
-                distArr = [abs(foaHash[i]-fobHash[i]) for i in range(len(foaHash))]
+                distArr = [abs(hashA[i]-hashB[i]) for i in range(len(hashA))]
             val = stats.mean(distArr)
             values.append(val)
             return val <= self.limit
@@ -309,7 +316,10 @@ class ColorCondition(ConditionFrame):
         mVals = []
         matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b, values=mVals)]
         mVals.sort()
-        myTip = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9])) if len(mVals) > 9 else 'Min: %d' % (math.ceil(min(mVals)))
+        if mVals:
+            myTip = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9])) if len(mVals) > 9 else 'Min: %d' % (math.ceil(min(mVals)))
+        else:
+            myTip = ''
         self.ScaleTip.text=myTip
 
         self.currentMatchingGroups = []

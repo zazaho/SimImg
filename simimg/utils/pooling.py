@@ -1,27 +1,9 @@
 import hashlib
 import statistics as stats
+from operator import add
+import functools
 from multiprocessing import Pool
 from PIL import Image
-try:
-    from imagehash import dhash
-except ModuleNotFoundError:
-    def dhash():
-        pass
-try:
-    from imagehash import average_hash
-except ModuleNotFoundError:
-    def average_hash():
-        pass
-try:
-    from imagehash import phash
-except ModuleNotFoundError:
-    def phash():
-        pass
-try:
-    from imagehash import whash
-except ModuleNotFoundError:
-    def whash():
-        pass
 import simimg.utils.database as DB
 import simimg.utils.pillowplus as PP
 
@@ -75,7 +57,7 @@ def colhash(Img, colorspace=None, five=False):
         Img = Img.convert(cspace)
 
     # resample to speed up the calculation
-    Img = Img.resize((100,100), Image.NEAREST)
+    Img = Img.resize((100,100), Image.ANTIALIAS)
 
     # split in bands
     channels = [ch.getdata() for ch in Img.split()]
@@ -116,19 +98,38 @@ def lhash(Img, **kwargs):
 def l5hash(Img, **kwargs):
     return colhash(Img, colorspace='L', five=True)
 
+def mydhash(Img, doVertical=False):
+    if doVertical:
+        i8x8 = Img.convert('L').resize((8, 9), Image.BOX).transpose(Image.ROTATE_90)
+    else:
+        i8x8 = Img.convert('L').resize((9, 8), Image.BOX)
+
+    values = []
+    for y in range(8):
+        val = functools.reduce(
+            add,
+            [(i8x8.getpixel((x+1, y)) > i8x8.getpixel((x, y)))*(2**x) for x in range(8)]
+        )
+        values.append(val)
+    return values
+
+def mydhash_horizontal(Img, **kwargs):
+    return mydhash(Img)
+
+def mydhash_vertical(Img, **kwargs):
+    return mydhash(Img, doVertical=True)
+
 def CalculateImageHash(args):
     md5, FullPath, hashName = args
     funcdict = {
-        'Average': average_hash,
-        'Difference': dhash,
-        'Perception': phash,
-        'Wavelet': whash,
         'HSV': hsvhash,
         'HSV (5 regions)': hsv5hash,
         'RGB': rgbhash,
         'RGB (5 regions)': rgb5hash,
         'Luminosity': lhash,
         'Luminosity (5 regions)': l5hash,
+        'Horizontal': mydhash_horizontal,
+        'Vertical': mydhash_vertical,
         }
     return (md5, funcdict[hashName](PP.imageOpen(FullPath), hash_size=8))
 
