@@ -1,3 +1,6 @@
+version 0.5.2 (SH Dec 30 2019)
+- made imports relative
+
 version 0.5.1 (SH Dec 30 2019)
 - removed ImageHash dependency
 - replaced dhash (horizontal and vertical) versions by my own pure python version
