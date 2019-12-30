@@ -2,7 +2,7 @@
 import hashlib
 from datetime import datetime
 from PIL import Image, ExifTags
-import simimg.utils.pillowplus as PP
+from ..utils import pillowplus as PP
 
 class FileObject():
     ' File object that contains all information relating to one file on disk '

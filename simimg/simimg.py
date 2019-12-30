@@ -3,9 +3,9 @@
 import os
 from tkinter import PhotoImage
 import tkinter as tk
-import simimg.classes.configuration as CONF
-import simimg.classes.controller as CTRL
-import simimg.classes.scrollframe as SF
+from .classes import configuration as CONF
+from .classes import controller as CTRL
+from .classes import scrollframe as SF
 
 class simim_app(tk.Tk):
     ''' Main window for sorting and managing pictures'''

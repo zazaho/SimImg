@@ -12,8 +12,8 @@ from operator import add
 import functools
 import tkinter as tk
 from tkinter import ttk
-import simimg.classes.textscale as TS
-import simimg.classes.tooltip as TT
+from . import textscale as TS
+from . import tooltip as TT
 
 class ConditionFrame(tk.Frame):
     name = ''

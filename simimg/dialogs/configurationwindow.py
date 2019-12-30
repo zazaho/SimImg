@@ -3,8 +3,8 @@ import os
 import tkinter as tk
 from tkinter import font as tkfont
 from tkinter import filedialog as tkfiledialog
-import simimg.classes.tooltip as TT
-import simimg.utils.pillowplus as PP
+from ..classes import tooltip as TT
+from ..utils import pillowplus as PP
 
 class CfgWindow(tk.Toplevel):
     def __init__(self, parent, Controller=None):

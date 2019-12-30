@@ -142,10 +142,15 @@ def sortMd5ListsByFilename(md5Lists, FilenameMd5Dict):
     ''' return the lists of list of md5s sorted by filename
     for the first md5 in each list '''
     result = []
+    md5sDone = []
     firstmd5sDict = {ml[0]:ml for ml in md5Lists}
     for f in sorted(FilenameMd5Dict):
         md5 = FilenameMd5Dict[f]
+        # if this md5 is already in the list dont add it again
+        if md5 in md5sDone:
+            continue
         if not md5 in firstmd5sDict:
             continue
         result.append(firstmd5sDict[md5])
+        md5sDone.append(md5)
     return result

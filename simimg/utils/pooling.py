@@ -4,8 +4,8 @@ from operator import add
 import functools
 from multiprocessing import Pool
 from PIL import Image
-import simimg.utils.database as DB
-import simimg.utils.pillowplus as PP
+from . import database as DB
+from . import pillowplus as PP
 
 # box that contains the whole image
 onebox = [(0.0, 0.0, 1.0, 1.0)]

@@ -8,17 +8,17 @@ import glob
 import itertools
 from tkinter import filedialog as tkfiledialog
 from PIL import ImageTk
-import simimg.classes.conditionmodules as CM
-import simimg.classes.fileobject as FO
-import simimg.classes.imageframe as IF
-import simimg.classes.toolbar as TB
-import simimg.dialogs.confirmdeletedialog as CDD
-import simimg.dialogs.configurationwindow as CW
-import simimg.dialogs.infowindow as IW
-import simimg.dialogs.viewer as VI
-import simimg.utils.database as DB
-import simimg.utils.handyfunctions as HF
-import simimg.utils.pooling as POOL
+from . import conditionmodules as CM
+from . import fileobject as FO
+from . import imageframe as IF
+from . import toolbar as TB
+from ..dialogs import confirmdeletedialog as CDD
+from ..dialogs import configurationwindow as CW
+from ..dialogs import infowindow as IW
+from ..dialogs import viewer as VI
+from ..utils import database as DB
+from ..utils import handyfunctions as HF
+from ..utils import pooling as POOL
 
 class Controller():
     'Controller object that initializes the program and reacts to events.'

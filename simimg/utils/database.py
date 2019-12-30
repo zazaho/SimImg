@@ -1,6 +1,6 @@
 import os
 import sqlite3
-import simimg.utils.handyfunctions as HF
+from ..utils import handyfunctions as HF
 
 def CreateDBConnection(db_file):
     'Create a connection to the DataBase'

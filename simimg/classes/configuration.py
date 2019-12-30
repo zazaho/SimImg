@@ -1,7 +1,7 @@
 import sys
 import os.path
 import configparser
-import simimg.utils.handyfunctions as HF
+from ..utils import handyfunctions as HF
 
 class Configuration():
     ' Object that can initialise, change and inform about App configuration'

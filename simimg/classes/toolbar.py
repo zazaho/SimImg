@@ -1,9 +1,9 @@
 ''' Modules that defines a oolbar with action items'''
 import os
 import tkinter as tk
-import simimg.classes.tooltip as TT
-import simimg.dialogs.infowindow as IW
-import simimg.utils.pillowplus as PP
+from . import tooltip as TT
+from ..dialogs import infowindow as IW
+from ..utils import pillowplus as PP
 
 class Toolbar(tk.Frame):
     " A toolbar frame that holds the action buttons"

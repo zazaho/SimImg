@@ -1,6 +1,6 @@
 import tkinter as tk
 from PIL import ImageTk
-import simimg.utils.pillowplus as PP
+from ..utils import pillowplus as PP
 
 class viewer(tk.Toplevel):
     "A viewer window to display the selected pictures"
