@@ -1,3 +1,8 @@
+version 0.6.0 (SH Dec 31 2019)
+- use ttk for theming
+- remove most of the custom style for better fit with host OS
+- clicking anywhere in the thumb pane deselects
+
 version 0.5.2 (SH Dec 30 2019)
 - made imports relative
 

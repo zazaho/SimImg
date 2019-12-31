@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox as tkmessagebox
 from PIL import ImageTk
 from ..utils import pillowplus as PP
 
@@ -59,6 +60,7 @@ class viewer(tk.Toplevel):
     # keys
     def _key(self, event):
         keyDict = {
+            'space':self._showNext,
             'n':self._showNext,
             'Right':self._showNext,
             'p':self._showPrevious,
@@ -128,12 +130,12 @@ The scrollwheel should also work
 
 The following keys are defined:
 i, F1: show this help
-n, Right: show the next image
+n, Right, Spacebar: show the next image
 p, Left: show the previous images
 d, Delete: delete the file from your hard disk!
 q, Escape: quit the viewer
 '''
-        tk.messagebox.showinfo("Information", msg, parent=self)
+        tkmessagebox.showinfo("Information", msg, parent=self)
 
     def _exitViewer(self):
         self.Ctrl.Cfg.set('viewergeometry', self.geometry())

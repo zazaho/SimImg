@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 ''' Project to display similar images from an image catalog '''
 import os
-from tkinter import PhotoImage
 import tkinter as tk
+from tkinter import ttk
 from .classes import configuration as CONF
 from .classes import controller as CTRL
 from .classes import scrollframe as SF
@@ -21,21 +21,38 @@ class simim_app(tk.Tk):
         # Object that hold configuration database
         self.Cfg = CONF.Configuration(ScriptPath=ScriptPath)
 
-        appIcon = os.path.join(
-            self.Cfg.get('iconpath'),
-            'simimg.png'
-        )
         self.title("Similar Image Finder")
-        self.tk.call('wm', 'iconphoto', self._w, PhotoImage(file=appIcon))
+        self.tk.call('wm', 'iconphoto', self._w,
+                     tk.PhotoImage(
+                         file=os.path.join(self.Cfg.get('iconpath'),'simimg.png')
+                     )
+        )
         self.geometry(self.Cfg.get('findergeometry'))
 
-        self.Statusbar = tk.Label(self,text="...", bd=1, relief="sunken", anchor="w")
+        # ttk widget style section
+        style = ttk.Style()
+        style.configure("LargeText.TButton", font=('', 11))
+        style.configure("LargeText.TLabel", font=('', 11))
+        style.configure("LargeText.TCheckbutton", font=('', 11))
+        style.configure("BoldText.TLabel", font=('', 12, 'bold'))
+
+        style.configure("Picture.TButton", relief="flat", padding=0)
+        style.configure("Thumb.TButton", relief="flat", padding=0, font=('', 8))
+
+        style.configure("Tooltip.TLabel",
+                        background='#FFFFE1',
+                        padding=3,
+                        relief="solid",
+                        borderwidth=1,
+                        font=('', 11),
+                        )
+
+        self.Statusbar = ttk.Label(self, text="...", relief="sunken")
         self.Statusbar.pack(side="bottom", fill='x')
-        self.ModulePane = tk.Frame(self)
+        self.ModulePane = ttk.Frame(self)
         self.ModulePane.pack(side="left", fill='y')
         self.ThumbPane = SF.ScrollFrame(self)
         self.ThumbPane.pack(side="right", fill="both", expand=True)
-
         # The object responsible for dealing with the data
         # and the display of those data
         self.Ctrl = CTRL.Controller(self)

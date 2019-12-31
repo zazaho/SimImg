@@ -1,17 +1,18 @@
 import tkinter as tk
+from tkinter import ttk
 
 # ************************
 # Scrollable Frame Class
 # ************************
-class ScrollFrame(tk.Frame):
+class ScrollFrame(ttk.Frame):
     ''' Frame with two scrollbars two be able to view content bigger than the window '''
     def __init__(self, parent):
         super().__init__(parent)
 
         self.canvas = tk.Canvas(self)
-        self.viewPort = tk.Frame(self.canvas)
-        self.hsb = tk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)
-        self.vsb = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.viewPort = ttk.Frame(self.canvas)
+        self.hsb = ttk.Scrollbar(self, orient="horizontal", command=self.canvas.xview)
+        self.vsb = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
 
         self.canvas.configure(xscrollcommand=self.hsb.set)
         self.canvas.configure(yscrollcommand=self.vsb.set)

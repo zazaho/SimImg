@@ -5,7 +5,6 @@ the fileinfo objects and the display.
 import sys
 import os
 import glob
-import itertools
 from tkinter import filedialog as tkfiledialog
 from PIL import ImageTk
 from . import conditionmodules as CM
@@ -45,6 +44,7 @@ class Controller():
         self.TopWindow.bind("<Key>", self._onKeyPress)
         # bind clicking in an empty area of the thumbPane to unselectThumbnails
         self.TopWindow.ThumbPane.viewPort.bind("<Button-1>",  self.unselectThumbnails)
+        self.TopWindow.ThumbPane.canvas.bind("<Button-1>",  self.unselectThumbnails)
 
         # put the toolbar in the self.TopWindow.ModulePane
         Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
@@ -66,7 +66,7 @@ class Controller():
         self.startDatabase()
         self._getFileList()
         self._processFilelist()
-        self.onFileListChanged()
+        self.onChange()
 
     def _onKeyPress(self, event):
         if event.keysym == 'F1':
@@ -109,7 +109,7 @@ class Controller():
         CW.CfgWindow(self.TopWindow, Controller=self)
         if self.Cfg.get('thumbnailsize') != oldThumbsize or self.Cfg.get('showbuttons') != oldShowButtons:
             self._setThumbnails()
-            self._onThumbnailsChanged()
+            self.onChange()
 
     def addFolder(self):
         selectedFolder = tkfiledialog.askdirectory()
@@ -119,7 +119,7 @@ class Controller():
             return
         self._getFileList(Add=selectedFolder)
         self._processFilelist()
-        self.onFileListChanged()
+        self.onChange()
 
     def openFolder(self):
         selectedFolder = tkfiledialog.askdirectory()
@@ -129,7 +129,7 @@ class Controller():
             return
         self._getFileList(Replace=selectedFolder)
         self._processFilelist()
-        self.onFileListChanged()
+        self.onChange()
 
     def _showInStatusbar(self, txt):
         self.TopWindow.Statusbar.config(text=txt)
@@ -232,9 +232,9 @@ class Controller():
         # because there are no criteria display thumbnails in order
         # calculate how many thumbs fit in the viewPort
         maxW = self.TopWindow.ThumbPane.winfo_width()
-        thumbW = 2 * self.Cfg.get('thumbnailborderwidth') + self.Cfg.get('thumbnailsize')
+        thumbW = self.Cfg.get('thumbnailsize')
         nx = maxW // thumbW
-
+        
         # maximum nx*ny thumbs to show
         thumbToShow = 0
         for md5 in HF.sortMd5sByFilename(self.FODict.keys(), self._MD5HashesDict):
@@ -265,27 +265,27 @@ class Controller():
         self._TPPositionDict[(X, Y)] = ThisThumb
 
     def _removeThumbXY(self, X, Y):
-        ThisThumb = self._TPPositionDict[(X,Y)] if (X,Y) in self._TPPositionDict else None
-        if ThisThumb:
+        if (X,Y) in self._TPPositionDict:
+            self._TPPositionDict[(X,Y)].destroy()
             del self._TPPositionDict[(X, Y)]
-            ThisThumb.destroy()
 
     def _removeAllThumbs(self):
         for ThisThumb in self._TPPositionDict.values():
             ThisThumb.destroy()
         self._TPPositionDict = {}
 
-    def _getMatchingGroups(self, activePairs):
+    def _getMatchingGroups(self):
         ''' given the matching groups returned by each active condition module
            make a master list of image groups '''
 
         self._matchingGroups = []
         matchingGroupsList = []
         MMMatchingGroupsList = []
+        activeMD5s = [md5 for md5, FO in self.FODict.items() if FO[0].active]
         for cm in self._CMList:
             if not cm.active:
                 continue
-            thisMatchingGroups = cm.matchingGroups(activePairs)
+            thisMatchingGroups = cm.matchingGroups(activeMD5s)
             matchingGroupsList.append(thisMatchingGroups)
             if cm.mustMatch.get():
                 MMMatchingGroupsList.append(thisMatchingGroups)
@@ -319,7 +319,6 @@ class Controller():
                 uniqueMatchingGroups.append(MG)
 
         self._matchingGroups = uniqueMatchingGroups
-        self._matchingGroups.sort()
 
     def _displayMatchingGroups(self):
         #clear messages from the statusbar
@@ -336,42 +335,19 @@ class Controller():
                 self._showInStatusbar("Warning too many matches: truncated to ~%s" % self._maxThumbnails)
                 return
 
-    def onConditionChanged(self):
+    def onChange(self):
         # put everything to default
         self._matchingGroups = []
         # make sure to clean the interface
         self._removeAllThumbs()
-
-        activeMD5s = [md5 for md5, FO in self.FODict.items() if FO[0].active]
-        activeMD5s.sort()
-
-        activePairs = list(itertools.combinations(activeMD5s,2))
-        activePairs.sort()
-
-        self._getMatchingGroups(activePairs)
-
+        self._getMatchingGroups()
         self._displayMatchingGroups()
-
-    def onFileListChanged(self):
-        self.onConditionChanged()
-
-    def _onThumbnailsChanged(self):
-        # check if any conditions are active
-        someCMActive = False
-        for cm in self._CMList:
-            if cm.active:
-                someCMActive = True
-                break
-        if someCMActive:
-            self._displayMatchingGroups()
-        else:
-            self._createViewWithoutConditions()
 
     def resetThumbnails(self):
         for foList in self.FODict.values():
             for fo in foList:
                 fo.active = True
-        self.onFileListChanged()
+        self.onChange()
 
     # functions related to the selected thumbnails
     def _selectedFOs(self, firstFOOnly = False):
@@ -392,7 +368,7 @@ class Controller():
     def hideSelected(self):
         for fo in self._selectedFOs():
             fo.active = False
-        self.onFileListChanged()
+        self.onChange()
 
     def _deleteFile(self, Filename):
         if self.Cfg.get('gzipinsteadofdelete'):
@@ -430,7 +406,7 @@ class Controller():
                 self._deleteFile(filename)
 
         if somethingDeleted:
-            self.onFileListChanged()
+            self.onChange()
         return somethingDeleted
 
     def deleteSelected(self):

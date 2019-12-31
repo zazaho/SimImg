@@ -27,7 +27,6 @@ class Configuration():
     def _setDefaultConfiguration(self):
         'Default configuration parameters'
         # not yet? configurable
-        self.set('thumbnailborderwidth', 3)
         self.set('maxthumbnails', 300)
         # can be overwritten from ini file
         self.set('searchinsubfolders', False)

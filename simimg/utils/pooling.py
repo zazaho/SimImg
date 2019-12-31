@@ -57,7 +57,7 @@ def colhash(Img, colorspace=None, five=False):
         Img = Img.convert(cspace)
 
     # resample to speed up the calculation
-    Img = Img.resize((100,100), Image.ANTIALIAS)
+    Img = Img.resize((100,100), Image.BOX)
 
     # split in bands
     channels = [ch.getdata() for ch in Img.split()]

@@ -9,13 +9,14 @@
 import math
 import statistics as stats
 from operator import add
+import itertools
 import functools
 import tkinter as tk
 from tkinter import ttk
 from . import textscale as TS
 from . import tooltip as TT
 
-class ConditionFrame(tk.Frame):
+class ConditionFrame(ttk.Frame):
     name = ''
     " A frame that holds one selection criterion with options"
     def __init__(self, parent, Controller=None):
@@ -24,112 +25,151 @@ class ConditionFrame(tk.Frame):
         # keep a handle of the controller object
         self.Ctrl = Controller
 
-        self.config(borderwidth=1,relief="sunken")
+        self.config(borderwidth=1, relief="sunken")
 
-        self.label = None
+        self._label = None
         self.active = False
         self.mustMatch = tk.BooleanVar()
+        self._mustMatchToggle = None
+        self._childWidgets = []
 
-        self.currentConfig = {}
-        self.currentMatchingGroups = []
+        self._currentConfig = {}
+        self._currentMatchingGroups = []
 
         self._makeBaseWidgets()
-        self.setActive(False)
-        self._candidates = {}
+        self._setActive(False)
+        self._md5s = {}
 
     def _makeBaseWidgets(self):
-        self.label = tk.Label(self, text=self.name, anchor='w')
-        self.label.bind('<Button-1>', self._activeToggled)
-        self.mustMatchToggle = tk.Checkbutton(self,
-                                              text="Must Match",
-                                              anchor='w',
-                                              variable=self.mustMatch,
-                                              command=self._mustMatchToggled
+        self._label = ttk.Label(self, text=self.name)
+        self._label.bind('<Button-1>', self._activeToggled)
+        self._mustMatchToggle = ttk.Checkbutton(
+            self,
+            text="Must Match",
+            variable=self.mustMatch,
+            command=self._somethingChanged
         )
 
-        self.childWidgets = [self.mustMatchToggle]
-        self.label.pack(fill='x')
-        self.mustMatchToggle.pack(fill='x')
+        self._childWidgets = [self._mustMatchToggle]
+        self._label.pack(fill='x')
+        self._mustMatchToggle.pack(fill='x')
 
-    def setActive(self, value):
+    def _setActive(self, value):
         self.active = value
         if self.active:
             self.config(relief="raised")
-            for widget in self.childWidgets:
+            for widget in self._childWidgets:
                 if widget.winfo_class() == 'TCombobox':
                     widget.config(state="readonly")
                 else:
                     widget.config(state="normal")
         else:
             self.config(relief="sunken")
-            for widget in self.childWidgets:
+            for widget in self._childWidgets:
                 widget.config(state="disabled")
 
-    def _activeToggled(self, event):
-        self.setActive(not self.active)
-        self._somethingChanged()
-        
-    def _mustMatchToggled(self):
+    def _activeToggled(self, *args):
+        self._setActive(not self.active)
         self._somethingChanged()
 
     def _somethingChanged(self, *args):
+        self.Ctrl.onChange()
+
+    def _updateFromPrevious(self, md5s):
+        # check that the md5s or the widget parameters are different from before
+        # if not simply return false to indicate that nothing is updated
+        foundADifference = (self._md5s != set(md5s))
+        for param in self._currentConfig:
+            if foundADifference:
+                # one difference is enough
+                break
+            if getattr(self, param) != self._currentConfig[param]:
+                foundADifference = True
+
+        if not foundADifference:
+            return False
+
+        # store the current values for posterity
+        self._md5s = set(md5s)
+        for param in self._currentConfig:
+            self._currentConfig[param] = getattr(self, param)
+        return True
+
+    def _theymatch(self, md5a, md5b, **kwargs):
         pass
 
-    def matchingGroups(self, candidates):
-        pass
+    def _getMatchingGroups(self, **kwargs):
+        cand = list(itertools.combinations(self._md5s,2))
+        matches = [(a, b) for a, b in cand if self._theymatch(a, b, **kwargs)]
+        self._currentMatchingGroups = []
+        # make a FULL SORTED group list for EACH MD5 ONE ENTRY
+        # this is important for the merging of groups later
+        md5s = list(self._md5s)
+        md5s.sort()
+        for thismd5 in md5s:
+            # put atleast the first image in each matchingGroups
+            dummy = [thismd5]
+            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
+            dummy = list(set(dummy))
+            dummy.sort()
+            self._currentMatchingGroups.append(dummy)
+
+    def matchingGroups(self, md5s):
+        #if nothing changed _updateFromPrevious will return False
+        if not self._updateFromPrevious(md5s):
+            return self._currentMatchingGroups
+        self._getMatchingGroups()
+        return self._currentMatchingGroups
 
 class GradientCondition(ConditionFrame):
     name = 'GRADIENTS'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        self.Combo = None
-        self.Scale = None
-        self.ScaleTip = None
+        self._Combo = None
+        self._Scale = None
+        self._ScaleTip = None
         self.method = "Horizontal"
         self.limit = 14
-        self.limitVar = tk.IntVar()
-        self.limitVar.set(self.limit)
-        self.currentConfig = {'method':'', 'limit':-1}
-        self.currentMatchingGroups = []
+        self._limitVar = tk.IntVar()
+        self._limitVar.set(self.limit)
+        self._currentConfig = {'method':'', 'limit':-1}
+        self._currentMatchingGroups = []
         self._makeAdditionalWidgets()
-        self.setActive(False)
+        self._setActive(False)
         self._mouseIsPressed = False
         
     def _makeAdditionalWidgets(self):
-        self.Combo = ttk.Combobox(
+        self._Combo = ttk.Combobox(
             self,
             values=["Horizontal", "Vertical"],
             width=15,
             state="readonly",
         )
-        self.Combo.set(self.method)
-        self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
-        self.Scale = tk.Scale(self,
-                              from_= 1, to=50,
-                              variable=self.limitVar,
-                              takefocus=1,
-                              command=self._scaleChanged,
-                              orient="horizontal"
+        self._Combo.set(self.method)
+        self._Combo.bind("<<ComboboxSelected>>", self._comboChanged)
+        self._Scale = tk.Scale(self,
+                               from_= 1, to=50,
+                               variable=self._limitVar,
+                               takefocus=1,
+                               command=self._scaleChanged,
+                               orient="horizontal",
         )
-        self.Scale.bind("<ButtonPress-1>", self._scalePressed)
-        self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
-        self.Scale.bind("<Control-a>", self._doSelectAll)
-        self.ScaleTip = TT.Tooltip(self.Scale, text='')
-        self.Combo.pack()
-        self.Scale.pack()
-        self.childWidgets.extend([self.Combo, self.Scale])
+        self._Scale.bind("<ButtonPress-1>", self._scalePressed)
+        self._Scale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self._Scale.bind("<Control-a>", self._doSelectAll)
+        self._ScaleTip = TT.Tooltip(self._Scale, text='')
+        self._Combo.pack()
+        self._Scale.pack()
+        self._childWidgets.extend([self._Combo, self._Scale])
 
     def _doSelectAll(self, *args):
         self.Ctrl.selectAllThumbnails()
         return "break"
 
-    def _somethingChanged(self, *args):
-        self.Ctrl.onConditionChanged()
-
     def _comboChanged(self, *args):
-        self.method = self.Combo.get()
-        self.Combo.focus_set()
-        self.Ctrl.onConditionChanged()
+        self.method = self._Combo.get()
+        self._Combo.focus_set()
+        self.Ctrl.onChange()
 
     def _scalePressed(self, *args):
         self._mouseIsPressed = True
@@ -142,116 +182,88 @@ class GradientCondition(ConditionFrame):
         # do nothing while the mouse is down
         if self._mouseIsPressed:
             return
-        self.limit = self.limitVar.get()
-        self.Scale.focus_set()
-        self.Ctrl.onConditionChanged()
+        self.limit = self._limitVar.get()
+        self._Scale.focus_set()
+        self.Ctrl.onChange()
 
-    def matchingGroups(self, candidates):
-        def theymatch(md5a, md5b, values=None):
-            hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
-            hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
-            dist = functools.reduce(
-                add,
-                [format(hashA[i]^hashB[i], 'b').count('1') for i in range(len(hashA))]
-            )
-            values.append(dist)
-            return dist <= self.limit
+    def _theymatch(self, md5a, md5b, values=None):
+        hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
+        hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
+        dist = functools.reduce(
+            add,
+            [format(hashA[i]^hashB[i], 'b').count('1') for i in range(len(hashA))]
+        )
+        values.append(dist)
+        return dist <= self.limit
 
-        # check that the widget parameters are different from before
-        # if not simply return the matchingGroupsList from before
-        if (
-                self._candidates == set(candidates) and
-                self.method == self.currentConfig['method'] and
-                self.limit == self.currentConfig['limit']
-        ):
-            return self.currentMatchingGroups
+    def matchingGroups(self, md5s):
+        # if nothing changed _updateFromPrevious will return False
+        if not self._updateFromPrevious(md5s):
+            return self._currentMatchingGroups
 
-        self._candidates = set(candidates)
-        self.currentConfig['method'] = self.method
-        self.currentConfig['limit'] = self.limit
-
-        #Call this to make sure the hash values for this method are available
+        # Call this to make sure the hash values for this method are available
         self.Ctrl.setImageHashes(hashName=self.method)
 
-        md5s = []
-        for a, b in candidates:
-            md5s.append(a)
-            md5s.append(b)
-        md5s = list(set(md5s))
-        md5s.sort()
-
         mVals = []
-        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b, values=mVals)]
-        mVals.sort()
-        if mVals:
-            myTip = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9])) if len(mVals) > 9 else 'Min: %d' % (math.ceil(min(mVals)))
+        self._getMatchingGroups(values=mVals)
+        if not mVals:
+            self._ScaleTip.text = ''
+        elif len(mVals) < 10:
+            self._ScaleTip.text = 'Min: %d' % (math.ceil(min(mVals)))
         else:
-            myTip = ''
-        self.ScaleTip.text=myTip
+            mVals.sort()
+            self._ScaleTip.text = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9]))
 
-        self.currentMatchingGroups = []
-        for thismd5 in md5s:
-            # put atleast the first image in each matchingGroups
-            dummy = [thismd5]
-            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
-            dummy = list(set(dummy))
-            dummy.sort()
-            self.currentMatchingGroups.append(dummy)
-
-        self.currentMatchingGroups.sort()
-        return self.currentMatchingGroups
+        return self._currentMatchingGroups
 
 class ColorCondition(ConditionFrame):
     name = 'COLOR DISTANCE'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        self.Combo = None
-        self.Scale = None
-        self.ScaleTip = None
+        self._Combo = None
+        self._Scale = None
+        self._ScaleTip = None
         self.method = "HSV (5 regions)"
         self.limit = 10
-        self.limitVar = tk.IntVar()
-        self.limitVar.set(self.limit)
-        self.currentConfig = {'method':'', 'limit':-1}
-        self.currentMatchingGroups = []
+        self._limitVar = tk.IntVar()
+        self._limitVar.set(self.limit)
+        self._currentConfig = {'method':'', 'limit':-1}
+        self._currentMatchingGroups = []
         self._makeAdditionalWidgets()
-        self.setActive(False)
+        self._setActive(False)
         self._mouseIsPressed = False
 
     def _makeAdditionalWidgets(self):
-        self.Combo = ttk.Combobox(
+        self._Combo = ttk.Combobox(
             self,
             values=["HSV", "HSV (5 regions)","RGB", "RGB (5 regions)", "Luminosity", "Luminosity (5 regions)"],
             width=15,
             state="readonly",
         )
-        self.Combo.set(self.method)
-        self.Combo.bind("<<ComboboxSelected>>", self._comboChanged)
-        self.Scale = tk.Scale(self,
+        self._Combo.set(self.method)
+        self._Combo.bind("<<ComboboxSelected>>", self._comboChanged)
+        self._Scale = tk.Scale(self,
                               from_= 1, to=50,
-                              variable=self.limitVar,
+                              variable=self._limitVar,
                               command=self._scaleChanged,
                               orient="horizontal"
         )
-        self.Scale.bind("<ButtonPress-1>", self._scalePressed)
-        self.Scale.bind("<ButtonRelease-1>", self._scaleReleased)
-        self.Scale.bind("<Control-a>", self._doSelectAll)
-        self.ScaleTip = TT.Tooltip(self.Scale, text='')
-        self.Combo.pack()
-        self.Scale.pack()
-        self.childWidgets.extend([self.Combo, self.Scale])
+        self._Scale.bind("<ButtonPress-1>", self._scalePressed)
+        self._Scale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self._Scale.bind("<Control-a>", self._doSelectAll)
+        self._ScaleTip = TT.Tooltip(self._Scale, text='')
+        self._Combo.pack()
+        self._Scale.pack()
+        self._childWidgets.extend([self._Combo, self._Scale])
 
     def _doSelectAll(self, *args):
         self.Ctrl.selectAllThumbnails()
         return "break"
 
-    def _somethingChanged(self, *args):
-        self.Ctrl.onConditionChanged()
-
     def _comboChanged(self, *args):
-        self.method = self.Combo.get()
-        self.Combo.focus_set()
-        self.Ctrl.onConditionChanged()
+        self.method = self._Combo.get()
+        self._Combo.focus_set()
+        self.Ctrl.onChange()
 
     def _scalePressed(self, *args):
         self._mouseIsPressed = True
@@ -264,160 +276,96 @@ class ColorCondition(ConditionFrame):
         # do nothing while the mouse is down
         if self._mouseIsPressed:
             return
-        self.limit = self.limitVar.get()
-        self.Scale.focus_set()
-        self.Ctrl.onConditionChanged()
+        self.limit = self._limitVar.get()
+        self._Scale.focus_set()
+        self.Ctrl.onChange()
 
-    def matchingGroups(self, candidates):
-        def theymatch(md5a, md5b, values=None):
-            hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
-            hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
-            # we need to take care of the median hue value (0, 6, .. th element)
-            # when calculating distance because this is a measure that wraps at 255
-            # back to 0 the correct distance is the minimum of (h1-h2) % 255 and (h2-h1) % 255
-            # in all other cases use abs(v1 -v2)
-            if self.method in ['HSV', 'HSV (5 regions)']:
-                distArr = [
-                    abs(hashA[i]-hashB[i]) if i % 6
-                    else min((hashA[i]-hashB[i]) % 255, (hashB[i]-hashA[i]) % 255)
-                    for i in range(len(hashA))
-                ]
-            else:
-                distArr = [abs(hashA[i]-hashB[i]) for i in range(len(hashA))]
-            val = stats.mean(distArr)
-            values.append(val)
-            return val <= self.limit
+    def _theymatch(self, md5a, md5b, values=None):
+        hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
+        hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
+        # we need to take care of the median hue value (0, 6, .. th element)
+        # when calculating distance because this is a measure that wraps at 255
+        # back to 0 the correct distance is the minimum of (h1-h2) % 255 and (h2-h1) % 255
+        # in all other cases use abs(v1 -v2)
+        if self.method in ['HSV', 'HSV (5 regions)']:
+            distArr = [
+                abs(hashA[i]-hashB[i]) if i % 6
+                else min((hashA[i]-hashB[i]) % 255, (hashB[i]-hashA[i]) % 255)
+                for i in range(len(hashA))
+            ]
+        else:
+            distArr = [abs(hashA[i]-hashB[i]) for i in range(len(hashA))]
+        val = stats.mean(distArr)
+        values.append(val)
+        return val <= self.limit
 
-        # check that the widget parameters are different from before
-        # if not simply return the matchingGroupsList from before
-        # check that the widget parameters are different from before
-        # if not simply return the matchingGroupsList from before
-        if (
-                self._candidates == set(candidates) and
-                self.method == self.currentConfig['method'] and
-                self.limit == self.currentConfig['limit']
-        ):
-            return self.currentMatchingGroups
-
-        self._candidates = set(candidates)
-        self.currentConfig['method'] = self.method
-        self.currentConfig['limit'] = self.limit
+    def matchingGroups(self, md5s):
+        #if nothing changed _updateFromPrevious will return False
+        if not self._updateFromPrevious(md5s):
+            return self._currentMatchingGroups
 
         #Call this to make sure the hash values for this method are available
         self.Ctrl.setImageHashes(hashName=self.method)
 
-        md5s = []
-        for a, b in candidates:
-            md5s.append(a)
-            md5s.append(b)
-        md5s = list(set(md5s))
-        md5s.sort()
-
         mVals = []
-        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b, values=mVals)]
-        mVals.sort()
-        if mVals:
-            myTip = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9])) if len(mVals) > 9 else 'Min: %d' % (math.ceil(min(mVals)))
+        self._getMatchingGroups(values=mVals)
+        if not mVals:
+            self._ScaleTip.text = ''
+        elif len(mVals) < 10:
+            self._ScaleTip.text = 'Min: %d' % (math.ceil(min(mVals)))
         else:
-            myTip = ''
-        self.ScaleTip.text=myTip
+            mVals.sort()
+            self._ScaleTip.text = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9]))
 
-        self.currentMatchingGroups = []
-        for thismd5 in md5s:
-            # put atleast the first image in each matchingGroups
-            dummy = [thismd5]
-            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
-            dummy = list(set(dummy))
-            dummy.sort()
-            self.currentMatchingGroups.append(dummy)
-
-        self.currentMatchingGroups.sort()
-        return self.currentMatchingGroups
+        return self._currentMatchingGroups
 
 class CameraCondition(ConditionFrame):
     name = 'SAME CAMERA'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        self.missingMatchesCheck = None
-        self.missingVar = tk.BooleanVar()
-        self.missing = False
-        self.currentConfig = {'missingmatches':None}
-        self.currentMatchingGroups = []
+        self._missingMatchesCheck = None
+        self._missingVar = tk.BooleanVar()
+        self.missingmatches = False
+        self._currentConfig = {'missingmatches':None}
+        self._currentMatchingGroups = []
         self._makeAdditionalWidgets()
-        self.setActive(False)
+        self._setActive(False)
 
     def _makeAdditionalWidgets(self):
-        self.missingMatchesCheck = tk.Checkbutton(
+        self._missingMatchesCheck = ttk.Checkbutton(
             self,
             text="Missing Matches",
-            variable=self.missingVar,
+            variable=self._missingVar,
             command=self._somethingChanged,
-            anchor='w'
         )
-        self.missingMatchesCheck.pack()
-        self.childWidgets.extend([self.missingMatchesCheck])
+        self._missingMatchesCheck.pack(fill='x')
+        self._childWidgets.extend([self._missingMatchesCheck])
 
     def _somethingChanged(self, *args):
-        self.missing = self.missingVar.get()
-        self.Ctrl.onConditionChanged()
+        self.missingmatches = self._missingVar.get()
+        self.Ctrl.onChange()
 
-    def matchingGroups(self, candidates):
-        ''' make groups of images that have the same camera model
-        Optionally include the images without info about cameras as a match all
-        '''
-        def theymatch(md5a, md5b):
-            if self.Ctrl.FODict[md5a][0].CameraModel() == '':
-                return False
-            if self.Ctrl.FODict[md5a][0].CameraModel() == self.Ctrl.FODict[md5b][0].CameraModel():
-                return True
-            if self.missing and self.Ctrl.FODict[md5b][0].CameraModel() == '':
-                return True
+    def _theymatch(self, md5a, md5b):
+        if self.Ctrl.FODict[md5a][0].CameraModel() == '':
             return False
-
-        # check that the widget parameters are different from before
-        # if not simply return the matchingGroupsList from before
-        if (
-                self._candidates == set(candidates) and
-                self.missing == self.currentConfig['missingmatches']
-        ):
-            return self.currentMatchingGroups
-
-        self._candidates = set(candidates)
-        self.currentConfig['missingmatches'] = self.missingVar.get()
-
-        md5s = []
-        for a, b in candidates:
-            md5s.append(a)
-            md5s.append(b)
-        md5s = list(set(md5s))
-        md5s.sort()
-
-        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
-
-        self.currentMatchingGroups = []
-        for thismd5 in md5s:
-            # put atleast the first image in each matchingGroups
-            dummy = [thismd5]
-            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
-            dummy = list(set(dummy))
-            dummy.sort()
-            self.currentMatchingGroups.append(dummy)
-
-        self.currentMatchingGroups.sort()
-        return self.currentMatchingGroups
+        if self.Ctrl.FODict[md5a][0].CameraModel() == self.Ctrl.FODict[md5b][0].CameraModel():
+            return True
+        if self.missingmatches and self.Ctrl.FODict[md5b][0].CameraModel() == '':
+            return True
+        return False
 
 class DateCondition(ConditionFrame):
     name = 'CLOSE IN TIME'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        self.missingMatchesCheck = None
-        self.missingVar = tk.BooleanVar()
-        self.missing = False
-        self.Scale = None
+        self._missingMatchesCheck = None
+        self._missingVar = tk.BooleanVar()
+        self.missingmatches = False
+        self._Scale = None
 
-        self.initialIndex = 1
-        self.scalelabels = ['1 minute','10 minutes','1 hour','1 day','1 week','4 weeks','1 year']
-        self.scaleSeconds = {
+        self._initialIndex = 1
+        self._scalelabels = ['1 minute','10 minutes','1 hour','1 day','1 week','4 weeks','1 year']
+        self._scaleSeconds = {
             '1 minute':60,
             '10 minutes':600,
             '1 hour':3600,
@@ -426,40 +374,42 @@ class DateCondition(ConditionFrame):
             '4 weeks':4*7*24*3600,
             '1 year':365*24*3600
         }
-        self.timeDifferenceInSec = self.scaleSeconds[self.scalelabels[self.initialIndex]]
+        self.timedifference = self._scaleSeconds[self._scalelabels[self._initialIndex]]
 
-        self.currentConfig = {'missingmatches':None, 'timedifference':''}
-        self.currentMatchingGroups = []
+        self._currentConfig = {'missingmatches':None, 'timedifference':''}
+        self._currentMatchingGroups = []
         self._makeAdditionalWidgets()
-        self.setActive(False)
+        self._setActive(False)
         self._mouseIsPressed = False
 
     def _makeAdditionalWidgets(self):
-        self.missingMatchesCheck = tk.Checkbutton(self,
-                                                  text="Missing Matches",
-                                                  variable=self.missingVar,
-                                                  command=self._somethingChanged,
-                                                  anchor='w')
-        self.missingMatchesCheck.pack()
-        self.Scale = TS.TextScale(self,
-                                  textLabels=self.scalelabels,
-                                  initialInt=self.initialIndex,
-                                  onChange=self._scaleChanged,
-                                  orient="horizontal"
+        self._missingMatchesCheck = ttk.Checkbutton(
+            self,
+            text="Missing Matches",
+            variable=self._missingVar,
+            command=self._somethingChanged
         )
-        self.Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
-        self.Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
-        self.Scale.bind("<Control-a>", self._doSelectAll)
-        self.Scale.pack()
-        self.childWidgets.extend([self.missingMatchesCheck, self.Scale])
+        self._missingMatchesCheck.pack(fill='x')
+        self._Scale = TS.TextScale(
+            self,
+            textLabels=self._scalelabels,
+            initialInt=self._initialIndex,
+            onChange=self._scaleChanged,
+            orient="horizontal"
+        )
+        self._Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
+        self._Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self._Scale.bind("<Control-a>", self._doSelectAll)
+        self._Scale.pack()
+        self._childWidgets.extend([self._missingMatchesCheck, self._Scale])
 
     def _doSelectAll(self, *args):
         self.Ctrl.selectAllThumbnails()
         return "break"
 
     def _somethingChanged(self, *args):
-        self.missing = self.missingVar.get()
-        self.Ctrl.onConditionChanged()
+        self.missingmatches = self._missingVar.get()
+        self.Ctrl.onChange()
 
     def _scalePressed(self, *args):
         self._mouseIsPressed = True
@@ -472,68 +422,30 @@ class DateCondition(ConditionFrame):
         # do nothing while the mouse is down
         if self._mouseIsPressed:
             return
-        self.timeDifferenceInSec = self.scaleSeconds[self.Scale.textValue]
-        self.Scale.focus_set()
-        self.Ctrl.onConditionChanged()
+        self.timedifference = self._scaleSeconds[self._Scale.textValue]
+        self._Scale.focus_set()
+        self.Ctrl.onChange()
 
-    def matchingGroups(self, candidates):
-        ''' make groups of images that have the their date close enough together,
-        Optionally include the images without info about date as a match to all.
-        '''
-        def theymatch(md5a, md5b):
-            # deal with missings:
-            datetime_a = self.Ctrl.FODict[md5a][0].DateTime()
-            datetime_b = self.Ctrl.FODict[md5b][0].DateTime()
-            if datetime_a == 'Missing':
-                return False
-            if datetime_b == 'Missing':
-                return self.missing
-            if abs((datetime_a - datetime_b).total_seconds()) <= self.timeDifferenceInSec:
-                return True
+    def _theymatch(self, md5a, md5b):
+        datetime_a = self.Ctrl.FODict[md5a][0].DateTime()
+        datetime_b = self.Ctrl.FODict[md5b][0].DateTime()
+        # deal with missings:
+        if datetime_a == 'Missing':
             return False
-
-        # check that the widget parameters are different from before
-        # if not simply return the matchingGroupsList from before
-        if (
-                self._candidates == set(candidates) and
-                self.missing == self.currentConfig['missingmatches'] and
-                self.timeDifferenceInSec == self.currentConfig['timedifference']
-        ):
-            return self.currentMatchingGroups
-
-        self._candidates = set(candidates)
-        self.currentConfig['missingmatches'] = self.missing
-        self.currentConfig['timedifference'] = self.timeDifferenceInSec
-
-        md5s = []
-        for a, b in candidates:
-            md5s.append(a)
-            md5s.append(b)
-        md5s = list(set(md5s))
-        md5s.sort()
-
-        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
-
-        self.currentMatchingGroups = []
-        for thismd5 in md5s:
-            # put atleast the first image in each matchingGroups
-            dummy = [thismd5]
-            dummy.extend([md5b for md5a, md5b in matches if md5a == thismd5])
-            dummy = list(set(dummy))
-            dummy.sort()
-            self.currentMatchingGroups.append(dummy)
-
-        self.currentMatchingGroups.sort()
-        return self.currentMatchingGroups
+        if datetime_b == 'Missing':
+            return self.missingmatches
+        if abs((datetime_a - datetime_b).total_seconds()) <= self.timedifference:
+            return True
+        return False
 
 class ShapeCondition(ConditionFrame):
     name = 'PICTURE SHAPE'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        self.Scale = None
-        self.initialIndex = 0
-        self.scalelabels = ['Portrait/Landscape', 'Exact', '<5%', '<10%', '<20%', '<30%', '<50%']
-        self.scalevalues = {
+        self._Scale = None
+        self._initialIndex = 0
+        self._scalelabels = ['Portrait/Landscape', 'Exact', '<5%', '<10%', '<20%', '<30%', '<50%']
+        self._scalevalues = {
             'Portrait/Landscape':-1,
             'Exact':0,
             '<5%':5,
@@ -542,34 +454,31 @@ class ShapeCondition(ConditionFrame):
             '<30%':30,
             '<50%':50
         }
-        self.limit = self.scalevalues[self.scalelabels[self.initialIndex]]
+        self.limit = self._scalevalues[self._scalelabels[self._initialIndex]]
 
-        self.currentConfig = {'limit':-666}
-        self.currentMatchingGroups = []
+        self._currentConfig = {'limit':-666}
+        self._currentMatchingGroups = []
         self._makeAdditionalWidgets()
-        self.setActive(False)
+        self._setActive(False)
         self._mouseIsPressed = False
 
     def _makeAdditionalWidgets(self):
-        self.Scale = TS.TextScale(self,
-                                  textLabels=self.scalelabels,
+        self._Scale = TS.TextScale(self,
+                                  textLabels=self._scalelabels,
                                   topLabel='',
-                                  initialInt=self.initialIndex,
+                                  initialInt=self._initialIndex,
                                   onChange=self._scaleChanged,
                                   orient="horizontal"
         )
-        self.Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
-        self.Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
-        self.Scale.TSScale.bind("<Control-a>", self._doSelectAll)
-        self.Scale.pack()
-        self.childWidgets.extend([self.Scale])
+        self._Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
+        self._Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
+        self._Scale.TSScale.bind("<Control-a>", self._doSelectAll)
+        self._Scale.pack()
+        self._childWidgets.extend([self._Scale])
 
     def _doSelectAll(self, *args):
         self.Ctrl.selectAllThumbnails()
         return "break"
-
-    def _somethingChanged(self, *args):
-        self.Ctrl.onConditionChanged()
 
     def _scalePressed(self, *args):
         self._mouseIsPressed = True
@@ -582,46 +491,13 @@ class ShapeCondition(ConditionFrame):
         # do nothing while the mouse is down
         if self._mouseIsPressed:
             return
-        self.limit = self.scalevalues[self.Scale.textValue]
-        self.Scale.focus_set()
-        self.Ctrl.onConditionChanged()
+        self.limit = self._scalevalues[self._Scale.textValue]
+        self._Scale.focus_set()
+        self.Ctrl.onChange()
 
-    def matchingGroups(self, candidates):
-        def theymatch(md5a, md5b):
-            foaval = self.Ctrl.FODict[md5a][0].ShapeParameter()
-            fobval = self.Ctrl.FODict[md5b][0].ShapeParameter()
-            if self.limit == -1:
-                return foaval*fobval > 0.0 or fobval == 0.0
-            return abs(foaval - fobval) <= self.limit
-
-        # check that the widget parameters are different from before
-        # if not simply return the matchingGroupsList from before
-        if (
-                self._candidates == set(candidates) and
-                self.limit == self.currentConfig['limit']
-        ):
-            return self.currentMatchingGroups
-
-        self._candidates = set(candidates)
-        self.currentConfig['limit'] = self.limit
-
-        md5s = []
-        for a, b in candidates:
-            md5s.append(a)
-            md5s.append(b)
-        md5s = list(set(md5s))
-        md5s.sort()
-
-        matches = [(md5a, md5b) for md5a, md5b in candidates if theymatch(md5a, md5b)]
-
-        self.currentMatchingGroups = []
-        for thismd5 in md5s:
-            # put atleast the first image in each matchingGroups
-            dummy = [thismd5]
-            dummy.extend([md5b for md5a, md5b in matches if md5a == thismd5])
-            dummy = list(set(dummy))
-            dummy.sort()
-            self.currentMatchingGroups.append(dummy)
-
-        self.currentMatchingGroups.sort()
-        return self.currentMatchingGroups
+    def _theymatch(self, md5a, md5b):
+        foaval = self.Ctrl.FODict[md5a][0].ShapeParameter()
+        fobval = self.Ctrl.FODict[md5b][0].ShapeParameter()
+        if self.limit == -1:
+            return foaval*fobval > 0.0 or fobval == 0.0
+        return abs(foaval - fobval) <= self.limit

@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import font as tkfont
+from tkinter import ttk
 
 class Tooltip:
     '''
@@ -24,7 +24,6 @@ class Tooltip:
 
     def __init__(self, widget,
                  *,
-                 bg='#FFFFE1',
                  text='widget info',
                  waittime=400,
                  wraplength=250):
@@ -36,10 +35,8 @@ class Tooltip:
         self.widget.bind("<Enter>", self.onEnter)
         self.widget.bind("<Leave>", self.onLeave)
         self.widget.bind("<ButtonPress>", self.onLeave)
-        self.bg = bg
         self.id = None
         self.tw = None
-        self.myfont = tkfont.Font(family='Helvetica', size=11)
 
     def onEnter(self, event=None):
         self.schedule()
@@ -106,7 +103,6 @@ class Tooltip:
 
         if not self.text:
             return
-        bg = self.bg
         widget = self.widget
 
         # creates a toplevel window
@@ -115,19 +111,13 @@ class Tooltip:
         # Leaves only the label and removes the app window
         self.tw.wm_overrideredirect(True)
 
-        win = tk.Frame(self.tw,
-                       background=bg,
-                       borderwidth=0)
-        label = tk.Label(win,
-                         text=self.text,
-                         justify="left",
-                         background=bg,
-                         relief="solid",
-                         borderwidth=1,
-                         font=self.myfont,
-                         padx=5,
-                         pady=5,
-                         wraplength=self.wraplength)
+        win = ttk.Frame(self.tw)
+
+        label = ttk.Label(win,
+                          text=self.text,
+                          style="Tooltip.TLabel",
+                          wraplength=self.wraplength
+        )
 
         label.grid(sticky="nsew")
         win.grid()

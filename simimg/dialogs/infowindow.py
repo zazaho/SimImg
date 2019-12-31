@@ -1,4 +1,4 @@
-from tkinter import messagebox
+from tkinter import messagebox as tkmessagebox
 
 def showInfoDialog():
     ''' show basic info about this program '''
@@ -21,4 +21,4 @@ The workflow is as follows:
 * Click the play button to inspect the selected images
 * Click the delete button to delete selected images
     '''
-    messagebox.showinfo("Information",msg)
+    tkmessagebox.showinfo("Information", msg)

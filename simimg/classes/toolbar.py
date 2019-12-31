@@ -1,15 +1,14 @@
 ''' Modules that defines a oolbar with action items'''
 import os
-import tkinter as tk
+from tkinter import ttk
 from . import tooltip as TT
 from ..dialogs import infowindow as IW
 from ..utils import pillowplus as PP
 
-class Toolbar(tk.Frame):
+class Toolbar(ttk.Frame):
     " A toolbar frame that holds the action buttons"
     def __init__(self, parent, Controller=None):
         super().__init__(parent)
-        self.config(bd=1, relief="raised")
 
         iconpath = Controller.Cfg.get('iconpath')
         self.addImg = PP.photoImageOpen(os.path.join(iconpath, "add.png"))
@@ -23,20 +22,20 @@ class Toolbar(tk.Frame):
         self.settingsImg = PP.photoImageOpen(os.path.join(iconpath, "settings.png"))
         self.uncheckImg = PP.photoImageOpen(os.path.join(iconpath, "uncheck.png"))
 
-        self.exitButton = tk.Button(self, image=self.exitImg, relief="flat", command=Controller.exitProgram)
-        self.settingsButton = tk.Button(self, image=self.settingsImg, relief="flat", command=Controller.configureProgram)
+        self.exitButton = ttk.Button(self, image=self.exitImg, style="Picture.TButton", command=Controller.exitProgram)
+        self.settingsButton = ttk.Button(self, image=self.settingsImg, style="Picture.TButton", command=Controller.configureProgram)
         #
-        self.infoButton = tk.Button(self, image=self.infoImg, relief="flat", command=IW.showInfoDialog)
+        self.infoButton = ttk.Button(self, image=self.infoImg, style="Picture.TButton", command=IW.showInfoDialog)
 
-        self.openButton = tk.Button(self, image=self.openImg, relief="flat", command=Controller.openFolder)
-        self.addButton = tk.Button(self, image=self.addImg, relief="flat", command=Controller.addFolder)
+        self.openButton = ttk.Button(self, image=self.openImg, style="Picture.TButton", command=Controller.openFolder)
+        self.addButton = ttk.Button(self, image=self.addImg, style="Picture.TButton", command=Controller.addFolder)
         #
-        self.refreshButton = tk.Button(self, image=self.refreshImg, relief="flat", command=Controller.resetThumbnails)
+        self.refreshButton = ttk.Button(self, image=self.refreshImg, style="Picture.TButton", command=Controller.resetThumbnails)
 
-        self.uncheckButton = tk.Button(self, image=self.uncheckImg, relief="flat", command=Controller.unselectThumbnails)
-        self.deleteButton = tk.Button(self, image=self.deleteImg, relief="flat", command=Controller.deleteSelected)
-        self.hideButton = tk.Button(self, image=self.hideImg, relief="flat", command=Controller.hideSelected)
-        self.playButton = tk.Button(self, image=self.playImg, relief="flat", command=Controller.viewSelected)
+        self.uncheckButton = ttk.Button(self, image=self.uncheckImg, style="Picture.TButton", command=Controller.unselectThumbnails)
+        self.deleteButton = ttk.Button(self, image=self.deleteImg, style="Picture.TButton", command=Controller.deleteSelected)
+        self.hideButton = ttk.Button(self, image=self.hideImg, style="Picture.TButton", command=Controller.hideSelected)
+        self.playButton = ttk.Button(self, image=self.playImg, style="Picture.TButton", command=Controller.viewSelected)
 
         self.exitButton.grid(column=0, row=0)
         self.settingsButton.grid(column=1, row=0)

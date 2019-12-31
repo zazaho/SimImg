@@ -1,7 +1,7 @@
 ''' Modules that defines a oolbar with action items'''
 import os
 import tkinter as tk
-from tkinter import font as tkfont
+from tkinter import ttk
 from tkinter import filedialog as tkfiledialog
 from ..classes import tooltip as TT
 from ..utils import pillowplus as PP
@@ -10,7 +10,6 @@ class CfgWindow(tk.Toplevel):
     def __init__(self, parent, Controller=None):
         super().__init__()
 
-        myfont = tkfont.Font(family='Helvetica', size=11)
         self.title("Settings")
 
         self.parent = parent
@@ -35,28 +34,28 @@ class CfgWindow(tk.Toplevel):
         self.startupDir = tk.StringVar()
         self.startupDir.set(self.Cfg.get('startupfolder'))
 
-        startupFrame = tk.Frame(self)
+        startupFrame = ttk.Frame(self)
         startupFrame.pack(fill='x', padx=5)
-        startlabel = tk.Label(
+        startlabel = ttk.Label(
             startupFrame,
-            font=myfont,
+            style="LargeText.TLabel",
             text="Startup Folder"
         )
-        startentry = tk.Entry(
+        startentry = ttk.Entry(
             startupFrame,
-            font=myfont,
+            font=('', 11),
             textvariable=self.startupDir
         )
-        self.openImg = PP.photoImageOpen(os.path.join(iconpath, "open.png"))
-        openbutton = tk.Button(
+        self.openImg = PP.photoImageOpenAndResizeToFit(os.path.join(iconpath, "open.png"), 16 , 16)
+        openbutton = ttk.Button(
             startupFrame,
             image=self.openImg,
-            relief="flat",
+            style="Picture.TButton",
             command=self._openFolder
         )
-        startlabel.pack(pady=5,side="left")
-        startentry.pack(pady=5,side="left")
-        openbutton.pack(side="left")
+        startlabel.pack(pady=5, side="left")
+        startentry.pack(pady=5, side="left")
+        openbutton.pack(side="left", padx=5)
         msg = '''Folder to read upon starting the application.
 
 . Means the directory from which the script was started.
@@ -66,27 +65,28 @@ Leave empty to start without reading files.'''
         TT.Tooltip(startentry, text=msg)
         TT.Tooltip(openbutton, text='Select Startup Folder')
 
-        thumbSizeFrame = tk.Frame(self)
+        thumbSizeFrame = ttk.Frame(self)
         thumbSizeFrame.pack(fill='x', padx=5)
 
-        tk.Label(
+        ttk.Label(
             thumbSizeFrame,
-            font=myfont,
+            style="LargeText.TLabel",
             text="Thumbnail Size"
-        ).pack(pady=5,side="left")
-        tk.Entry(
+        ).pack(pady=5, side="left")
+        ttk.Entry(
             thumbSizeFrame,
-            font=myfont,
+            font=('', 11),
             textvariable=self.thumbSize
-        ).pack(pady=5,side="left")
+        ).pack(pady=5, side="left")
 
-        clearDBFrame = tk.Frame(self)
+        clearDBFrame = ttk.Frame(self)
         clearDBFrame.pack(fill='x', padx=5)
         self.clearDBImg = PP.photoImageOpen(os.path.join(iconpath, "refresh.png"))
-        clearDBbutton = tk.Button(
+        clearDBbutton = ttk.Button(
             clearDBFrame,
             image=self.clearDBImg,
             text="Clear Database",
+            style="LargeText.TButton",
             compound="left",
             command=self._clearDB
         )
@@ -94,42 +94,42 @@ Leave empty to start without reading files.'''
         msg = '''Empty the database that holds the calculated image properties.'''
         TT.Tooltip(clearDBbutton, text=msg)
 
-        toggleFrame = tk.Frame(self)
+        toggleFrame = ttk.Frame(self)
         toggleFrame.pack(fill='x', padx=5)
-        subdir = tk.Checkbutton(toggleFrame,
-                                text="Search in Subfolders",
-                                font=myfont,
-                                variable=self.recurse
+        subdir = ttk.Checkbutton(toggleFrame,
+                                 text="Search in Subfolders",
+                                 style="LargeText.TCheckbutton",
+                                 variable=self.recurse
         )
         msg = '''Search recursively in the subfolders for image files.'''
         TT.Tooltip(subdir, text=msg)
 
-        cnfrm = tk.Checkbutton(toggleFrame,
-                               text="Confirm File Delete",
-                               font=myfont,
-                               variable=self.confirmDel
+        cnfrm = ttk.Checkbutton(toggleFrame,
+                                text="Confirm File Delete",
+                                style="LargeText.TCheckbutton",
+                                variable=self.confirmDel
         )
         msg = '''Ask before deleting files.'''
         TT.Tooltip(cnfrm, text=msg)
 
-        gzp = tk.Checkbutton(toggleFrame,
-                             text="Gzip File Instead of Delete",
-                             font=myfont,
-                             variable=self.doGzip
+        gzp = ttk.Checkbutton(toggleFrame,
+                              text="Gzip File Instead of Delete",
+                              style="LargeText.TCheckbutton",
+                              variable=self.doGzip
         )
         msg = '''Instead of deleting the file gzip it (adds .gz to the filename).'''
         TT.Tooltip(gzp, text=msg)
 
-        svs = tk.Checkbutton(toggleFrame,
-                             text="Save Settings on Exit",
-                             font=myfont,
-                             variable=self.saveSettings
+        svs = ttk.Checkbutton(toggleFrame,
+                              text="Save Settings on Exit",
+                              style="LargeText.TCheckbutton",
+                              variable=self.saveSettings
         )
 
-        shb = tk.Checkbutton(toggleFrame,
-                             text="Show Hide/Delete buttons",
-                             font=myfont,
-                             variable=self.showButtons
+        shb = ttk.Checkbutton(toggleFrame,
+                              text="Show Hide/Delete buttons",
+                              style="LargeText.TCheckbutton",
+                              variable=self.showButtons
         )
         msg = '''Show the individual Hide/Delete buttons with each thumbnail.'''
         TT.Tooltip(shb, text=msg)
@@ -140,18 +140,20 @@ Leave empty to start without reading files.'''
         svs.pack(pady=5, anchor='w')
         shb.pack(pady=5, anchor='w')
 
-        btnFrame = tk.Frame(self)
+        btnFrame = ttk.Frame(self)
         btnFrame.pack(fill='x')
-        tk.Button(
+        ttk.Button(
             btnFrame,
             text="Ok",
             width=15,
+            style="LargeText.TButton",
             command=self._ok
         ).pack(padx=10, side="left")
-        tk.Button(
+        ttk.Button(
             btnFrame,
             text="Cancel",
             width=15,
+            style="LargeText.TButton",
             command=self._cancel
         ).pack(padx=10, side="right")
 

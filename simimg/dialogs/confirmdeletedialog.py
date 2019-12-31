@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import font
+from tkinter import ttk
 
 class CDDialog(tk.Toplevel):
     def __init__(self, parent, Filename="", simple=False):
@@ -11,36 +11,39 @@ class CDDialog(tk.Toplevel):
         self.transient(self.parent)
 
         self.result = None
-        boldfont = font.Font(family='Helvetica', size=12, weight='bold')
-        tk.Label(
+        ttk.Label(
             self,
             text=Filename,
-            font=boldfont
+            style="BoldText.TLabel",
         ).grid(column=0, row=0, columnspan=4, padx=10, pady=10)
-        tk.Button(
+        ttk.Button(
             self,
             text="Yes",
             width=10,
             command=self._yes,
+            style="LargeText.TButton",
             default="active"
         ).grid(column=0, row=1, padx=10)
-        tk.Button(
+        ttk.Button(
             self,
             text="No",
             width=10,
+            style="LargeText.TButton",
             command=self._no
         ).grid(column=1, row=1, padx=10)
         if not simple:
-            tk.Button(
+            ttk.Button(
                 self,
                 text="Yes to All",
                 width=10,
+                style="LargeText.TButton",
                 command=self._yes_to_all
             ).grid(column=2, row=1, padx=10)
-            tk.Button(
+            ttk.Button(
                 self,
                 text="Abort",
                 width=10,
+                style="LargeText.TButton",
                 command=self._abort
             ).grid(column=3, row=1, padx=10)
 

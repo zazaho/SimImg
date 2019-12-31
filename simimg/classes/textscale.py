@@ -1,6 +1,7 @@
 import tkinter as tk
+from tkinter import ttk
 
-class TextScale(tk.Frame):
+class TextScale(ttk.Frame):
     "A scale widget (slider) with text rather than numerical labels"
     def __init__(self, parent, *args,
                  topLabel='',
@@ -20,7 +21,7 @@ class TextScale(tk.Frame):
         self.onChange = onChange
         self.TSScaleIntVar = tk.IntVar()
         self.TSScaleIntVar.set(initialInt)
-        self.TSValueLabel = tk.Label(self, text=self.textValue)
+        self.TSValueLabel = ttk.Label(self, text=self.textValue)
         self.TSScale = tk.Scale(self,
                                 from_=min(self.textLabelsDict),
                                 to=max(self.textLabelsDict),
@@ -31,7 +32,7 @@ class TextScale(tk.Frame):
                                 *args, **kwargs
         )
         if topLabel:
-            self.TSTopLabel = tk.Label(self, text=topLabel)
+            self.TSTopLabel = ttk.Label(self, text=topLabel)
             self.TSTopLabel.pack()
         self.TSValueLabel.pack()
         self.TSScale.pack()
