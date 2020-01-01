@@ -1,3 +1,8 @@
+version 0.6.1 (SH Jan  1 2020)
+- removed duplicate code in condition modules. They are now faster and
+  much cleaner in design
+- Hiding or showing button below thumbnails without recalculating thumbnails
+
 version 0.6.0 (SH Dec 31 2019)
 - use ttk for theming
 - remove most of the custom style for better fit with host OS

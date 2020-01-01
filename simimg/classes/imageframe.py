@@ -7,46 +7,52 @@ class ImageFrame(ttk.Frame):
         super().__init__(parent)
 
         self.Ctrl = Ctrl
-        self.ThumbSize = Ctrl.Cfg.get('thumbnailsize')
+        self._ThumbSize = Ctrl.Cfg.get('thumbnailsize')
         self.md5 = md5
         self.selected = False
         self.X = X
         self.Y = Y
 
-        self.defaultBackgroundColor = Ctrl.TopWindow.cget('background')
-        self.thumb_canvas = tk.Canvas(
+        self._defaultBackgroundColor = Ctrl.TopWindow.cget('background')
+        self._thumb_canvas = tk.Canvas(
             self,
-            width=self.ThumbSize,
-            height=self.ThumbSize
+            width=self._ThumbSize,
+            height=self._ThumbSize
         )
-        self.thumb_canvas.bind("<Button-1>", self._click)
+        self._thumb_canvas.bind("<Button-1>", self._click)
 
         if self.md5:
-            self.thumb_canvas.create_image(
-                self.ThumbSize/2,
-                self.ThumbSize/2,
+            self._thumb_canvas.create_image(
+                self._ThumbSize/2,
+                self._ThumbSize/2,
                 anchor='center',
                 image=Ctrl.FODict[self.md5][0].Thumbnail()
             )
             if len(Ctrl.FODict[self.md5]) > 1:
-                self.thumb_canvas.config(highlightbackground="green", highlightthickness=2)
+                self._thumb_canvas.config(highlightbackground="green", highlightthickness=2)
 
-        self.thumb_canvas.pack(side="top")
-        if Ctrl.Cfg.get('showbuttons'):
-            hide_button = ttk.Button(
-                self,
-                text="Hide",
-                command=self._hide,
-                style="Thumb.TButton"
-            )
-            delete_button = ttk.Button(
-                self,
-                text="Delete",
-                command=self._delete,
-                style="Thumb.TButton"
-            )
-            hide_button.pack(side="left")
-            delete_button.pack(side="right")
+        self._thumb_canvas.pack(side="top")
+        self._hide_button = ttk.Button(
+            self,
+            text="Hide",
+            command=self._hide,
+            style="Thumb.TButton"
+        )
+        self._delete_button = ttk.Button(
+            self,
+            text="Delete",
+            command=self._delete,
+            style="Thumb.TButton"
+        )
+        self.showHideButtons()
+
+    def showHideButtons(self):
+        if self.Ctrl.Cfg.get('showbuttons'):
+            self._hide_button.pack(side="left")
+            self._delete_button.pack(side="right")
+        else:
+            self._hide_button.pack_forget()
+            self._delete_button.pack_forget()
 
     def _hide(self):
         for fo in self.Ctrl.FODict[self.md5]:
@@ -62,10 +68,10 @@ class ImageFrame(ttk.Frame):
     def select(self, value):
         self.selected = value
         if self.selected:
-            self.thumb_canvas.config(bg="blue")
+            self._thumb_canvas.config(bg="blue")
             self.Ctrl.lastSelectedXY = (self.X, self.Y)
         else:
-            self.thumb_canvas.config(bg=self.defaultBackgroundColor)
+            self._thumb_canvas.config(bg=self._defaultBackgroundColor)
             self.Ctrl.lastSelectedXY = None
         self.focus_set()
 

@@ -107,7 +107,10 @@ class Controller():
         oldThumbsize = self.Cfg.get('thumbnailsize')
         oldShowButtons = self.Cfg.get('showbuttons')
         CW.CfgWindow(self.TopWindow, Controller=self)
-        if self.Cfg.get('thumbnailsize') != oldThumbsize or self.Cfg.get('showbuttons') != oldShowButtons:
+        if self.Cfg.get('showbuttons') != oldShowButtons:
+            for thumbframe in self._TPPositionDict.values():
+                thumbframe.showHideButtons()
+        if self.Cfg.get('thumbnailsize') != oldThumbsize:
             self._setThumbnails()
             self.onChange()
 
