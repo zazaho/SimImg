@@ -8,28 +8,29 @@ class viewer(tk.Toplevel):
     def __init__(self, Fileinfo=None, Controller=None):
         super().__init__()
 
-        self.Filenames = [f for _, f in Fileinfo]
-        self.MD5s = [m for m, _ in Fileinfo]
+        self._MD5s, self._filenames = zip(*Fileinfo)
         self.Ctrl = Controller
 
         self.geometry(self.Ctrl.Cfg.get('viewergeometry'))
-
-        self.canvas = tk.Canvas(self, bg="white")
-        self.canvas.pack(fill='both', expand=True)
-        self.canvas.update_idletasks()
-        self.canvas.bind("<Button>", self._click)
         self.bind("<Key>", self._key)
-        self.ImgDict = {}
-        self.ImgIndex = 0
         self.protocol("WM_DELETE_WINDOW", self._exitViewer)
+
+        self._ImgDict = {}
+        self._ImgIndex = 0
+
+        self._canvas = tk.Canvas(self, bg="white")
+        self._canvas.pack(fill='both', expand=True)
+        self._canvas.update_idletasks()
+        self._canvas.bind("<Button>", self._click)
+
         self.bind("<Configure>", self._showImage)
 
     def _fillImgDict(self, Index):
-        maxW = self.canvas.winfo_width()
-        maxH = self.canvas.winfo_height()
+        maxW = self._canvas.winfo_width()
+        maxH = self._canvas.winfo_height()
         # check if this image already exists?
-        if Index in self.ImgDict:
-            File, Img, W, H, targetW, targetH = self.ImgDict[Index]
+        if Index in self._ImgDict:
+            File, Img, W, H, targetW, targetH = self._ImgDict[Index]
             # check if this image has the right dimensions.
             # if the max-dimensions did not change, fine!
             if targetW == maxW and targetH == maxH:
@@ -41,14 +42,14 @@ class viewer(tk.Toplevel):
                 return
 
         # if we get here, we need to create and image tuple
-        File = self.Filenames[Index]
+        File = self._filenames[Index]
         Img = PP.imageOpen(File)
         W = Img.size[0]
         H = Img.size[1]
         # scale down if too large
         if W > maxW or H > maxH:
             Img = PP.imageResizeToFit(Img, maxW, maxH)
-        self.ImgDict[Index] = (File, ImageTk.PhotoImage(Img), W, H, maxW, maxH)
+        self._ImgDict[Index] = (File, ImageTk.PhotoImage(Img), W, H, maxW, maxH)
 
     # clicks
     def _click(self, event):
@@ -77,43 +78,43 @@ class viewer(tk.Toplevel):
         keyDict[event.keysym]()
 
     def _showImage(self, *args):
-        self.canvas.delete("all")
-        self._fillImgDict(self.ImgIndex)
-        self.canvas.create_image(
-            self.canvas.winfo_width()/2,
-            self.canvas.winfo_height()/2,
+        self._canvas.delete("all")
+        self._fillImgDict(self._ImgIndex)
+        self._canvas.create_image(
+            self._canvas.winfo_width()/2,
+            self._canvas.winfo_height()/2,
             anchor='center',
-            image=self.ImgDict[self.ImgIndex][1]
+            image=self._ImgDict[self._ImgIndex][1]
         )
-        self.title("Similar Image Viewer: %s --- Press F1 for Help" % self.ImgDict[self.ImgIndex][0])
+        self.title("Similar Image Viewer: %s --- Press F1 for Help" % self._ImgDict[self._ImgIndex][0])
 
     def _showNext(self):
-        self.ImgIndex += 1
-        self.ImgIndex = self.ImgIndex % len(self.Filenames)
+        self._ImgIndex += 1
+        self._ImgIndex = self._ImgIndex % len(self._filenames)
         #if the filename is none skip to next
-        if self.Filenames[self.ImgIndex] == None:
+        if self._filenames[self._ImgIndex] == None:
             self._showNext()
         self._showImage()
 
     def _showPrevious(self):
-        self.ImgIndex -= 1
-        self.ImgIndex = self.ImgIndex % len(self.Filenames)
-        if self.Filenames[self.ImgIndex] == None:
+        self._ImgIndex -= 1
+        self._ImgIndex = self._ImgIndex % len(self._filenames)
+        if self._filenames[self._ImgIndex] == None:
             self._showPrevious()
         self._showImage()
 
     def _deleteFile(self):
-        md5 = self.MD5s[self.ImgIndex]
+        md5 = self._MD5s[self._ImgIndex]
         fo = [self.Ctrl.FODict[md5][0]]
         if not self.Ctrl.deleteFOs(fo, Owner=self):
             return
 
         # remove the filename
-        self.Filenames[self.ImgIndex] = None
-        self.MD5s[self.ImgIndex] = None
-        del self.ImgDict[self.ImgIndex]
+        self._filenames[self._ImgIndex] = None
+        self._MD5s[self._ImgIndex] = None
+        del self._ImgDict[self._ImgIndex]
         # check if all filenames are None
-        if len(set(self.Filenames)) > 1:
+        if len(set(self._filenames)) > 1:
             self._showNext()
         else:
             self.destroy()

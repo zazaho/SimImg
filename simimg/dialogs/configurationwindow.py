@@ -16,23 +16,22 @@ class CfgWindow(tk.Toplevel):
         self.transient(self.parent)
 
         self.Ctrl = Controller
-        self.Cfg = Controller.Cfg
-        iconpath = self.Cfg.get('iconpath')
+        iconpath = self.Ctrl.Cfg.get('iconpath')
 
         self.recurse = tk.BooleanVar()
-        self.recurse.set(self.Cfg.get('searchinsubfolders'))
+        self.recurse.set(self.Ctrl.Cfg.get('searchinsubfolders'))
         self.confirmDel = tk.BooleanVar()
-        self.confirmDel.set(self.Cfg.get('confirmdelete'))
+        self.confirmDel.set(self.Ctrl.Cfg.get('confirmdelete'))
         self.doGzip = tk.BooleanVar()
-        self.doGzip.set(self.Cfg.get('gzipinsteadofdelete'))
+        self.doGzip.set(self.Ctrl.Cfg.get('gzipinsteadofdelete'))
         self.saveSettings = tk.BooleanVar()
-        self.saveSettings.set(self.Cfg.get('savesettings'))
+        self.saveSettings.set(self.Ctrl.Cfg.get('savesettings'))
         self.showButtons = tk.BooleanVar()
-        self.showButtons.set(self.Cfg.get('showbuttons'))
+        self.showButtons.set(self.Ctrl.Cfg.get('showbuttons'))
         self.thumbSize = tk.IntVar()
-        self.thumbSize.set(self.Cfg.get('thumbnailsize'))
+        self.thumbSize.set(self.Ctrl.Cfg.get('thumbnailsize'))
         self.startupDir = tk.StringVar()
-        self.startupDir.set(self.Cfg.get('startupfolder'))
+        self.startupDir.set(self.Ctrl.Cfg.get('startupfolder'))
 
         startupFrame = ttk.Frame(self)
         startupFrame.pack(fill='x', padx=5)
@@ -175,17 +174,17 @@ Leave empty to start without reading files.'''
         self.Ctrl.startDatabase(clear=True)
 
     def _ok(self, *args):
-        self.Cfg.set('searchinsubfolders', self.recurse.get())
-        self.Cfg.set('confirmdelete', self.confirmDel.get())
-        self.Cfg.set('gzipinsteadofdelete', self.doGzip.get())
-        self.Cfg.set('savesettings', self.saveSettings.get())
-        self.Cfg.set('showbuttons', self.showButtons.get())
+        self.Ctrl.Cfg.set('searchinsubfolders', self.recurse.get())
+        self.Ctrl.Cfg.set('confirmdelete', self.confirmDel.get())
+        self.Ctrl.Cfg.set('gzipinsteadofdelete', self.doGzip.get())
+        self.Ctrl.Cfg.set('savesettings', self.saveSettings.get())
+        self.Ctrl.Cfg.set('showbuttons', self.showButtons.get())
         try:
             ts = self.thumbSize.get()
         except tk.TclError:
-            ts = self.Cfg.get('thumbnailsize')
-        self.Cfg.set('thumbnailsize', ts)
-        self.Cfg.set('startupfolder', self.startupDir.get())
+            ts = self.Ctrl.Cfg.get('thumbnailsize')
+        self.Ctrl.Cfg.set('thumbnailsize', ts)
+        self.Ctrl.Cfg.set('startupfolder', self.startupDir.get())
         self._returntoparent()
 
     def _cancel(self, *args):
