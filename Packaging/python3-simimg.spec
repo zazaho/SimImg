@@ -1,6 +1,6 @@
 Summary: Similar Image Finder
 Name: python3-simimg
-Version: 0.5.2
+Version: 0.6.1
 Epoch: 6
 Release: 1%{?dist}
 Url: https://pypi.python.org/pypi/simimg
