@@ -37,7 +37,7 @@ class simim_app(tk.Tk):
         style.configure("BoldText.TLabel", font=('', 12, 'bold'))
 
         style.configure("Picture.TButton", relief="flat", padding=0)
-        style.configure("Thumb.TButton", relief="flat", padding=0, font=('', 8))
+        style.configure("Thumb.TButton", relief="flat", padding=0, font=('', 8), width=-1)
 
         style.configure("Tooltip.TLabel",
                         background='#FFFFE1',

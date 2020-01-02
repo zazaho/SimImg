@@ -40,6 +40,8 @@ class ConditionFrame(ttk.Frame):
         self._setActive(False)
         self._md5s = {}
 
+        self._matchingInfo = []
+
     def _makeBaseWidgets(self):
         self._label = ttk.Label(self, text=self.name)
         self._label.bind('<Button-1>', self._activeToggled)
@@ -95,12 +97,18 @@ class ConditionFrame(ttk.Frame):
             self._currentConfig[param] = getattr(self, param)
         return True
 
-    def _theymatch(self, md5a, md5b, **kwargs):
+    def _theymatch(self, md5a, md5b):
         pass
 
-    def _getMatchingGroups(self, **kwargs):
+    def _preMatching(self):
+        pass
+    
+    def _postMatching(self):
+        pass
+    
+    def _getMatchingGroups(self):
         cand = list(itertools.combinations(self._md5s,2))
-        matches = [(a, b) for a, b in cand if self._theymatch(a, b, **kwargs)]
+        matches = [(a, b) for a, b in cand if self._theymatch(a, b)]
         self._currentMatchingGroups = []
         # make a FULL SORTED group list for EACH MD5 ONE ENTRY
         # this is important for the merging of groups later
@@ -110,15 +118,15 @@ class ConditionFrame(ttk.Frame):
             # put atleast the first image in each matchingGroups
             dummy = [thismd5]
             dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
-            dummy = list(set(dummy))
-            dummy.sort()
             self._currentMatchingGroups.append(dummy)
 
     def matchingGroups(self, md5s):
         #if nothing changed _updateFromPrevious will return False
         if not self._updateFromPrevious(md5s):
             return self._currentMatchingGroups
+        self._preMatching()
         self._getMatchingGroups()
+        self._postMatching()
         return self._currentMatchingGroups
 
 class GradientCondition(ConditionFrame):
@@ -186,35 +194,29 @@ class GradientCondition(ConditionFrame):
         self._Scale.focus_set()
         self.Ctrl.onChange()
 
-    def _theymatch(self, md5a, md5b, values=None):
+    def _preMatching(self):
+        # Call this to make sure the hash values for this method are available
+        self.Ctrl.setImageHashes(hashName=self.method)
+        self._matchingInfo = []
+
+    def _postMatching(self):
+        if not self._matchingInfo:
+            self._ScaleTip.text = ''
+        elif len(self._matchingInfo) < 10:
+            self._ScaleTip.text = 'Min: %d' % (math.ceil(min(self._matchingInfo)))
+        else:
+            self._matchingInfo.sort()
+            self._ScaleTip.text = 'min=%d; >10 pairs=%d' % (math.ceil(min(self._matchingInfo)), math.ceil(self._matchingInfo[9]))
+
+    def _theymatch(self, md5a, md5b):
         hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
         hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
         dist = functools.reduce(
             add,
             [format(hashA[i]^hashB[i], 'b').count('1') for i in range(len(hashA))]
         )
-        values.append(dist)
+        self._matchingInfo.append(dist)
         return dist <= self.limit
-
-    def matchingGroups(self, md5s):
-        # if nothing changed _updateFromPrevious will return False
-        if not self._updateFromPrevious(md5s):
-            return self._currentMatchingGroups
-
-        # Call this to make sure the hash values for this method are available
-        self.Ctrl.setImageHashes(hashName=self.method)
-
-        mVals = []
-        self._getMatchingGroups(values=mVals)
-        if not mVals:
-            self._ScaleTip.text = ''
-        elif len(mVals) < 10:
-            self._ScaleTip.text = 'Min: %d' % (math.ceil(min(mVals)))
-        else:
-            mVals.sort()
-            self._ScaleTip.text = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9]))
-
-        return self._currentMatchingGroups
 
 class ColorCondition(ConditionFrame):
     name = 'COLOR DISTANCE'
@@ -280,7 +282,21 @@ class ColorCondition(ConditionFrame):
         self._Scale.focus_set()
         self.Ctrl.onChange()
 
-    def _theymatch(self, md5a, md5b, values=None):
+    def _preMatching(self):
+        # Call this to make sure the hash values for this method are available
+        self.Ctrl.setImageHashes(hashName=self.method)
+        self._matchingInfo = []
+
+    def _postMatching(self):
+        if not self._matchingInfo:
+            self._ScaleTip.text = ''
+        elif len(self._matchingInfo) < 10:
+            self._ScaleTip.text = 'Min: %d' % (math.ceil(min(self._matchingInfo)))
+        else:
+            self._matchingInfo.sort()
+            self._ScaleTip.text = 'min=%d; >10 pairs=%d' % (math.ceil(min(self._matchingInfo)), math.ceil(self._matchingInfo[9]))
+
+    def _theymatch(self, md5a, md5b):
         hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
         hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
         # we need to take care of the median hue value (0, 6, .. th element)
@@ -296,28 +312,8 @@ class ColorCondition(ConditionFrame):
         else:
             distArr = [abs(hashA[i]-hashB[i]) for i in range(len(hashA))]
         val = stats.mean(distArr)
-        values.append(val)
+        self._matchingInfo.append(val)
         return val <= self.limit
-
-    def matchingGroups(self, md5s):
-        #if nothing changed _updateFromPrevious will return False
-        if not self._updateFromPrevious(md5s):
-            return self._currentMatchingGroups
-
-        #Call this to make sure the hash values for this method are available
-        self.Ctrl.setImageHashes(hashName=self.method)
-
-        mVals = []
-        self._getMatchingGroups(values=mVals)
-        if not mVals:
-            self._ScaleTip.text = ''
-        elif len(mVals) < 10:
-            self._ScaleTip.text = 'Min: %d' % (math.ceil(min(mVals)))
-        else:
-            mVals.sort()
-            self._ScaleTip.text = 'min=%d; >10 pairs=%d' % (math.ceil(min(mVals)), math.ceil(mVals[9]))
-
-        return self._currentMatchingGroups
 
 class CameraCondition(ConditionFrame):
     name = 'SAME CAMERA'

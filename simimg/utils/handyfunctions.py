@@ -28,7 +28,7 @@ def existsAsSubGroup(E, GL):
 
 def pairlist2dict(lst):
     '''take a list containing key,values pairs and return
-    a dict where each key hold a list of matching values.
+    a dict where each key holds a list of matching values.
     '''
     dct = {}
     for ky, vle in lst:
@@ -94,7 +94,6 @@ def mergeGroupLists(ListGList):
         for j in range(lenListGList):
             dummy = dummy | set(ListGList[j][i])
         dummy = list(dummy)
-        dummy.sort()
         GList.append(dummy)
 
     return GList
@@ -120,7 +119,6 @@ def applyMMGroupLists(GList, ListGList):
         for j in range(lenListGList):
             dummy = dummy & set(ListGList[j][i])
         dummy = list(dummy)
-        dummy.sort()
         GList[i] = dummy
 
     return GList

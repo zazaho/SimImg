@@ -1,4 +1,5 @@
 ''' The basic object that represents one file '''
+import os
 import hashlib
 from datetime import datetime
 from PIL import Image, ExifTags
@@ -10,9 +11,9 @@ class FileObject():
 
         self.Cfg = parent.Cfg
         self.FullPath = FullPath
-        #self.DirName = os.path.dirname(self.FullPath)
-        #self.FileName = os.path.basename(self.FullPath)
-        #dummy, self.FileExtension = os.path.splitext(self.FileName)
+        self.DirName = os.path.dirname(self.FullPath)
+        self.FileName = os.path.basename(self.FullPath)
+        dummy, self.FileExtension = os.path.splitext(self.FileName)
 
         self.hashDict = {}
 

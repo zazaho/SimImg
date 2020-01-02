@@ -28,12 +28,14 @@ class Configuration():
         'Default configuration parameters'
         # not yet? configurable
         self.set('maxthumbnails', 300)
+        self.set('channeltoshow', 'default')
         # can be overwritten from ini file
         self.set('searchinsubfolders', False)
         self.set('confirmdelete', True)
         self.set('gzipinsteadofdelete', False)
         self.set('savesettings', True)
         self.set('showbuttons', True)
+        self.set('filenameonthumbnail', False)
         self.set('thumbnailsize', 150)
         self.set('startupfolder', '')
         self.set('findergeometry', '1200x800+0+0')
@@ -44,11 +46,12 @@ class Configuration():
         config = configparser.ConfigParser()
         if config.read(self.IniPath):
             default = config['simimg']
-            doRecursive = default.get('searchinsubfolders', 'yes')
+            doRecursive = default.get('searchinsubfolders', 'no')
             confirmdelete = default.get('confirmdelete', 'yes')
             doGzip = default.get('gzipinsteadofdelete', 'no')
             savesettings = default.get('savesettings', 'yes')
             showbuttons = default.get('showbuttons', 'yes')
+            filenameonthumbnail = default.get('filenameonthumbnail', 'no')
             thumbSize = default.getint('thumbnailsize', 150)
             startupDir = default.get('startupfolder', '.')
             finderGeometry = default.get('findergeometry', '1200x800+0+0')
@@ -59,6 +62,7 @@ class Configuration():
             self.set('gzipinsteadofdelete', HF.str2bool(doGzip, default=True))
             self.set('savesettings', HF.str2bool(savesettings, default=True))
             self.set('showbuttons', HF.str2bool(showbuttons, default=True))
+            self.set('filenameonthumbnail', HF.str2bool(filenameonthumbnail, default=True))
             self.set('thumbnailsize', thumbSize)
             self.set('startupfolder', startupDir)
             self.set('findergeometry', finderGeometry)
@@ -78,6 +82,7 @@ class Configuration():
             'gzipinsteadofdelete':self.get('gzipinsteadofdelete'),
             'savesettings':self.get('savesettings'),
             'showbuttons':self.get('showbuttons'),
+            'filenameonthumbnail':self.get('filenameonthumbnail'),
             'thumbnailsize':self.get('thumbnailsize'),
             'startupfolder':self.get('startupfolder'),
             'findergeometry':self.get('findergeometry'),

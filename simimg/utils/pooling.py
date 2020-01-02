@@ -185,13 +185,13 @@ def GetImageHashes(FODict, hashName, db_connection=None):
             FO.hashDict[hashName] = hashValue
 
 def getOneThumb(arg):
-    md5, filename, tsize = arg
-    img = PP.imageOpenAndResizeToFit(filename, tsize, tsize)
+    md5, filename, tsize, channel = arg
+    img = PP.thumbnailOpen(filename, tsize, tsize, channel=channel)
     return (md5, img)
 
-def GetMD5Thumbnails(FODict, Thumbsize=None):
+def GetMD5Thumbnails(FODict, Thumbsize=None, channel='Default'):
     '''return thumbnail for each md5 in FODict.'''
-    args = [(md5, fo[0].FullPath, Thumbsize) for md5, fo in FODict.items()]
+    args = [(md5, fo[0].FullPath, Thumbsize, channel) for md5, fo in FODict.items()]
     ThumbDict = {} ## md5, thumbnail
     with Pool() as pool:
         calculatedthumbs = pool.map(getOneThumb, args)

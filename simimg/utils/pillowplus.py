@@ -1,5 +1,5 @@
 ''' Some some utililty for reading and dealing with pillow images'''
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageChops
 
 pillowplus_table16 = [i/256 for i in range(65536)]
 
@@ -12,15 +12,15 @@ def imageOpen(fn):
                 max(img.getdata()) > 255
         ):
             img = img.point(pillowplus_table16, 'L')
-        return img
     except:
         return None
+    return img
 
 def imageResize(img, w, h):
     try:
-        res=img.resize((w, h), Image.ANTIALIAS)
+        res = img.resize((w, h), Image.ANTIALIAS)
     except:
-        res=None
+        res = None
     return res
 
 def imageResizeToFit(img, w, h):
@@ -28,16 +28,10 @@ def imageResizeToFit(img, w, h):
     return imageResize(img, int(img.size[0]/ratio), int(img.size[1]/ratio))
 
 def imageOpenAndResize(fn, w, h):
-    img = imageOpen(fn)
-    if not img:
-        return None
-    return imageResize(img, w, h)
+    return imageResize(imageOpen(fn), w, h)
 
 def imageOpenAndResizeToFit(fn, w, h):
-    img = imageOpen(fn)
-    if not img:
-        return None
-    return imageResizeToFit(img, w, h)
+    return imageResizeToFit(imageOpen(fn), w, h)
 
 def photoImageOpen(fn):
     img = imageOpen(fn)
@@ -46,13 +40,59 @@ def photoImageOpen(fn):
     return ImageTk.PhotoImage(img)
 
 def photoImageOpenAndResize(fn, w, h):
-    img = imageOpen(fn)
+    img = imageResize(imageOpen(fn), w, h)
     if not img:
         return None
-    return ImageTk.PhotoImage(imageResize(img, w, h))
+    return ImageTk.PhotoImage(img)
 
 def photoImageOpenAndResizeToFit(fn, w, h):
+    img = imageResizeToFit(imageOpen(fn), w, h)
+    if not img:
+        return None
+    return ImageTk.PhotoImage(img)
+
+def thumbnailOpen(fn, w, h, channel=None):
     img = imageOpen(fn)
     if not img:
         return None
-    return ImageTk.PhotoImage(imageResizeToFit(img, w, h))
+
+    try:
+        # this is needed because thumbnail does not check that the file can
+        # be actually loaded
+        img.load()
+        img.thumbnail((w, h))
+    except:
+        return None
+
+    if (
+            not channel or
+            channel == 'Default' or
+            len(img.getbands()) == 1
+    ):
+        return img
+
+    try:
+        hsv = img.split() if img.getbands() == ("H", "S", "V") else img.convert("HSV").split()
+    except:
+        return img
+
+    if channel == 'Hue':
+        img = Image.merge(
+            "HSV",
+            (
+                hsv[0],
+                ImageChops.constant(hsv[1], 255),
+                ImageChops.constant(hsv[2], 255),
+            )
+            )
+    if channel == 'Saturation':
+        img = hsv[1]
+    if channel == 'Value':
+        img = hsv[2]
+    return img
+
+def photoThumbnailOpen(fn, w, h, channel=None):
+    img = thumbnailOpen(fn, w, h, channel=channel)
+    if not img:
+        return None
+    return ImageTk.PhotoImage(img)

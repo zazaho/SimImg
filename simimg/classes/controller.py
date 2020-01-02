@@ -1,6 +1,6 @@
 ''' Controller module:
 The main gateway between the information contained in the database,
-the fileinfo objects and the display.
+the fileinfo objects and the display of teh thumbnails.
  '''
 import sys
 import os
@@ -10,6 +10,7 @@ from PIL import ImageTk
 from . import conditionmodules as CM
 from . import fileobject as FO
 from . import imageframe as IF
+from . import miscmodules as MM
 from . import toolbar as TB
 from ..dialogs import confirmdeletedialog as CDD
 from ..dialogs import configurationwindow as CW
@@ -50,8 +51,12 @@ class Controller():
         Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
         Toolbar.pack(side="top", fill='x')
 
+        ThumbOpt = MM.ThumbOptions(self.TopWindow.ModulePane, Controller=self)
+        ThumbOpt.pack(side="top", fill='x')
+        
         # create the condition modules in the self.TopWindow.ModulePane
         # put them in a list so that we can easily iterate over them
+
         self._CMList = []
         self._CMList.extend([
             CM.ColorCondition(self.TopWindow.ModulePane, Controller=self),
@@ -103,16 +108,43 @@ class Controller():
         self.Cfg.writeConfiguration()
         self.TopWindow.quit()
 
+    def onChange(self):
+        # put everything to default
+        self._matchingGroups = []
+        # make sure to clean the interface
+        self._removeAllThumbs()
+        self._getMatchingGroups()
+        self._displayMatchingGroups()
+
     def configureProgram(self):
         oldThumbsize = self.Cfg.get('thumbnailsize')
-        oldShowButtons = self.Cfg.get('showbuttons')
         CW.CfgWindow(self.TopWindow, Controller=self)
-        if self.Cfg.get('showbuttons') != oldShowButtons:
-            for thumbframe in self._TPPositionDict.values():
-                thumbframe.showHideButtons()
         if self.Cfg.get('thumbnailsize') != oldThumbsize:
-            self._setThumbnails()
-            self.onChange()
+            self.onThumbParamsChanged()
+
+    def onThumbElementsChanged(self):
+        for thumbframe in self._TPPositionDict.values():
+            thumbframe.showOptionalElements()
+
+    def onThumbParamsChanged(self):
+        # the parameters changed we should regenerate the thumbnails
+        self._setThumbnails()
+
+        # check whether at least one conditions is active.
+        someConditionactive = False
+        for cm in self._CMList:
+            if cm.active:
+                someConditionActive = True
+                break
+        # if one conditions is active just change the shown thumbnails
+        # otherwise recreate the whole interface
+        # including the number of thumbs per line if thumbnailsize changed
+        if someConditionactive:
+            for thumbframe in self._TPPositionDict.values():
+                thumbframe.createThumbContent()
+                thumbframe.showOptionalElements()
+        else:
+            self._createViewWithoutConditions()
 
     def addFolder(self):
         selectedFolder = tkfiledialog.askdirectory()
@@ -195,7 +227,7 @@ class Controller():
         self._fileList = [c for c in candidates if os.path.isfile(c)]
         self._fileList.extend(oldFiles)
         self._fileList = list(set(self._fileList))
-        self._fileList.sort()
+        #self._fileList.sort()
 
         # split the _fileList into a common and a unique part
         self._filenameCommon, filenameUniqueList = HF.stringlist2commonunique(self._fileList)
@@ -315,7 +347,6 @@ class Controller():
         if not matchingGroups:
             return
 
-        matchingGroups.sort()
         uniqueMatchingGroups = []
         for MG in matchingGroups:
             if not HF.existsAsSubGroup(MG, uniqueMatchingGroups):
@@ -337,14 +368,6 @@ class Controller():
             if numThumbsShown > self._maxThumbnails:
                 self._showInStatusbar("Warning too many matches: truncated to ~%s" % self._maxThumbnails)
                 return
-
-    def onChange(self):
-        # put everything to default
-        self._matchingGroups = []
-        # make sure to clean the interface
-        self._removeAllThumbs()
-        self._getMatchingGroups()
-        self._displayMatchingGroups()
 
     def resetThumbnails(self):
         for foList in self.FODict.values():
@@ -468,7 +491,8 @@ class Controller():
         self._showInStatusbar("Making file thumbnails, please be patient")
         MD5ThumbDict = POOL.GetMD5Thumbnails(
             self.FODict,
-            Thumbsize=self.Cfg.get('thumbnailsize')
+            Thumbsize=self.Cfg.get('thumbnailsize'),
+            channel=self.Cfg.get('channeltoshow'),
         )
         self._showInStatusbar("...")
         if not MD5ThumbDict:
@@ -477,9 +501,16 @@ class Controller():
             if not thumb:
                 del self.FODict[md5]
                 continue
+
+            try:
+                pimage = ImageTk.PhotoImage(thumb)
+            except:
+                del self.FODict[md5]
+                continue
+
             fo = self.FODict[md5]
             for afo in fo:
-                afo._Thumbnail = ImageTk.PhotoImage(thumb)
+                afo._Thumbnail = pimage
 
     def setImageHashes(self, hashName=None):
         self._showInStatusbar("Calculating Image Hash values, please be patient")

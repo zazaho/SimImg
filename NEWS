@@ -1,3 +1,7 @@
+version 0.6.2 (SH Jan  2 2020)
+- options to configure thumbnails
+- fixed bug in match-making
+
 version 0.6.1 (SH Jan  1 2020)
 - removed duplicate code in condition modules. They are now faster and
   much cleaner in design

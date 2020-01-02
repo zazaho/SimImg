@@ -21,16 +21,6 @@ class ImageFrame(ttk.Frame):
         )
         self._thumb_canvas.bind("<Button-1>", self._click)
 
-        if self.md5:
-            self._thumb_canvas.create_image(
-                self._ThumbSize/2,
-                self._ThumbSize/2,
-                anchor='center',
-                image=Ctrl.FODict[self.md5][0].Thumbnail()
-            )
-            if len(Ctrl.FODict[self.md5]) > 1:
-                self._thumb_canvas.config(highlightbackground="green", highlightthickness=2)
-
         self._thumb_canvas.pack(side="top")
         self._hide_button = ttk.Button(
             self,
@@ -44,9 +34,44 @@ class ImageFrame(ttk.Frame):
             command=self._delete,
             style="Thumb.TButton"
         )
-        self.showHideButtons()
+        self.createThumbContent()
+        self.showOptionalElements()
 
-    def showHideButtons(self):
+    def createThumbContent(self):
+        self._ThumbSize = self.Ctrl.Cfg.get('thumbnailsize')
+        self._thumb_canvas.delete('all')
+        self._thumb_canvas.config(width=self._ThumbSize, height=self._ThumbSize)
+        if self.md5:
+            self._thumb_canvas.create_image(
+                self._ThumbSize/2,
+                self._ThumbSize/2,
+                anchor='center',
+                image=self.Ctrl.FODict[self.md5][0].Thumbnail()
+            )
+            self.text = self._thumb_canvas.create_text(
+                self._ThumbSize/2,
+                self._ThumbSize,
+                anchor='s',
+                text=self.Ctrl.FODict[self.md5][0].FileName,
+            )
+            self.backtext = self._thumb_canvas.create_rectangle(
+                self._thumb_canvas.bbox(self.text),
+                fill=self._defaultBackgroundColor,
+                width=0,
+            )
+            self._thumb_canvas.tag_lower(self.backtext, self.text)
+
+            if len(self.Ctrl.FODict[self.md5]) > 1:
+                self._thumb_canvas.config(highlightbackground="green", highlightthickness=2)
+                
+    def showOptionalElements(self):
+        if self.Ctrl.Cfg.get('filenameonthumbnail'):
+            self._thumb_canvas.itemconfigure(self.text, state='normal')
+            self._thumb_canvas.itemconfigure(self.backtext, state='normal')
+        else:
+            self._thumb_canvas.itemconfigure(self.text, state='hidden')
+            self._thumb_canvas.itemconfigure(self.backtext, state='hidden')
+
         if self.Ctrl.Cfg.get('showbuttons'):
             self._hide_button.pack(side="left")
             self._delete_button.pack(side="right")

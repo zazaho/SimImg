@@ -26,10 +26,6 @@ class CfgWindow(tk.Toplevel):
         self.doGzip.set(self.Ctrl.Cfg.get('gzipinsteadofdelete'))
         self.saveSettings = tk.BooleanVar()
         self.saveSettings.set(self.Ctrl.Cfg.get('savesettings'))
-        self.showButtons = tk.BooleanVar()
-        self.showButtons.set(self.Ctrl.Cfg.get('showbuttons'))
-        self.thumbSize = tk.IntVar()
-        self.thumbSize.set(self.Ctrl.Cfg.get('thumbnailsize'))
         self.startupDir = tk.StringVar()
         self.startupDir.set(self.Ctrl.Cfg.get('startupfolder'))
 
@@ -63,20 +59,6 @@ Leave empty to start without reading files.'''
         TT.Tooltip(startlabel, text=msg)
         TT.Tooltip(startentry, text=msg)
         TT.Tooltip(openbutton, text='Select Startup Folder')
-
-        thumbSizeFrame = ttk.Frame(self)
-        thumbSizeFrame.pack(fill='x', padx=5)
-
-        ttk.Label(
-            thumbSizeFrame,
-            style="LargeText.TLabel",
-            text="Thumbnail Size"
-        ).pack(pady=5, side="left")
-        ttk.Entry(
-            thumbSizeFrame,
-            font=('', 11),
-            textvariable=self.thumbSize
-        ).pack(pady=5, side="left")
 
         clearDBFrame = ttk.Frame(self)
         clearDBFrame.pack(fill='x', padx=5)
@@ -125,19 +107,10 @@ Leave empty to start without reading files.'''
                               variable=self.saveSettings
         )
 
-        shb = ttk.Checkbutton(toggleFrame,
-                              text="Show Hide/Delete buttons",
-                              style="LargeText.TCheckbutton",
-                              variable=self.showButtons
-        )
-        msg = '''Show the individual Hide/Delete buttons with each thumbnail.'''
-        TT.Tooltip(shb, text=msg)
-
         subdir.pack(pady=5, anchor='w')
         cnfrm.pack(pady=5, anchor='w')
         gzp.pack(pady=5, anchor='w')
         svs.pack(pady=5, anchor='w')
-        shb.pack(pady=5, anchor='w')
 
         btnFrame = ttk.Frame(self)
         btnFrame.pack(fill='x')
@@ -178,12 +151,6 @@ Leave empty to start without reading files.'''
         self.Ctrl.Cfg.set('confirmdelete', self.confirmDel.get())
         self.Ctrl.Cfg.set('gzipinsteadofdelete', self.doGzip.get())
         self.Ctrl.Cfg.set('savesettings', self.saveSettings.get())
-        self.Ctrl.Cfg.set('showbuttons', self.showButtons.get())
-        try:
-            ts = self.thumbSize.get()
-        except tk.TclError:
-            ts = self.Ctrl.Cfg.get('thumbnailsize')
-        self.Ctrl.Cfg.set('thumbnailsize', ts)
         self.Ctrl.Cfg.set('startupfolder', self.startupDir.get())
         self._returntoparent()
 
