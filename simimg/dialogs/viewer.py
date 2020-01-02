@@ -9,6 +9,9 @@ class viewer(tk.Toplevel):
         super().__init__()
 
         self._MD5s, self._filenames = zip(*Fileinfo)
+        self._MD5s = list(self._MD5s)
+        self._filenames = list(self._filenames)
+        
         self.Ctrl = Controller
 
         self.geometry(self.Ctrl.Cfg.get('viewergeometry'))
