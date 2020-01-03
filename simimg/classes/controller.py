@@ -5,6 +5,7 @@ the fileinfo objects and the display of teh thumbnails.
 import sys
 import os
 import glob
+from tkinter import ttk
 from tkinter import filedialog as tkfiledialog
 from PIL import ImageTk
 from . import conditionmodules as CM
@@ -51,9 +52,13 @@ class Controller():
         Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
         Toolbar.pack(side="top", fill='x')
 
+        _label = ttk.Label(self.TopWindow.ModulePane, text="Display", style="HeaderText.TLabel").pack(fill='x')
+
         ThumbOpt = MM.ThumbOptions(self.TopWindow.ModulePane, Controller=self)
         ThumbOpt.pack(side="top", fill='x')
         
+        _label = ttk.Label(self.TopWindow.ModulePane, text="Filters", style="HeaderText.TLabel").pack(fill='x')
+
         # create the condition modules in the self.TopWindow.ModulePane
         # put them in a list so that we can easily iterate over them
 

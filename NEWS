@@ -1,3 +1,7 @@
+version 0.6.3 (SH Jan  3 2020)
+- Small layout improvement
+- fixed bug in file delete in viewer windows
+
 version 0.6.2 (SH Jan  2 2020)
 - options to configure thumbnails
 - fixed bug in match-making

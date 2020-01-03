@@ -11,8 +11,6 @@ class ThumbOptions(ttk.Frame):
         # keep a handle of the controller object
         self.Ctrl = Controller
 
-        label = ttk.Label(self, text="THUMBNAIL OPTIONS")
-        label.pack(fill='x')
         label = ttk.Label(self, text="Output channel")
         label.pack(fill='x')
         self.channeltoshow = "Default"

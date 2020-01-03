@@ -33,6 +33,13 @@ class simim_app(tk.Tk):
         style = ttk.Style()
         style.configure("LargeText.TButton", font=('', 11))
         style.configure("LargeText.TLabel", font=('', 11))
+        style.configure(
+            "HeaderText.TLabel",
+            font=('', 11),
+            foreground=self.cget('background'),
+            background='darkblue',
+            anchor='center',
+        )
         style.configure("LargeText.TCheckbutton", font=('', 11))
         style.configure("BoldText.TLabel", font=('', 12, 'bold'))
 
