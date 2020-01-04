@@ -30,6 +30,7 @@ def CreateDBTables(db_connection, clear=None):
         db_cursor = db_connection.cursor()
         if clear:
             db_cursor.execute(sql_delete_table)
+            db_connection.execute("VACUUM") 
         db_cursor.execute(sql_create_table)
 
         db_cursor.close()
@@ -42,6 +43,7 @@ def CreateDBTables(db_connection, clear=None):
 def CloseDBConnection(db_connection):
     try:
         db_connection.commit()
+        db_connection.execute("VACUUM") 
         db_connection.close()
     except sqlite3.Error as error:
         print(error)

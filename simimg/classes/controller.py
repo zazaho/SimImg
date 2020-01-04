@@ -134,9 +134,8 @@ class Controller():
     def onThumbParamsChanged(self):
         # the parameters changed we should regenerate the thumbnails
         self._setThumbnails()
-
         # check whether at least one conditions is active.
-        someConditionactive = False
+        someConditionActive = False
         for cm in self._CMList:
             if cm.active:
                 someConditionActive = True
@@ -144,12 +143,16 @@ class Controller():
         # if one conditions is active just change the shown thumbnails
         # otherwise recreate the whole interface
         # including the number of thumbs per line if thumbnailsize changed
-        if someConditionactive:
+        if someConditionActive:
             for thumbframe in self._TPPositionDict.values():
                 thumbframe.createThumbContent()
                 thumbframe.showOptionalElements()
         else:
             self._createViewWithoutConditions()
+
+        for thumbframe in self._TPPositionDict.values():
+            thumbframe.createThumbContent()
+            thumbframe.showOptionalElements()
 
     def addFolder(self):
         selectedFolder = tkfiledialog.askdirectory()

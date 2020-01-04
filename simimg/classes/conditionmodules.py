@@ -13,7 +13,7 @@ import itertools
 import functools
 import tkinter as tk
 from tkinter import ttk
-from . import textscale as TS
+from . import customscales as CS
 from . import tooltip as TT
 
 class ConditionFrame(ttk.Frame):
@@ -21,40 +21,30 @@ class ConditionFrame(ttk.Frame):
     " A frame that holds one selection criterion with options"
     def __init__(self, parent, Controller=None):
         super().__init__(parent)
-
-        # keep a handle of the controller object
-        self.Ctrl = Controller
-
         self.config(borderwidth=1, relief="sunken")
 
-        self._label = None
+        # keep a handle of the controller object
+        self._Ctrl = Controller
         self.active = False
         self.mustMatch = tk.BooleanVar()
-        self._mustMatchToggle = None
-        self._childWidgets = []
 
         self._currentConfig = {}
         self._currentMatchingGroups = []
-
-        self._makeBaseWidgets()
-        self._setActive(False)
+        self._matchingInfo = []
         self._md5s = {}
 
-        self._matchingInfo = []
-
-    def _makeBaseWidgets(self):
         self._label = ttk.Label(self, text=self.name)
         self._label.bind('<Button-1>', self._activeToggled)
+        self._label.pack(fill='x')
+
         self._mustMatchToggle = ttk.Checkbutton(
             self,
             text="Must Match",
             variable=self.mustMatch,
             command=self._somethingChanged
         )
-
-        self._childWidgets = [self._mustMatchToggle]
-        self._label.pack(fill='x')
         self._mustMatchToggle.pack(fill='x')
+        self._childWidgets = [self._mustMatchToggle]
 
     def _setActive(self, value):
         self.active = value
@@ -75,7 +65,7 @@ class ConditionFrame(ttk.Frame):
         self._somethingChanged()
 
     def _somethingChanged(self, *args):
-        self.Ctrl.onChange()
+        self._Ctrl.onChange()
 
     def _updateFromPrevious(self, md5s):
         # check that the md5s or the widget parameters are different from before
@@ -129,22 +119,30 @@ class ConditionFrame(ttk.Frame):
         self._postMatching()
         return self._currentMatchingGroups
 
+    # this is a trick to make sure that ctrl-a works on the thumbnails
+    # even if the Scale has foocus
+    def _doSelectAll(self, *args):
+        self._Ctrl.selectAllThumbnails()
+        return "break"
+
 class GradientCondition(ConditionFrame):
     name = 'GRADIENTS'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
+        self.method = "Horizontal"
+        self.limit = 14
+
         self._Combo = None
         self._Scale = None
         self._ScaleTip = None
-        self.method = "Horizontal"
-        self.limit = 14
         self._limitVar = tk.IntVar()
         self._limitVar.set(self.limit)
         self._currentConfig = {'method':'', 'limit':-1}
         self._currentMatchingGroups = []
+        self._mouseIsPressed = False
+
         self._makeAdditionalWidgets()
         self._setActive(False)
-        self._mouseIsPressed = False
         
     def _makeAdditionalWidgets(self):
         self._Combo = ttk.Combobox(
@@ -155,48 +153,32 @@ class GradientCondition(ConditionFrame):
         )
         self._Combo.set(self.method)
         self._Combo.bind("<<ComboboxSelected>>", self._comboChanged)
-        self._Scale = tk.Scale(self,
-                               from_= 1, to=50,
-                               variable=self._limitVar,
-                               takefocus=1,
-                               command=self._scaleChanged,
-                               orient="horizontal",
+        self._Scale = CS.DelayedScale(self,
+                                      from_= 1, to=50,
+                                      variable=self._limitVar,
+                                      takefocus=1,
+                                      command=self._scaleChanged,
+                                      orient="horizontal",
         )
-        self._Scale.bind("<ButtonPress-1>", self._scalePressed)
-        self._Scale.bind("<ButtonRelease-1>", self._scaleReleased)
         self._Scale.bind("<Control-a>", self._doSelectAll)
         self._ScaleTip = TT.Tooltip(self._Scale, text='')
         self._Combo.pack()
         self._Scale.pack()
         self._childWidgets.extend([self._Combo, self._Scale])
 
-    def _doSelectAll(self, *args):
-        self.Ctrl.selectAllThumbnails()
-        return "break"
-
     def _comboChanged(self, *args):
         self.method = self._Combo.get()
         self._Combo.focus_set()
-        self.Ctrl.onChange()
-
-    def _scalePressed(self, *args):
-        self._mouseIsPressed = True
-
-    def _scaleReleased(self, *args):
-        self._mouseIsPressed = False
-        self._scaleChanged()
+        self._somethingChanged()
 
     def _scaleChanged(self, *args):
-        # do nothing while the mouse is down
-        if self._mouseIsPressed:
-            return
         self.limit = self._limitVar.get()
         self._Scale.focus_set()
-        self.Ctrl.onChange()
+        self._somethingChanged()
 
     def _preMatching(self):
         # Call this to make sure the hash values for this method are available
-        self.Ctrl.setImageHashes(hashName=self.method)
+        self._Ctrl.setImageHashes(hashName=self.method)
         self._matchingInfo = []
 
     def _postMatching(self):
@@ -209,8 +191,8 @@ class GradientCondition(ConditionFrame):
             self._ScaleTip.text = 'min=%d; >10 pairs=%d' % (math.ceil(min(self._matchingInfo)), math.ceil(self._matchingInfo[9]))
 
     def _theymatch(self, md5a, md5b):
-        hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
-        hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
+        hashA = self._Ctrl.FODict[md5a][0].hashDict[self.method]
+        hashB = self._Ctrl.FODict[md5b][0].hashDict[self.method]
         dist = functools.reduce(
             add,
             [format(hashA[i]^hashB[i], 'b').count('1') for i in range(len(hashA))]
@@ -222,18 +204,19 @@ class ColorCondition(ConditionFrame):
     name = 'COLOR DISTANCE'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
+        self.method = "HSV (5 regions)"
+        self.limit = 10
+
         self._Combo = None
         self._Scale = None
         self._ScaleTip = None
-        self.method = "HSV (5 regions)"
-        self.limit = 10
         self._limitVar = tk.IntVar()
         self._limitVar.set(self.limit)
         self._currentConfig = {'method':'', 'limit':-1}
         self._currentMatchingGroups = []
+        self._mouseIsPressed = False
         self._makeAdditionalWidgets()
         self._setActive(False)
-        self._mouseIsPressed = False
 
     def _makeAdditionalWidgets(self):
         self._Combo = ttk.Combobox(
@@ -244,47 +227,31 @@ class ColorCondition(ConditionFrame):
         )
         self._Combo.set(self.method)
         self._Combo.bind("<<ComboboxSelected>>", self._comboChanged)
-        self._Scale = tk.Scale(self,
-                              from_= 1, to=50,
-                              variable=self._limitVar,
-                              command=self._scaleChanged,
-                              orient="horizontal"
+        self._Scale = CS.DelayedScale(self,
+                                      from_= 1, to=50,
+                                      variable=self._limitVar,
+                                      command=self._scaleChanged,
+                                      orient="horizontal"
         )
-        self._Scale.bind("<ButtonPress-1>", self._scalePressed)
-        self._Scale.bind("<ButtonRelease-1>", self._scaleReleased)
         self._Scale.bind("<Control-a>", self._doSelectAll)
         self._ScaleTip = TT.Tooltip(self._Scale, text='')
         self._Combo.pack()
         self._Scale.pack()
         self._childWidgets.extend([self._Combo, self._Scale])
 
-    def _doSelectAll(self, *args):
-        self.Ctrl.selectAllThumbnails()
-        return "break"
-
     def _comboChanged(self, *args):
         self.method = self._Combo.get()
         self._Combo.focus_set()
-        self.Ctrl.onChange()
-
-    def _scalePressed(self, *args):
-        self._mouseIsPressed = True
-
-    def _scaleReleased(self, *args):
-        self._mouseIsPressed = False
-        self._scaleChanged()
+        self._somethingChanged()
 
     def _scaleChanged(self, *args):
-        # do nothing while the mouse is down
-        if self._mouseIsPressed:
-            return
         self.limit = self._limitVar.get()
         self._Scale.focus_set()
-        self.Ctrl.onChange()
+        self._somethingChanged()
 
     def _preMatching(self):
         # Call this to make sure the hash values for this method are available
-        self.Ctrl.setImageHashes(hashName=self.method)
+        self._Ctrl.setImageHashes(hashName=self.method)
         self._matchingInfo = []
 
     def _postMatching(self):
@@ -297,8 +264,8 @@ class ColorCondition(ConditionFrame):
             self._ScaleTip.text = 'min=%d; >10 pairs=%d' % (math.ceil(min(self._matchingInfo)), math.ceil(self._matchingInfo[9]))
 
     def _theymatch(self, md5a, md5b):
-        hashA = self.Ctrl.FODict[md5a][0].hashDict[self.method]
-        hashB = self.Ctrl.FODict[md5b][0].hashDict[self.method]
+        hashA = self._Ctrl.FODict[md5a][0].hashDict[self.method]
+        hashB = self._Ctrl.FODict[md5b][0].hashDict[self.method]
         # we need to take care of the median hue value (0, 6, .. th element)
         # when calculating distance because this is a measure that wraps at 255
         # back to 0 the correct distance is the minimum of (h1-h2) % 255 and (h2-h1) % 255
@@ -316,14 +283,23 @@ class ColorCondition(ConditionFrame):
         return val <= self.limit
 
 class CameraCondition(ConditionFrame):
-    name = 'SAME CAMERA'
+    name = 'CAMERA MODEL'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
+        self.missingmatches = False
+
         self._missingMatchesCheck = None
         self._missingVar = tk.BooleanVar()
-        self.missingmatches = False
-        self._currentConfig = {'missingmatches':None}
         self._currentMatchingGroups = []
+        self._Scale = None
+        self._initialIndex = 0
+        self._scalelabels = ['Same', 'Different']
+        self._scaleSameMatches = {
+            'Same':True,
+            'Different':False,
+        }
+        self.samematches = self._scaleSameMatches[self._scalelabels[self._initialIndex]]
+        self._currentConfig = {'missingmatches':None, 'samematches':None}
         self._makeAdditionalWidgets()
         self._setActive(False)
 
@@ -332,31 +308,45 @@ class CameraCondition(ConditionFrame):
             self,
             text="Missing Matches",
             variable=self._missingVar,
-            command=self._somethingChanged,
+            command=self._toggleChanged,
         )
         self._missingMatchesCheck.pack(fill='x')
-        self._childWidgets.extend([self._missingMatchesCheck])
+        self._Scale = CS.TextScale(
+            self,
+            textLabels=self._scalelabels,
+            initialInt=self._initialIndex,
+            onChange=self._scaleChanged,
+            orient="horizontal"
+        )
+        self._Scale.bind("<Control-a>", self._doSelectAll)
+        self._Scale.pack()
+        self._childWidgets.extend([self._missingMatchesCheck, self._Scale])
 
-    def _somethingChanged(self, *args):
+    def _toggleChanged(self, *args):
         self.missingmatches = self._missingVar.get()
-        self.Ctrl.onChange()
+        self._somethingChanged()
+
+    def _scaleChanged(self, *args):
+        self.samematches = self._scaleSameMatches[self._Scale.textValue]
+        self._Scale.focus_set()
+        self._somethingChanged()
 
     def _theymatch(self, md5a, md5b):
-        if self.Ctrl.FODict[md5a][0].CameraModel() == '':
+        if self._Ctrl.FODict[md5a][0].CameraModel() == '':
             return False
-        if self.Ctrl.FODict[md5a][0].CameraModel() == self.Ctrl.FODict[md5b][0].CameraModel():
+        if self.missingmatches and self._Ctrl.FODict[md5b][0].CameraModel() == '':
             return True
-        if self.missingmatches and self.Ctrl.FODict[md5b][0].CameraModel() == '':
-            return True
-        return False
+        isSame = self._Ctrl.FODict[md5a][0].CameraModel() == self._Ctrl.FODict[md5b][0].CameraModel() 
+        return isSame == self.samematches
 
 class DateCondition(ConditionFrame):
     name = 'CLOSE IN TIME'
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
+        self.missingmatches = False
+
         self._missingMatchesCheck = None
         self._missingVar = tk.BooleanVar()
-        self.missingmatches = False
         self._Scale = None
 
         self._initialIndex = 1
@@ -374,57 +364,42 @@ class DateCondition(ConditionFrame):
 
         self._currentConfig = {'missingmatches':None, 'timedifference':''}
         self._currentMatchingGroups = []
+        self._mouseIsPressed = False
+
         self._makeAdditionalWidgets()
         self._setActive(False)
-        self._mouseIsPressed = False
 
     def _makeAdditionalWidgets(self):
         self._missingMatchesCheck = ttk.Checkbutton(
             self,
             text="Missing Matches",
             variable=self._missingVar,
-            command=self._somethingChanged
+            command=self._toggleChanged
         )
         self._missingMatchesCheck.pack(fill='x')
-        self._Scale = TS.TextScale(
+        self._Scale = CS.TextScale(
             self,
             textLabels=self._scalelabels,
             initialInt=self._initialIndex,
             onChange=self._scaleChanged,
             orient="horizontal"
         )
-        self._Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
-        self._Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
         self._Scale.bind("<Control-a>", self._doSelectAll)
         self._Scale.pack()
         self._childWidgets.extend([self._missingMatchesCheck, self._Scale])
 
-    def _doSelectAll(self, *args):
-        self.Ctrl.selectAllThumbnails()
-        return "break"
-
-    def _somethingChanged(self, *args):
+    def _toggleChanged(self, *args):
         self.missingmatches = self._missingVar.get()
-        self.Ctrl.onChange()
-
-    def _scalePressed(self, *args):
-        self._mouseIsPressed = True
-
-    def _scaleReleased(self, *args):
-        self._mouseIsPressed = False
-        self._scaleChanged()
+        self._somethingChanged()
 
     def _scaleChanged(self, *args):
-        # do nothing while the mouse is down
-        if self._mouseIsPressed:
-            return
         self.timedifference = self._scaleSeconds[self._Scale.textValue]
         self._Scale.focus_set()
-        self.Ctrl.onChange()
+        self._somethingChanged()
 
     def _theymatch(self, md5a, md5b):
-        datetime_a = self.Ctrl.FODict[md5a][0].DateTime()
-        datetime_b = self.Ctrl.FODict[md5b][0].DateTime()
+        datetime_a = self._Ctrl.FODict[md5a][0].DateTime()
+        datetime_b = self._Ctrl.FODict[md5b][0].DateTime()
         # deal with missings:
         if datetime_a == 'Missing':
             return False
@@ -454,46 +429,30 @@ class ShapeCondition(ConditionFrame):
 
         self._currentConfig = {'limit':-666}
         self._currentMatchingGroups = []
+        self._mouseIsPressed = False
         self._makeAdditionalWidgets()
         self._setActive(False)
-        self._mouseIsPressed = False
 
     def _makeAdditionalWidgets(self):
-        self._Scale = TS.TextScale(self,
-                                  textLabels=self._scalelabels,
-                                  topLabel='',
-                                  initialInt=self._initialIndex,
-                                  onChange=self._scaleChanged,
-                                  orient="horizontal"
+        self._Scale = CS.TextScale(self,
+                                   textLabels=self._scalelabels,
+                                   topLabel='',
+                                   initialInt=self._initialIndex,
+                                   onChange=self._scaleChanged,
+                                   orient="horizontal"
         )
-        self._Scale.TSScale.bind("<ButtonPress-1>", self._scalePressed)
-        self._Scale.TSScale.bind("<ButtonRelease-1>", self._scaleReleased)
         self._Scale.TSScale.bind("<Control-a>", self._doSelectAll)
         self._Scale.pack()
         self._childWidgets.extend([self._Scale])
 
-    def _doSelectAll(self, *args):
-        self.Ctrl.selectAllThumbnails()
-        return "break"
-
-    def _scalePressed(self, *args):
-        self._mouseIsPressed = True
-
-    def _scaleReleased(self, *args):
-        self._mouseIsPressed = False
-        self._scaleChanged()
-
     def _scaleChanged(self, *args):
-        # do nothing while the mouse is down
-        if self._mouseIsPressed:
-            return
         self.limit = self._scalevalues[self._Scale.textValue]
         self._Scale.focus_set()
-        self.Ctrl.onChange()
+        self._somethingChanged()
 
     def _theymatch(self, md5a, md5b):
-        foaval = self.Ctrl.FODict[md5a][0].ShapeParameter()
-        fobval = self.Ctrl.FODict[md5b][0].ShapeParameter()
+        foaval = self._Ctrl.FODict[md5a][0].ShapeParameter()
+        fobval = self._Ctrl.FODict[md5b][0].ShapeParameter()
         if self.limit == -1:
             return foaval*fobval > 0.0 or fobval == 0.0
         return abs(foaval - fobval) <= self.limit
