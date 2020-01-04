@@ -1,3 +1,7 @@
+version 0.6.4 (SH Jan  4 2020)
+- better regrouping algorithm for reducing the series of matches
+- further compatcing of condition modules
+
 version 0.6.3 (SH Jan  3 2020)
 - Small layout improvement
 - fixed bug in file delete in viewer windows

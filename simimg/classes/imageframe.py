@@ -6,12 +6,13 @@ class ImageFrame(ttk.Frame):
     def __init__(self, parent, md5=None, Ctrl=None, X=None, Y=None):
         super().__init__(parent)
 
-        self.Ctrl = Ctrl
-        self._ThumbSize = Ctrl.Cfg.get('thumbnailsize')
         self.md5 = md5
         self.selected = False
         self.X = X
         self.Y = Y
+
+        self._Ctrl = Ctrl
+        self._ThumbSize = Ctrl.Cfg.get('thumbnailsize')
 
         self._defaultBackgroundColor = Ctrl.TopWindow.cget('background')
         self._thumb_canvas = tk.Canvas(
@@ -38,7 +39,7 @@ class ImageFrame(ttk.Frame):
         self.showOptionalElements()
 
     def createThumbContent(self):
-        self._ThumbSize = self.Ctrl.Cfg.get('thumbnailsize')
+        self._ThumbSize = self._Ctrl.Cfg.get('thumbnailsize')
         self._thumb_canvas.delete('all')
         self._thumb_canvas.config(width=self._ThumbSize, height=self._ThumbSize)
         if self.md5:
@@ -46,13 +47,13 @@ class ImageFrame(ttk.Frame):
                 self._ThumbSize/2,
                 self._ThumbSize/2,
                 anchor='center',
-                image=self.Ctrl.FODict[self.md5][0].Thumbnail()
+                image=self._Ctrl.FODict[self.md5][0].Thumbnail()
             )
             self.text = self._thumb_canvas.create_text(
                 self._ThumbSize/2,
                 self._ThumbSize,
                 anchor='s',
-                text=self.Ctrl.FODict[self.md5][0].FileName,
+                text=self._Ctrl.FODict[self.md5][0].FileName,
             )
             self.backtext = self._thumb_canvas.create_rectangle(
                 self._thumb_canvas.bbox(self.text),
@@ -61,18 +62,18 @@ class ImageFrame(ttk.Frame):
             )
             self._thumb_canvas.tag_lower(self.backtext, self.text)
 
-            if len(self.Ctrl.FODict[self.md5]) > 1:
+            if len(self._Ctrl.FODict[self.md5]) > 1:
                 self._thumb_canvas.config(highlightbackground="green", highlightthickness=2)
                 
     def showOptionalElements(self):
-        if self.Ctrl.Cfg.get('filenameonthumbnail'):
+        if self._Ctrl.Cfg.get('filenameonthumbnail'):
             self._thumb_canvas.itemconfigure(self.text, state='normal')
             self._thumb_canvas.itemconfigure(self.backtext, state='normal')
         else:
             self._thumb_canvas.itemconfigure(self.text, state='hidden')
             self._thumb_canvas.itemconfigure(self.backtext, state='hidden')
 
-        if self.Ctrl.Cfg.get('showbuttons'):
+        if self._Ctrl.Cfg.get('showbuttons'):
             self._hide_button.pack(side="left")
             self._delete_button.pack(side="right")
         else:
@@ -80,31 +81,31 @@ class ImageFrame(ttk.Frame):
             self._delete_button.pack_forget()
 
     def _hide(self):
-        for fo in self.Ctrl.FODict[self.md5]:
+        for fo in self._Ctrl.FODict[self.md5]:
             fo.active = False
-            self.Ctrl.onChange()
+            self._Ctrl.onChange()
 
     def _delete(self):
-        self.Ctrl.deleteFOs(
-            self.Ctrl.FODict[self.md5],
-            Owner=self.Ctrl.TopWindow
+        self._Ctrl.deleteFOs(
+            self._Ctrl.FODict[self.md5],
+            Owner=self._Ctrl.TopWindow
         )
 
     def select(self, value):
         self.selected = value
         if self.selected:
             self._thumb_canvas.config(bg="blue")
-            self.Ctrl.lastSelectedXY = (self.X, self.Y)
+            self._Ctrl.lastSelectedXY = (self.X, self.Y)
         else:
             self._thumb_canvas.config(bg=self._defaultBackgroundColor)
-            self.Ctrl.lastSelectedXY = None
+            self._Ctrl.lastSelectedXY = None
         self.focus_set()
 
     def _click(self, event):
         if (event.state & 0x4) != 0:
-            self.Ctrl.toggleSelectRow(self.Y, not self.selected)
+            self._Ctrl.toggleSelectRow(self.Y, not self.selected)
             return
         if (event.state & 0x1) != 0:
-            self.Ctrl.selectRangeFromLastSelected(self.X, self.Y)
+            self._Ctrl.selectRangeFromLastSelected(self.X, self.Y)
             return
         self.select(not self.selected)

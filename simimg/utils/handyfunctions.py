@@ -19,6 +19,18 @@ def str2bool(S, default=False):
         return True
     return default
 
+def listOfListWithoutDuplicateSubgroups(LL):
+    UL = []
+    for L in LL:
+        # Does this L exists as a subgroup of any element already in the list?
+        # if yes skip to the next list
+        if existsAsSubGroup(L, UL):
+            continue
+        # keep only elements in UL that are not a subgroup of L
+        UL = [l for l in UL if set(l) - set(L) != set()]
+        UL.append(L)
+    return UL
+
 def existsAsSubGroup(E, GL):
     '''Test whether E exists as a subgroup in any of the groups in the group list'''
     for G in GL:

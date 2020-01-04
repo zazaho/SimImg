@@ -414,9 +414,10 @@ class ShapeCondition(ConditionFrame):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self._Scale = None
-        self._initialIndex = 0
-        self._scalelabels = ['Portrait/Landscape', 'Exact', '<5%', '<10%', '<20%', '<30%', '<50%']
+        self._initialIndex = 1
+        self._scalelabels = ['Different Size', 'Portrait/Landscape', 'Exact', '<5%', '<10%', '<20%', '<30%', '<50%']
         self._scalevalues = {
+            'Different Size':-2,
             'Portrait/Landscape':-1,
             'Exact':0,
             '<5%':5,
@@ -453,6 +454,8 @@ class ShapeCondition(ConditionFrame):
     def _theymatch(self, md5a, md5b):
         foaval = self._Ctrl.FODict[md5a][0].ShapeParameter()
         fobval = self._Ctrl.FODict[md5b][0].ShapeParameter()
+        if self.limit == -2:
+            return set(self._Ctrl.FODict[md5a][0].Size()) != set(self._Ctrl.FODict[md5b][0].Size())
         if self.limit == -1:
             return foaval*fobval > 0.0 or fobval == 0.0
         return abs(foaval - fobval) <= self.limit

@@ -355,12 +355,7 @@ class Controller():
         if not matchingGroups:
             return
 
-        uniqueMatchingGroups = []
-        for MG in matchingGroups:
-            if not HF.existsAsSubGroup(MG, uniqueMatchingGroups):
-                uniqueMatchingGroups.append(MG)
-
-        self._matchingGroups = uniqueMatchingGroups
+        self._matchingGroups = HF.listOfListWithoutDuplicateSubgroups(matchingGroups)
 
     def _displayMatchingGroups(self):
         #clear messages from the statusbar
