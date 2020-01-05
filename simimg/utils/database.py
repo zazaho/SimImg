@@ -9,15 +9,13 @@ def CreateDBConnection(db_file):
     if not os.path.isdir(dirName):
         try:
             os.mkdir(dirName)
-        except OSError as error:
-            print(error)
+        except OSError:
             return None
             
     try:
         db_connection = sqlite3.connect(db_file)
         return db_connection
-    except sqlite3.Error as error:
-        print(error)
+    except sqlite3.Error:
         return None
 
 def CreateDBTables(db_connection, clear=None):
@@ -36,8 +34,7 @@ def CreateDBTables(db_connection, clear=None):
         db_cursor.close()
         db_connection.commit()
         return True
-    except sqlite3.Error as error:
-        print(error)
+    except sqlite3.Error:
         return False
 
 def CloseDBConnection(db_connection):
@@ -45,9 +42,9 @@ def CloseDBConnection(db_connection):
         db_connection.commit()
         db_connection.execute("VACUUM") 
         db_connection.close()
-    except sqlite3.Error as error:
-        print(error)
-
+    except sqlite3.Error:
+        return
+    
 def GetHashValueFromDataBase(md5, hashname, db_connection=None):
     # which function to use to translate the string to hash
     convDict = {
@@ -70,8 +67,7 @@ def GetHashValueFromDataBase(md5, hashname, db_connection=None):
         db_cursor.close()
         if hashvalue:
             return convDict[hashname](hashvalue[0])
-    except sqlite3.Error as error:
-        print(error)
+    except sqlite3.Error:
         db_cursor.close()
     return None
 

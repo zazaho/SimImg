@@ -81,8 +81,8 @@ def thumbnailOpen(fn, w, h, channel=None):
             "HSV",
             (
                 hsv[0],
-                ImageChops.constant(hsv[1], 255),
-                ImageChops.constant(hsv[2], 255),
+                ImageChops.constant(hsv[0], 255),
+                ImageChops.constant(hsv[0], 255),
             )
             )
     if channel == 'Saturation':

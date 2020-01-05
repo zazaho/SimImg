@@ -1,6 +1,11 @@
+version 0.6.5 (SH Jan  5 2020)
+- deal with matching groups as dicts, much cleaner implementation
+- results are now sorted by filename for each row of matches and by
+  filename for the first shown image
+  
 version 0.6.4 (SH Jan  4 2020)
 - better regrouping algorithm for reducing the series of matches
-- further compatcing of condition modules
+- further compacting of condition modules
 
 version 0.6.3 (SH Jan  3 2020)
 - Small layout improvement

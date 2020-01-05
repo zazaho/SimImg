@@ -3,6 +3,13 @@ import os.path
 import configparser
 from ..utils import handyfunctions as HF
 
+def str2bool(S):
+    '''convert a string to a boolean '''
+    if S[0] in [0, 'n', 'N', 'f', 'F']:
+        return False
+    if S[0] in [1, 'y', 'Y', 't', 'T']:
+        return True
+
 class Configuration():
     ' Object that can initialise, change and inform about App configuration'
     def __init__(self, ScriptPath=None):
@@ -43,26 +50,26 @@ class Configuration():
 
     def _readConfiguration(self):
         '''Function to get configurable parameters from SimImg.ini.'''
-        config = configparser.ConfigParser()
+        config = configparser.ConfigParser(converters={'strbool': str2bool})
         if config.read(self.IniPath):
             default = config['simimg']
-            doRecursive = default.get('searchinsubfolders', 'no')
-            confirmdelete = default.get('confirmdelete', 'yes')
-            doGzip = default.get('gzipinsteadofdelete', 'no')
-            savesettings = default.get('savesettings', 'yes')
-            showbuttons = default.get('showbuttons', 'yes')
-            filenameonthumbnail = default.get('filenameonthumbnail', 'no')
+            doRecursive = default.getstrbool('searchinsubfolders', 'no')
+            confirmdelete = default.getstrbool('confirmdelete', 'yes')
+            doGzip = default.getstrbool('gzipinsteadofdelete', 'no')
+            savesettings = default.getstrbool('savesettings', 'yes')
+            showbuttons = default.getstrbool('showbuttons', 'yes')
+            filenameonthumbnail = default.getstrbool('filenameonthumbnail', 'no')
             thumbSize = default.getint('thumbnailsize', 150)
             startupDir = default.get('startupfolder', '.')
             finderGeometry = default.get('findergeometry', '1200x800+0+0')
             viewerGeometry = default.get('viewergeometry', '1200x800+50+0')
             # store read values in ConfigurationDict
-            self.set('searchinsubfolders', HF.str2bool(doRecursive, default=True))
-            self.set('confirmdelete', HF.str2bool(confirmdelete, default=True))
-            self.set('gzipinsteadofdelete', HF.str2bool(doGzip, default=True))
-            self.set('savesettings', HF.str2bool(savesettings, default=True))
-            self.set('showbuttons', HF.str2bool(showbuttons, default=True))
-            self.set('filenameonthumbnail', HF.str2bool(filenameonthumbnail, default=True))
+            self.set('searchinsubfolders', doRecursive)
+            self.set('confirmdelete', confirmdelete)
+            self.set('gzipinsteadofdelete', doGzip)
+            self.set('savesettings', savesettings)
+            self.set('showbuttons', showbuttons)
+            self.set('filenameonthumbnail', filenameonthumbnail)
             self.set('thumbnailsize', thumbSize)
             self.set('startupfolder', startupDir)
             self.set('findergeometry', finderGeometry)

@@ -29,7 +29,7 @@ class ConditionFrame(ttk.Frame):
         self.mustMatch = tk.BooleanVar()
 
         self._currentConfig = {}
-        self._currentMatchingGroups = []
+        self._currentMatchingGroups = {}
         self._matchingInfo = []
         self._md5s = {}
 
@@ -99,16 +99,17 @@ class ConditionFrame(ttk.Frame):
     def _getMatchingGroups(self):
         cand = list(itertools.combinations(self._md5s,2))
         matches = [(a, b) for a, b in cand if self._theymatch(a, b)]
-        self._currentMatchingGroups = []
-        # make a FULL SORTED group list for EACH MD5 ONE ENTRY
-        # this is important for the merging of groups later
-        md5s = list(self._md5s)
-        md5s.sort()
-        for thismd5 in md5s:
-            # put atleast the first image in each matchingGroups
-            dummy = [thismd5]
-            dummy.extend([ md5b for md5a, md5b in matches if md5a == thismd5 ])
-            self._currentMatchingGroups.append(dummy)
+        # make a dict with for each md5 that has matches the set of md5s that matches
+        # we include the md5 itself
+        matchingGroupsDict = {}
+        for a, b in matches:
+            if not a in matchingGroupsDict:
+                matchingGroupsDict[a] = {a}
+            matchingGroupsDict[a].add(b)
+            if not b in matchingGroupsDict:
+                matchingGroupsDict[b] = {b}
+            matchingGroupsDict[b].add(a)
+        self._currentMatchingGroups = matchingGroupsDict
 
     def matchingGroups(self, md5s):
         #if nothing changed _updateFromPrevious will return False
@@ -138,12 +139,9 @@ class GradientCondition(ConditionFrame):
         self._limitVar = tk.IntVar()
         self._limitVar.set(self.limit)
         self._currentConfig = {'method':'', 'limit':-1}
-        self._currentMatchingGroups = []
-        self._mouseIsPressed = False
-
         self._makeAdditionalWidgets()
         self._setActive(False)
-        
+
     def _makeAdditionalWidgets(self):
         self._Combo = ttk.Combobox(
             self,
@@ -213,8 +211,6 @@ class ColorCondition(ConditionFrame):
         self._limitVar = tk.IntVar()
         self._limitVar.set(self.limit)
         self._currentConfig = {'method':'', 'limit':-1}
-        self._currentMatchingGroups = []
-        self._mouseIsPressed = False
         self._makeAdditionalWidgets()
         self._setActive(False)
 
@@ -290,7 +286,6 @@ class CameraCondition(ConditionFrame):
 
         self._missingMatchesCheck = None
         self._missingVar = tk.BooleanVar()
-        self._currentMatchingGroups = []
         self._Scale = None
         self._initialIndex = 0
         self._scalelabels = ['Same', 'Different']
@@ -348,7 +343,6 @@ class DateCondition(ConditionFrame):
         self._missingMatchesCheck = None
         self._missingVar = tk.BooleanVar()
         self._Scale = None
-
         self._initialIndex = 1
         self._scalelabels = ['1 minute','10 minutes','1 hour','1 day','1 week','4 weeks','1 year']
         self._scaleSeconds = {
@@ -361,11 +355,7 @@ class DateCondition(ConditionFrame):
             '1 year':365*24*3600
         }
         self.timedifference = self._scaleSeconds[self._scalelabels[self._initialIndex]]
-
         self._currentConfig = {'missingmatches':None, 'timedifference':''}
-        self._currentMatchingGroups = []
-        self._mouseIsPressed = False
-
         self._makeAdditionalWidgets()
         self._setActive(False)
 
@@ -427,10 +417,7 @@ class ShapeCondition(ConditionFrame):
             '<50%':50
         }
         self.limit = self._scalevalues[self._scalelabels[self._initialIndex]]
-
         self._currentConfig = {'limit':-666}
-        self._currentMatchingGroups = []
-        self._mouseIsPressed = False
         self._makeAdditionalWidgets()
         self._setActive(False)
 

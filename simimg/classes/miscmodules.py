@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from ..classes import tooltip as TT
+from . import customscales as CS
 
 class ThumbOptions(ttk.Frame):
     " A frame that holds some options for the thumbnail panels"
@@ -53,16 +54,14 @@ class ThumbOptions(ttk.Frame):
         self._thumbsizeVar = tk.IntVar()
         self._thumbsizeVar.set(self.Ctrl.Cfg.get('thumbnailsize'))
         
-        self._Scale = tk.Scale(self,
-                               from_= 50, to=500,
-                               resolution=10,
-                               variable=self._thumbsizeVar,
-                               takefocus=1,
-                               command=self._scaleChanged,
-                               orient="horizontal",
+        self._Scale = CS.DelayedScale(self,
+                                      from_= 50, to=500,
+                                      resolution=10,
+                                      variable=self._thumbsizeVar,
+                                      takefocus=1,
+                                      command=self._scaleChanged,
+                                      orient="horizontal",
         )
-        self._Scale.bind("<ButtonPress-1>", self._scalePressed)
-        self._Scale.bind("<ButtonRelease-1>", self._scaleReleased)
         self._Scale.bind("<Control-a>", self._doSelectAll)
         self._Scale.pack()
 
@@ -78,21 +77,11 @@ class ThumbOptions(ttk.Frame):
         self.Ctrl.Cfg.set('filenameonthumbnail', self.showfilename.get())
         self.Ctrl.onThumbElementsChanged()
 
-    def _doSelectAll(self, *args):
-        self.Ctrl.selectAllThumbnails()
-        return "break"
-
-    def _scalePressed(self, *args):
-        self._mouseIsPressed = True
-
-    def _scaleReleased(self, *args):
-        self._mouseIsPressed = False
-        self._scaleChanged()
-
     def _scaleChanged(self, *args):
-        # do nothing while the mouse is down
-        if self._mouseIsPressed:
-            return
         self.Ctrl.Cfg.set('thumbnailsize', self._thumbsizeVar.get())
         self._Scale.focus_set()
         self.Ctrl.onThumbParamsChanged()
+
+    def _doSelectAll(self, *args):
+        self.Ctrl.selectAllThumbnails()
+        return "break"

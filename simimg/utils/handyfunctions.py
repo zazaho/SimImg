@@ -11,33 +11,6 @@ def array2hexstring(array):
     '''convert an array to a hexstring (each pair of letters represents one element)'''
     return ''.join(format(round(i), 'x').zfill(2) for i in array)
 
-def str2bool(S, default=False):
-    '''convert a string to a boolean '''
-    if S[0] in [0, 'n', 'N', 'f', 'F']:
-        return False
-    if S[0] in [1, 'y', 'Y', 't', 'T']:
-        return True
-    return default
-
-def listOfListWithoutDuplicateSubgroups(LL):
-    UL = []
-    for L in LL:
-        # Does this L exists as a subgroup of any element already in the list?
-        # if yes skip to the next list
-        if existsAsSubGroup(L, UL):
-            continue
-        # keep only elements in UL that are not a subgroup of L
-        UL = [l for l in UL if set(l) - set(L) != set()]
-        UL.append(L)
-    return UL
-
-def existsAsSubGroup(E, GL):
-    '''Test whether E exists as a subgroup in any of the groups in the group list'''
-    for G in GL:
-        if set(E) - set(G) == set():
-            return True
-    return False
-
 def pairlist2dict(lst):
     '''take a list containing key,values pairs and return
     a dict where each key holds a list of matching values.
@@ -78,89 +51,66 @@ def gzipfile(file):
         f_out.close()
         f_in.close()
 
-def mergeGroupLists(ListGList):
-    ''' this routine takes a list of group lists 
-    each element containing a list of matching images 
+def mergeGroupDicts(ListGDict):
+    ''' this routine takes a list of group dicts
+    each element containing a dict of matching images 
     returned by a condition modules.
 
     So if for example the date module returned:
-    GL1 = [ [1,2,3], [2,3,6], [3], [4] [5,6] [6] ]
+    GL1 = { 1:{1,2,3}, 2:{2,3,6}, 5:{5,6} }
     and the hash module returned:
-    GL2 = [ [1] , [2,3,4], [3], [4], [5,6], [6] ]
-    the ListGList will be [G1, G2]
+    GL2 = { 2:{2,3,4}, 5:{5,6}, 6:{6,7} }
+    the ListGDict will be [G1, G2]
 
     This function should return the union of each by element:
-    GL = [ [1,2,3], [2,3,4,6], [3], [4], [5,6], [6] ]
+    GL = { 1:{1,2,3}, 2:{2,3,4,6}, 5:{5,6}, 6:{6,7} }
     '''
-    if not ListGList:
-        return None
+    GDict = {}
+    for d in ListGDict:
+        for m, g in d.items():
+            previous = GDict[m] if m in GDict else set()
+            GDict[m] = previous | g
+    return GDict
 
-    lenListGList = len(ListGList)
-    if lenListGList == 1:
-        return ListGList[0]
-
-    lenGList = len(ListGList[0])
-    GList = []
-    for i in range(lenGList):
-        dummy = set()
-        for j in range(lenListGList):
-            dummy = dummy | set(ListGList[j][i])
-        dummy = list(dummy)
-        GList.append(dummy)
-
-    return GList
-
-def applyMMGroupLists(GList, ListGList):
-    ''' this routine take a group list and a list of group lists
-    The first list contains for groups of images that matched at least one 
+def applyMMGroupDicts(GDict, ListGDict):
+    ''' this routine take a group dict and a list of group dicts
+    The first list contains groups of images that matched at least one 
     active condition.
-    The list of list contains group that statisfy an mustmatch condition.
+    The list of dicts contains groups that statisfy an mustmatch condition.
     We want to keep only the intersection of both element by element
     '''
-    if not GList:
-        return None
+    for k in GDict:
+        for mmDict in ListGDict:
+            mmSet = mmDict[k] if k in mmDict else set()
+            GDict[k] = GDict[k] & mmSet
+    # remove sets with less than two element
+    return {k:v for k, v in GDict.items() if len(v) > 1}
 
-    if not ListGList:
-        return GList
-
-    lenListGList = len(ListGList)
-    lenGList = len(GList)
-
-    for i in range(lenGList):
-        dummy = set(GList[i])
-        for j in range(lenListGList):
-            dummy = dummy & set(ListGList[j][i])
-        dummy = list(dummy)
-        GList[i] = dummy
-
-    return GList
-
-def sortMd5sByFilename(md5s, FilenameMd5Dict):
-    #get md5s sorted by filename:
-    # only one time
-    result = []
-    for f in sorted(FilenameMd5Dict):
-        md5 = FilenameMd5Dict[f]
-        if md5 in result:
+def removeRedunantSubgroups(GDict):
+    ''' Remove groups that exists entirely as subgroups elsewhere'''
+    # We sort by reverse length of the groups so we know that
+    # subgroups can only be found later in the list
+    md5s_sorted_by_length_of_group = sorted(GDict, key=lambda k: len(GDict[k]), reverse=True)
+    cleanedGDict = {}
+    for m in md5s_sorted_by_length_of_group:
+        # if this set exists as a subgroup already pass to the next
+        if existsAsSubGroup(GDict[m], cleanedGDict.values()):
             continue
-        if not md5 in md5s:
-            continue
-        result.append(md5)
-    return result
+        cleanedGDict[m] = GDict[m]
+    return cleanedGDict
 
-def sortMd5ListsByFilename(md5Lists, FilenameMd5Dict):
-    ''' return the lists of list of md5s sorted by filename
-    for the first md5 in each list '''
-    result = []
-    md5sDone = []
-    firstmd5sDict = {ml[0]:ml for ml in md5Lists}
-    for f in sorted(FilenameMd5Dict):
-        md5 = FilenameMd5Dict[f]
-        # if this md5 is already in the list dont add it again
-        if md5 in md5sDone:
-            continue
-        if not md5 in firstmd5sDict:
-            continue
-        result.append(firstmd5sDict[md5])
-        md5sDone.append(md5)
-    return result
+def existsAsSubGroup(E, GL):
+    '''Test whether E exists as a subgroup in any of the groups in the group list'''
+    for G in GL:
+        if E - G == set():
+            return True
+    return False
+
+def sortMatchingGroupsByFilename(GDict, Md5FilenameDict):
+    # sort each line
+    sortedLines = [sortMd5sByFilename(md5s, Md5FilenameDict) for md5s in GDict.values()]
+    # sort the final list of lists by the first element of each list
+    return sorted(sortedLines, key=lambda k: Md5FilenameDict[k[0]])
+
+def sortMd5sByFilename(md5s, Md5FilenameDict):
+    return sorted(md5s, key=lambda k: Md5FilenameDict[k])

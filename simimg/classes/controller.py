@@ -36,8 +36,9 @@ class Controller():
         self._filenameCommon = ""
         self._filenameUniqueDict = {}
         self._TPPositionDict = {}
-        self._matchingGroups = []
+        self._matchingGroups = [[]]
         self._MD5HashesDict = {}
+        self._Md5FilenameDict = {}
         self.lastSelectedXY = None
 
         # call the exitProgram function when the user clicks the X
@@ -56,7 +57,7 @@ class Controller():
 
         ThumbOpt = MM.ThumbOptions(self.TopWindow.ModulePane, Controller=self)
         ThumbOpt.pack(side="top", fill='x')
-        
+
         _label = ttk.Label(self.TopWindow.ModulePane, text="Filters", style="HeaderText.TLabel").pack(fill='x')
 
         # create the condition modules in the self.TopWindow.ModulePane
@@ -115,7 +116,7 @@ class Controller():
 
     def onChange(self):
         # put everything to default
-        self._matchingGroups = []
+        self._matchingGroups = [[]]
         # make sure to clean the interface
         self._removeAllThumbs()
         self._getMatchingGroups()
@@ -235,7 +236,6 @@ class Controller():
         self._fileList = [c for c in candidates if os.path.isfile(c)]
         self._fileList.extend(oldFiles)
         self._fileList = list(set(self._fileList))
-        #self._fileList.sort()
 
         # split the _fileList into a common and a unique part
         self._filenameCommon, filenameUniqueList = HF.stringlist2commonunique(self._fileList)
@@ -277,10 +277,10 @@ class Controller():
         maxW = self.TopWindow.ThumbPane.winfo_width()
         thumbW = self.Cfg.get('thumbnailsize')
         nx = maxW // thumbW
-        
+
         # maximum nx*ny thumbs to show
         thumbToShow = 0
-        for md5 in HF.sortMd5sByFilename(self.FODict.keys(), self._MD5HashesDict):
+        for md5 in HF.sortMd5sByFilename(self.FODict.keys(), self._Md5FilenameDict):
             if not self.FODict[md5][0].active:
                 continue
             X = thumbToShow % nx
@@ -321,51 +321,42 @@ class Controller():
         ''' given the matching groups returned by each active condition module
            make a master list of image groups '''
 
-        self._matchingGroups = []
-        matchingGroupsList = []
-        MMMatchingGroupsList = []
+        self._matchingGroups = {}
+        matchingGroupDictsList = []
+        MMMatchingGroupDictsList = []
         activeMD5s = [md5 for md5, FO in self.FODict.items() if FO[0].active]
+        someConditionActive = False
         for cm in self._CMList:
             if not cm.active:
                 continue
-            thisMatchingGroups = cm.matchingGroups(activeMD5s)
-            matchingGroupsList.append(thisMatchingGroups)
+            someConditionActive = True
+            thisMatchingGroupDict = cm.matchingGroups(activeMD5s)
+            matchingGroupDictsList.append(thisMatchingGroupDict)
             if cm.mustMatch.get():
-                MMMatchingGroupsList.append(thisMatchingGroups)
+                MMMatchingGroupDictsList.append(thisMatchingGroupDict)
 
         # nothing activated. Start-over
-        if not matchingGroupsList:
+        if not someConditionActive:
             self._createViewWithoutConditions()
             return
 
-        matchingGroups = HF.mergeGroupLists(matchingGroupsList)
+        matchingGroups = HF.mergeGroupDicts(matchingGroupDictsList)
 
-        if not matchingGroups:
-            return
+        if MMMatchingGroupDictsList:
+            matchingGroups = HF.applyMMGroupDicts(matchingGroups, MMMatchingGroupDictsList)
 
-        if MMMatchingGroupsList:
-            matchingGroups = HF.applyMMGroupLists(matchingGroups, MMMatchingGroupsList)
+        matchingGroups = HF.removeRedunantSubgroups(matchingGroups)
 
-        if not matchingGroups:
-            return
+        self._matchingGroups = matchingGroups
 
-        # remove "groups" of only one image
-        matchingGroups = [mg for mg in matchingGroups if len(mg) > 1]
-
-        if not matchingGroups:
-            return
-
-        self._matchingGroups = HF.listOfListWithoutDuplicateSubgroups(matchingGroups)
 
     def _displayMatchingGroups(self):
         #clear messages from the statusbar
         self._showInStatusbar("...")
-        sortedGroupsList = HF.sortMd5ListsByFilename(self._matchingGroups, self._MD5HashesDict)
+        sortedGroupsList = HF.sortMatchingGroupsByFilename(self._matchingGroups, self._Md5FilenameDict)
         numThumbsShown = 0
         for Y, group in enumerate(sortedGroupsList):
-            md5s = [group[0]]
-            md5s.extend(HF.sortMd5sByFilename(group[1:], self._MD5HashesDict))
-            for X, md5 in enumerate(md5s):
+            for X, md5 in enumerate(group):
                 self._showThumbXY(md5, X, Y)
                 numThumbsShown += 1
             if numThumbsShown > self._maxThumbnails:
@@ -488,6 +479,7 @@ class Controller():
     def _getMD5Hashes(self):
         self._showInStatusbar("Calculating File Hash values, please be patient")
         self._MD5HashesDict = POOL.GetMD5Hashes(self._fileList, self._MD5HashesDict)
+        self._Md5FilenameDict = {v:k for k, v in self._MD5HashesDict.items()}
         self._showInStatusbar("...")
 
     def _setThumbnails(self):
