@@ -8,9 +8,7 @@ class viewer(tk.Toplevel):
     def __init__(self, Fileinfo=None, Controller=None):
         super().__init__()
 
-        self._MD5s, self._filenames = zip(*Fileinfo)
-        self._MD5s = list(self._MD5s)
-        self._filenames = list(self._filenames)
+        self._MD5s, self._filenames = map(list, zip(*Fileinfo))
         
         self.Ctrl = Controller
 
@@ -21,7 +19,7 @@ class viewer(tk.Toplevel):
         self._ImgDict = {}
         self._ImgIndex = 0
 
-        self._canvas = tk.Canvas(self, bg="white")
+        self._canvas = tk.Canvas(self)
         self._canvas.pack(fill='both', expand=True)
         self._canvas.update_idletasks()
         self._canvas.bind("<Button>", self._click)
@@ -143,4 +141,5 @@ q, Escape: quit the viewer
 
     def _exitViewer(self):
         self.Ctrl.Cfg.set('viewergeometry', self.geometry())
+        del self._ImgDict
         self.destroy()

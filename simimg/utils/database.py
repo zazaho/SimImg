@@ -46,17 +46,17 @@ def CloseDBConnection(db_connection):
         return
     
 def GetHashValueFromDataBase(md5, hashname, db_connection=None):
-    # which function to use to translate the string to hash
-    convDict = {
-        'HSV':HF.hexstring2array,
-        'HSV (5 regions)':HF.hexstring2array,
-        'RGB':HF.hexstring2array,
-        'RGB (5 regions)':HF.hexstring2array,
-        'Luminosity':HF.hexstring2array,
-        'Luminosity (5 regions)':HF.hexstring2array,
-        'Horizontal':HF.hexstring2array,
-        'Vertical':HF.hexstring2array,
-        }
+    # # which function to use to translate the string to hash
+    # convDict = {
+    #     'HSV':HF.hexstring2array,
+    #     'HSV (5 regions)':HF.hexstring2array,
+    #     'RGB':HF.hexstring2array,
+    #     'RGB (5 regions)':HF.hexstring2array,
+    #     'Luminosity':HF.hexstring2array,
+    #     'Luminosity (5 regions)':HF.hexstring2array,
+    #     'Horizontal':HF.hexstring2array,
+    #     'Vertical':HF.hexstring2array,
+    #     }
     try:
         db_cursor = db_connection.cursor()
         db_cursor.execute(
@@ -66,7 +66,8 @@ def GetHashValueFromDataBase(md5, hashname, db_connection=None):
         hashvalue = db_cursor.fetchone()
         db_cursor.close()
         if hashvalue:
-            return convDict[hashname](hashvalue[0])
+            # return convDict[hashname](hashvalue[0])
+            return HF.hexstring2array(hashvalue[0])
     except sqlite3.Error:
         db_cursor.close()
     return None
@@ -76,19 +77,20 @@ def SetHashValues(Md5HashValueTuples, hashname, db_connection=None):
     if not Md5HashValueTuples:
         return
 
-    # which function to use to translate the hash to string
-    convDict = {
-        'HSV':HF.array2hexstring,
-        'HSV (5 regions)':HF.array2hexstring,
-        'RGB':HF.array2hexstring,
-        'RGB (5 regions)':HF.array2hexstring,
-        'Luminosity':HF.array2hexstring,
-        'Luminosity (5 regions)':HF.array2hexstring,
-        'Horizontal':HF.array2hexstring,
-        'Vertical':HF.array2hexstring,
-        }
+    # # which function to use to translate the hash to string
+    # convDict = {
+    #     'HSV':HF.array2hexstring,
+    #     'HSV (5 regions)':HF.array2hexstring,
+    #     'RGB':HF.array2hexstring,
+    #     'RGB (5 regions)':HF.array2hexstring,
+    #     'Luminosity':HF.array2hexstring,
+    #     'Luminosity (5 regions)':HF.array2hexstring,
+    #     'Horizontal':HF.array2hexstring,
+    #     'Vertical':HF.array2hexstring,
+    #     }
 
-    tupled_data = [(md5, hashname, convDict[hashname](imagehashvalue)) for md5, imagehashvalue in Md5HashValueTuples]
+    # tupled_data = [(md5, hashname, convDict[hashname](imagehashvalue)) for md5, imagehashvalue in Md5HashValueTuples]
+    tupled_data = [(md5, hashname, HF.array2hexstring(imagehashvalue)) for md5, imagehashvalue in Md5HashValueTuples]
 
     db_cursor = db_connection.cursor()
     db_cursor.executemany(

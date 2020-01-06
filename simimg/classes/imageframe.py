@@ -1,3 +1,4 @@
+''' class related to the display of one thumbnail '''
 import tkinter as tk
 from tkinter import ttk
 
@@ -13,13 +14,16 @@ class ImageFrame(ttk.Frame):
 
         self._Ctrl = Ctrl
         self._ThumbSize = Ctrl.Cfg.get('thumbnailsize')
+        self._text = None
+        self._backtext = None
 
-        self._defaultBackgroundColor = Ctrl.TopWindow.cget('background')
         self._thumb_canvas = tk.Canvas(
             self,
             width=self._ThumbSize,
             height=self._ThumbSize
         )
+        self._thumb_canvas.defaultBackgroundColor = self._thumb_canvas.cget('background')
+        self._thumb_canvas.selectedBackgroundColor = "blue"
         self._thumb_canvas.bind("<Button-1>", self._click)
 
         self._thumb_canvas.pack(side="top")
@@ -49,29 +53,29 @@ class ImageFrame(ttk.Frame):
                 anchor='center',
                 image=self._Ctrl.FODict[self.md5][0].Thumbnail()
             )
-            self.text = self._thumb_canvas.create_text(
+            self._text = self._thumb_canvas.create_text(
                 self._ThumbSize/2,
                 self._ThumbSize,
                 anchor='s',
                 text=self._Ctrl.FODict[self.md5][0].FileName,
             )
-            self.backtext = self._thumb_canvas.create_rectangle(
-                self._thumb_canvas.bbox(self.text),
-                fill=self._defaultBackgroundColor,
+            self._backtext = self._thumb_canvas.create_rectangle(
+                self._thumb_canvas.bbox(self._text),
+                fill=self._thumb_canvas.defaultBackgroundColor,
                 width=0,
             )
-            self._thumb_canvas.tag_lower(self.backtext, self.text)
+            self._thumb_canvas.tag_lower(self._backtext, self._text)
 
             if len(self._Ctrl.FODict[self.md5]) > 1:
                 self._thumb_canvas.config(highlightbackground="green", highlightthickness=2)
                 
     def showOptionalElements(self):
         if self._Ctrl.Cfg.get('filenameonthumbnail'):
-            self._thumb_canvas.itemconfigure(self.text, state='normal')
-            self._thumb_canvas.itemconfigure(self.backtext, state='normal')
+            self._thumb_canvas.itemconfigure(self._text, state='normal')
+            self._thumb_canvas.itemconfigure(self._backtext, state='normal')
         else:
-            self._thumb_canvas.itemconfigure(self.text, state='hidden')
-            self._thumb_canvas.itemconfigure(self.backtext, state='hidden')
+            self._thumb_canvas.itemconfigure(self._text, state='hidden')
+            self._thumb_canvas.itemconfigure(self._backtext, state='hidden')
 
         if self._Ctrl.Cfg.get('showbuttons'):
             self._hide_button.pack(side="left")
@@ -94,10 +98,10 @@ class ImageFrame(ttk.Frame):
     def select(self, value):
         self.selected = value
         if self.selected:
-            self._thumb_canvas.config(bg="blue")
+            self._thumb_canvas.config(bg=self._thumb_canvas.selectedBackgroundColor)
             self._Ctrl.lastSelectedXY = (self.X, self.Y)
         else:
-            self._thumb_canvas.config(bg=self._defaultBackgroundColor)
+            self._thumb_canvas.config(bg=self._thumb_canvas.defaultBackgroundColor)
             self._Ctrl.lastSelectedXY = None
         self.focus_set()
 

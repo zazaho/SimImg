@@ -30,9 +30,12 @@ def stringlist2commonunique(sl):
     ("/home/user/pictures/pic", ["1.jpg","2.jpg"])
     '''
 
-    letterTupleList = list(zip(*sl))
+    # break the list of string into tuples of letters for each position
+    letterTupleList = map(list, zip(*sl))
     common = ''
     for letterTuple in letterTupleList:
+        # if there is more than one letter in the set of letters
+        # it means that the filenames start to differ at this position.
         if len(set(letterTuple)) > 1:
             break
         common += letterTuple[0]
@@ -99,10 +102,10 @@ def removeRedunantSubgroups(GDict):
         cleanedGDict[m] = GDict[m]
     return cleanedGDict
 
-def existsAsSubGroup(E, GL):
-    '''Test whether E exists as a subgroup in any of the groups in the group list'''
+def existsAsSubGroup(g, GL):
+    '''Test whether G exists as a subgroup in any of the groups in the group list'''
     for G in GL:
-        if E - G == set():
+        if g - G == set():
             return True
     return False
 

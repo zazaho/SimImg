@@ -10,7 +10,8 @@ class Toolbar(ttk.Frame):
     def __init__(self, parent, Controller=None):
         super().__init__(parent)
 
-        iconpath = Controller.Cfg.get('iconpath')
+        self.Ctrl = Controller
+        iconpath = self.Ctrl.Cfg.get('iconpath')
         self.addImg = PP.photoImageOpen(os.path.join(iconpath, "add.png"))
         self.deleteImg = PP.photoImageOpen(os.path.join(iconpath, "delete.png"))
         self.exitImg = PP.photoImageOpen(os.path.join(iconpath, "exit.png"))
@@ -22,20 +23,20 @@ class Toolbar(ttk.Frame):
         self.settingsImg = PP.photoImageOpen(os.path.join(iconpath, "settings.png"))
         self.uncheckImg = PP.photoImageOpen(os.path.join(iconpath, "uncheck.png"))
 
-        self.exitButton = ttk.Button(self, image=self.exitImg, style="Picture.TButton", command=Controller.exitProgram)
-        self.settingsButton = ttk.Button(self, image=self.settingsImg, style="Picture.TButton", command=Controller.configureProgram)
+        self.exitButton = ttk.Button(self, image=self.exitImg, style="Picture.TButton", command=self.Ctrl.exitProgram)
+        self.settingsButton = ttk.Button(self, image=self.settingsImg, style="Picture.TButton", command=self.Ctrl.configureProgram)
         #
         self.infoButton = ttk.Button(self, image=self.infoImg, style="Picture.TButton", command=IW.showInfoDialog)
 
-        self.openButton = ttk.Button(self, image=self.openImg, style="Picture.TButton", command=Controller.openFolder)
-        self.addButton = ttk.Button(self, image=self.addImg, style="Picture.TButton", command=Controller.addFolder)
+        self.openButton = ttk.Button(self, image=self.openImg, style="Picture.TButton", command=self._openFolder)
+        self.addButton = ttk.Button(self, image=self.addImg, style="Picture.TButton", command=self._addFolder)
         #
-        self.refreshButton = ttk.Button(self, image=self.refreshImg, style="Picture.TButton", command=Controller.resetThumbnails)
+        self.refreshButton = ttk.Button(self, image=self.refreshImg, style="Picture.TButton", command=self.Ctrl.resetThumbnails)
 
-        self.uncheckButton = ttk.Button(self, image=self.uncheckImg, style="Picture.TButton", command=Controller.unselectThumbnails)
-        self.deleteButton = ttk.Button(self, image=self.deleteImg, style="Picture.TButton", command=Controller.deleteSelected)
-        self.hideButton = ttk.Button(self, image=self.hideImg, style="Picture.TButton", command=Controller.hideSelected)
-        self.playButton = ttk.Button(self, image=self.playImg, style="Picture.TButton", command=Controller.viewSelected)
+        self.uncheckButton = ttk.Button(self, image=self.uncheckImg, style="Picture.TButton", command=self.Ctrl.unselectThumbnails)
+        self.deleteButton = ttk.Button(self, image=self.deleteImg, style="Picture.TButton", command=self.Ctrl.deleteSelected)
+        self.hideButton = ttk.Button(self, image=self.hideImg, style="Picture.TButton", command=self.Ctrl.hideSelected)
+        self.playButton = ttk.Button(self, image=self.playImg, style="Picture.TButton", command=self.Ctrl.viewSelected)
 
         self.exitButton.grid(column=0, row=0)
         self.settingsButton.grid(column=1, row=0)
@@ -62,3 +63,9 @@ class Toolbar(ttk.Frame):
         TT.Tooltip(self.refreshButton, text='Start fresh with all images shown')
         TT.Tooltip(self.settingsButton, text='Settings')
         TT.Tooltip(self.uncheckButton, text='Unselect all images')
+
+    def _openFolder(self, *args):
+        self.Ctrl.addOrOpenFolder(action='open')
+
+    def _addFolder(self, *args):
+        self.Ctrl.addOrOpenFolder(action='add')

@@ -1,5 +1,7 @@
+''' Functions on the image files that take time.
+    Like file-hasing and image-hashing
+    They are organised to be done in multiprocessing.'''
 import hashlib
-import statistics as stats
 from operator import add
 import functools
 from multiprocessing import Pool
@@ -20,6 +22,16 @@ fiveboxes = [
     (1-fiveboxsize, 1-fiveboxsize, 1.0, 1.0),
     (0.5-fiveboxsize/2.0, 0.5-fiveboxsize/2.0, 0.5+fiveboxsize/2.0, 0.5+fiveboxsize/2.0)
 ]
+
+# not very careful but quick median function
+def statsmedian(a):
+    aa = sorted(a)
+    return aa[round(len(aa)*0.50)]
+
+# not very careful but quick 4-quantiles function
+def statsquantiles(a):
+    aa = sorted(a)
+    return [aa[round(len(aa)*i)] for i in [0.25, 0.5, 0.75]]
 
 def CalculateMD5Hash(file):
     hasher = hashlib.md5()
@@ -70,35 +82,35 @@ def colhash(Img, colorspace=None, five=False):
             data = subImage(ch, bx)
             if cspace == 'HSV' and idx == 1:
                 data = list(data)
-                medianH = stats.median(data)
-                quant = stats.quantiles([(h-medianH+128) % 255 for h in data])
+                medianH = statsmedian(data)
+                quant = statsquantiles([(h-medianH+128) % 255 for h in data])
                 values.append(round(medianH))
                 values.append(round(quant[2] - quant[0]))
             else:
-                quant = stats.quantiles(data)
+                quant = statsquantiles(data)
                 values.append(round(quant[1]))
                 values.append(round(quant[2] - quant[0]))
     return values
 
-def hsvhash(Img, **kwargs):
+def hsvhash(Img):
     return colhash(Img, colorspace='HSV', five=False)
 
-def hsv5hash(Img, **kwargs):
+def hsv5hash(Img):
     return colhash(Img, colorspace='HSV', five=True)
 
-def rgbhash(Img, **kwargs):
+def rgbhash(Img):
     return colhash(Img, colorspace='RGB', five=False)
 
-def rgb5hash(Img, **kwargs):
+def rgb5hash(Img):
     return colhash(Img, colorspace='RGB', five=True)
 
-def lhash(Img, **kwargs):
+def lhash(Img):
     return colhash(Img, colorspace='L', five=False)
 
-def l5hash(Img, **kwargs):
+def l5hash(Img):
     return colhash(Img, colorspace='L', five=True)
 
-def mydhash(Img, doVertical=False):
+def dhash(Img, doVertical=False):
     if doVertical:
         i8x8 = Img.convert('L').resize((8, 9), Image.BOX).transpose(Image.ROTATE_90)
     else:
@@ -113,11 +125,11 @@ def mydhash(Img, doVertical=False):
         values.append(val)
     return values
 
-def mydhash_horizontal(Img, **kwargs):
-    return mydhash(Img)
+def dhash_horizontal(Img):
+    return dhash(Img)
 
-def mydhash_vertical(Img, **kwargs):
-    return mydhash(Img, doVertical=True)
+def dhash_vertical(Img):
+    return dhash(Img, doVertical=True)
 
 def CalculateImageHash(args):
     md5, FullPath, hashName = args
@@ -128,16 +140,15 @@ def CalculateImageHash(args):
         'RGB (5 regions)': rgb5hash,
         'Luminosity': lhash,
         'Luminosity (5 regions)': l5hash,
-        'Horizontal': mydhash_horizontal,
-        'Vertical': mydhash_vertical,
+        'Horizontal': dhash_horizontal,
+        'Vertical': dhash_vertical,
         }
-    return (md5, funcdict[hashName](PP.imageOpen(FullPath), hash_size=8))
+    return (md5, funcdict[hashName](PP.imageOpen(FullPath)))
 
 def GetImageHashes(FODict, hashName, db_connection=None):
     '''return hashing value according to selected hashName method
     for each file the (file,md5) list.'''
 
-    ## the logic to apply is:
     ## create an empty dict to hold the results
     hashValueDict = {} ## md5:hashValue
 
@@ -160,11 +171,10 @@ def GetImageHashes(FODict, hashName, db_connection=None):
             continue
 
         hashValue = DB.GetHashValueFromDataBase(md5, hashName, db_connection=db_connection)
-        if hashValue is not None:
+        if hashValue is None:
+            needCalculating.append((md5, firstFO.FullPath, hashName))
+        else:
             hashValueDict[md5] = hashValue
-            continue
-
-        needCalculating.append((md5, firstFO.FullPath, hashName))
 
     ## For the md5 with None calculate the hashValue in a pool of workers
     ## Returning (md5, imagehash)
