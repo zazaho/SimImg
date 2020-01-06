@@ -1,3 +1,9 @@
+version 0.7.0 (SH Jan  6 2020)
+- removed more duplicate code using decorators in controller
+- removed dependencies on statistics module
+  * small speed up
+  * no more dependency on python 3.8 for statistics.quantiles
+  
 version 0.6.5 (SH Jan  5 2020)
 - deal with matching groups as dicts, much cleaner implementation
 - results are now sorted by filename for each row of matches and by

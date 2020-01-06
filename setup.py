@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="simimg",
-    version="0.6.5",
+    version="0.7.0",
     author="Sacha Hony",
     author_email="zazahohonini@gmail.com",
     description="Similar Image Finder",
@@ -19,7 +19,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.8',
+    python_requires='>=3',
     install_requires=['Pillow'],
     entry_points={
         'console_scripts': ['simimg=simimg.simimg:main'],
