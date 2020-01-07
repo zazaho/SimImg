@@ -5,38 +5,40 @@ from . import tooltip as TT
 from ..dialogs import infowindow as IW
 from ..utils import pillowplus as PP
 
+
 class Toolbar(ttk.Frame):
-    " A toolbar frame that holds the action buttons"
+    ' A toolbar frame that holds the action buttons'
+
     def __init__(self, parent, Controller=None):
         super().__init__(parent)
 
         self.Ctrl = Controller
         iconpath = self.Ctrl.Cfg.get('iconpath')
-        self.addImg = PP.photoImageOpen(os.path.join(iconpath, "add.png"))
-        self.deleteImg = PP.photoImageOpen(os.path.join(iconpath, "delete.png"))
-        self.exitImg = PP.photoImageOpen(os.path.join(iconpath, "exit.png"))
-        self.hideImg = PP.photoImageOpen(os.path.join(iconpath, "hide.png"))
-        self.infoImg = PP.photoImageOpen(os.path.join(iconpath, "info.png"))
-        self.openImg = PP.photoImageOpen(os.path.join(iconpath, "open.png"))
-        self.playImg = PP.photoImageOpen(os.path.join(iconpath, "play.png"))
-        self.refreshImg = PP.photoImageOpen(os.path.join(iconpath, "refresh.png"))
-        self.settingsImg = PP.photoImageOpen(os.path.join(iconpath, "settings.png"))
-        self.uncheckImg = PP.photoImageOpen(os.path.join(iconpath, "uncheck.png"))
+        self.addImg = PP.photoImageOpen(os.path.join(iconpath, 'add.png'))
+        self.deleteImg = PP.photoImageOpen(os.path.join(iconpath, 'delete.png'))
+        self.exitImg = PP.photoImageOpen(os.path.join(iconpath, 'exit.png'))
+        self.hideImg = PP.photoImageOpen(os.path.join(iconpath, 'hide.png'))
+        self.infoImg = PP.photoImageOpen(os.path.join(iconpath, 'info.png'))
+        self.openImg = PP.photoImageOpen(os.path.join(iconpath, 'open.png'))
+        self.playImg = PP.photoImageOpen(os.path.join(iconpath, 'play.png'))
+        self.refreshImg = PP.photoImageOpen(os.path.join(iconpath, 'refresh.png'))
+        self.settingsImg = PP.photoImageOpen(os.path.join(iconpath, 'settings.png'))
+        self.uncheckImg = PP.photoImageOpen(os.path.join(iconpath, 'uncheck.png'))
 
-        self.exitButton = ttk.Button(self, image=self.exitImg, style="Picture.TButton", command=self.Ctrl.exitProgram)
-        self.settingsButton = ttk.Button(self, image=self.settingsImg, style="Picture.TButton", command=self.Ctrl.configureProgram)
+        self.exitButton = ttk.Button(self, image=self.exitImg, style='Picture.TButton', command=self.Ctrl.exitProgram)
+        self.settingsButton = ttk.Button(self, image=self.settingsImg, style='Picture.TButton', command=self.Ctrl.configureProgram)
         #
-        self.infoButton = ttk.Button(self, image=self.infoImg, style="Picture.TButton", command=IW.showInfoDialog)
+        self.infoButton = ttk.Button(self, image=self.infoImg, style='Picture.TButton', command=IW.showInfoDialog)
 
-        self.openButton = ttk.Button(self, image=self.openImg, style="Picture.TButton", command=self._openFolder)
-        self.addButton = ttk.Button(self, image=self.addImg, style="Picture.TButton", command=self._addFolder)
+        self.openButton = ttk.Button(self, image=self.openImg, style='Picture.TButton', command=self._openFolder)
+        self.addButton = ttk.Button(self, image=self.addImg, style='Picture.TButton', command=self._addFolder)
         #
-        self.refreshButton = ttk.Button(self, image=self.refreshImg, style="Picture.TButton", command=self.Ctrl.resetThumbnails)
+        self.refreshButton = ttk.Button(self, image=self.refreshImg, style='Picture.TButton', command=self.Ctrl.resetThumbnails)
 
-        self.uncheckButton = ttk.Button(self, image=self.uncheckImg, style="Picture.TButton", command=self.Ctrl.unselectThumbnails)
-        self.deleteButton = ttk.Button(self, image=self.deleteImg, style="Picture.TButton", command=self.Ctrl.deleteSelected)
-        self.hideButton = ttk.Button(self, image=self.hideImg, style="Picture.TButton", command=self.Ctrl.hideSelected)
-        self.playButton = ttk.Button(self, image=self.playImg, style="Picture.TButton", command=self.Ctrl.viewSelected)
+        self.uncheckButton = ttk.Button(self, image=self.uncheckImg, style='Picture.TButton', command=self.Ctrl.unselectThumbnails)
+        self.deleteButton = ttk.Button(self, image=self.deleteImg, style='Picture.TButton', command=self.Ctrl.deleteSelected)
+        self.hideButton = ttk.Button(self, image=self.hideImg, style='Picture.TButton', command=self.Ctrl.hideSelected)
+        self.playButton = ttk.Button(self, image=self.playImg, style='Picture.TButton', command=self.Ctrl.viewSelected)
 
         self.exitButton.grid(column=0, row=0)
         self.settingsButton.grid(column=1, row=0)

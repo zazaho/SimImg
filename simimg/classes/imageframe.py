@@ -2,106 +2,105 @@
 import tkinter as tk
 from tkinter import ttk
 
+
 class ImageFrame(ttk.Frame):
-    " A frame that holds one image thumbnail with its buttons"
-    def __init__(self, parent, md5=None, Ctrl=None, X=None, Y=None):
+    ' A frame that holds one image thumbnail with its buttons'
+
+    def __init__(self, parent, checksum=None, Ctrl=None, X=None, Y=None):
         super().__init__(parent)
 
-        self.md5 = md5
+        self.checksum = checksum
         self.selected = False
         self.X = X
         self.Y = Y
 
         self._Ctrl = Ctrl
-        self._ThumbSize = Ctrl.Cfg.get('thumbnailsize')
+        self._tSize = Ctrl.Cfg.get('thumbnailsize')
         self._text = None
         self._backtext = None
 
-        self._thumb_canvas = tk.Canvas(
+        self._thumbCanvas = tk.Canvas(
             self,
-            width=self._ThumbSize,
-            height=self._ThumbSize
+            width=self._tSize,
+            height=self._tSize
         )
-        self._thumb_canvas.defaultBackgroundColor = self._thumb_canvas.cget('background')
-        self._thumb_canvas.selectedBackgroundColor = "blue"
-        self._thumb_canvas.bind("<Button-1>", self._click)
+        self._thumbCanvas.defBgClr = self._thumbCanvas.cget('background')
+        self._thumbCanvas.selBgClr = 'blue'
+        self._thumbCanvas.bind('<Button-1>', self._click)
 
-        self._thumb_canvas.pack(side="top")
-        self._hide_button = ttk.Button(
+        self._thumbCanvas.pack(side='top')
+        self._hideButton = ttk.Button(
             self,
-            text="Hide",
+            text='Hide',
             command=self._hide,
-            style="Thumb.TButton"
+            style='Thumb.TButton'
         )
-        self._delete_button = ttk.Button(
+        self._deleteButton = ttk.Button(
             self,
-            text="Delete",
+            text='Delete',
             command=self._delete,
-            style="Thumb.TButton"
+            style='Thumb.TButton'
         )
         self.createThumbContent()
         self.showOptionalElements()
 
     def createThumbContent(self):
-        self._ThumbSize = self._Ctrl.Cfg.get('thumbnailsize')
-        self._thumb_canvas.delete('all')
-        self._thumb_canvas.config(width=self._ThumbSize, height=self._ThumbSize)
-        if self.md5:
-            self._thumb_canvas.create_image(
-                self._ThumbSize/2,
-                self._ThumbSize/2,
+        self._tSize = self._Ctrl.Cfg.get('thumbnailsize')
+        self._thumbCanvas.delete('all')
+        self._thumbCanvas.config(width=self._tSize, height=self._tSize)
+        if self.checksum:
+            self._thumbCanvas.create_image(
+                self._tSize/2,
+                self._tSize/2,
                 anchor='center',
-                image=self._Ctrl.FODict[self.md5][0].Thumbnail()
+                image=self._Ctrl.FODict[self.checksum][0].thumbnail()
             )
-            self._text = self._thumb_canvas.create_text(
-                self._ThumbSize/2,
-                self._ThumbSize,
+            self._text = self._thumbCanvas.create_text(
+                self._tSize/2,
+                self._tSize,
                 anchor='s',
-                text=self._Ctrl.FODict[self.md5][0].FileName,
+                text=self._Ctrl.FODict[self.checksum][0].fileName,
             )
-            self._backtext = self._thumb_canvas.create_rectangle(
-                self._thumb_canvas.bbox(self._text),
-                fill=self._thumb_canvas.defaultBackgroundColor,
+            self._backtext = self._thumbCanvas.create_rectangle(
+                self._thumbCanvas.bbox(self._text),
+                fill=self._thumbCanvas.defBgClr,
                 width=0,
             )
-            self._thumb_canvas.tag_lower(self._backtext, self._text)
+            self._thumbCanvas.tag_lower(self._backtext, self._text)
 
-            if len(self._Ctrl.FODict[self.md5]) > 1:
-                self._thumb_canvas.config(highlightbackground="green", highlightthickness=2)
-                
+            if len(self._Ctrl.FODict[self.checksum]) > 1:
+                self._thumbCanvas.config(highlightbackground='green', highlightthickness=2)
+
     def showOptionalElements(self):
         if self._Ctrl.Cfg.get('filenameonthumbnail'):
-            self._thumb_canvas.itemconfigure(self._text, state='normal')
-            self._thumb_canvas.itemconfigure(self._backtext, state='normal')
+            self._thumbCanvas.itemconfigure(self._text, state='normal')
+            self._thumbCanvas.itemconfigure(self._backtext, state='normal')
         else:
-            self._thumb_canvas.itemconfigure(self._text, state='hidden')
-            self._thumb_canvas.itemconfigure(self._backtext, state='hidden')
+            self._thumbCanvas.itemconfigure(self._text, state='hidden')
+            self._thumbCanvas.itemconfigure(self._backtext, state='hidden')
 
         if self._Ctrl.Cfg.get('showbuttons'):
-            self._hide_button.pack(side="left")
-            self._delete_button.pack(side="right")
+            self._hideButton.pack(side='left')
+            self._deleteButton.pack(side='right')
         else:
-            self._hide_button.pack_forget()
-            self._delete_button.pack_forget()
+            self._hideButton.pack_forget()
+            self._deleteButton.pack_forget()
 
     def _hide(self):
-        for fo in self._Ctrl.FODict[self.md5]:
+        for fo in self._Ctrl.FODict[self.checksum]:
             fo.active = False
             self._Ctrl.onChange()
 
     def _delete(self):
-        self._Ctrl.deleteFOs(
-            self._Ctrl.FODict[self.md5],
-            Owner=self._Ctrl.TopWindow
-        )
+        self._Ctrl.deleteFOs(self._Ctrl.FODict[self.checksum])
 
     def select(self, value):
         self.selected = value
         if self.selected:
-            self._thumb_canvas.config(bg=self._thumb_canvas.selectedBackgroundColor)
+            self._thumbCanvas.config(bg=self._thumbCanvas.selBgClr)
             self._Ctrl.lastSelectedXY = (self.X, self.Y)
         else:
-            self._thumb_canvas.config(bg=self._thumb_canvas.defaultBackgroundColor)
+            self._thumbCanvas.config(bg=self._thumbCanvas.defBgClr)
             self._Ctrl.lastSelectedXY = None
         self.focus_set()
 

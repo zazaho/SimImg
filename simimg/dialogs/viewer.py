@@ -3,18 +3,20 @@ from tkinter import messagebox as tkmessagebox
 from PIL import ImageTk
 from ..utils import pillowplus as PP
 
-class viewer(tk.Toplevel):
-    "A viewer window to display the selected pictures"
+
+class Viewer(tk.Toplevel):
+    'A viewer window to display the selected pictures'
+
     def __init__(self, Fileinfo=None, Controller=None):
         super().__init__()
 
-        self._MD5s, self._filenames = map(list, zip(*Fileinfo))
-        
+        self._checksums, self._filenames = map(list, zip(*Fileinfo))
+
         self.Ctrl = Controller
 
         self.geometry(self.Ctrl.Cfg.get('viewergeometry'))
-        self.bind("<Key>", self._key)
-        self.protocol("WM_DELETE_WINDOW", self._exitViewer)
+        self.bind('<Key>', self._key)
+        self.protocol('WM_DELETE_WINDOW', self._exitViewer)
 
         self._ImgDict = {}
         self._ImgIndex = 0
@@ -22,9 +24,9 @@ class viewer(tk.Toplevel):
         self._canvas = tk.Canvas(self)
         self._canvas.pack(fill='both', expand=True)
         self._canvas.update_idletasks()
-        self._canvas.bind("<Button>", self._click)
+        self._canvas.bind('<Button>', self._click)
 
-        self.bind("<Configure>", self._showImage)
+        self.bind('<Configure>', self._showImage)
 
     def _fillImgDict(self, Index):
         maxW = self._canvas.winfo_width()
@@ -62,24 +64,24 @@ class viewer(tk.Toplevel):
     # keys
     def _key(self, event):
         keyDict = {
-            'space':self._showNext,
-            'n':self._showNext,
-            'Right':self._showNext,
-            'p':self._showPrevious,
-            'Left':self._showPrevious,
-            'd':self._deleteFile,
-            'Delete':self._deleteFile ,
-            'h':self._showHelp,
-            'F1':self._showHelp,
-            'q':self._exitViewer,
-            'Escape':self._exitViewer
+            'space': self._showNext,
+            'n': self._showNext,
+            'Right': self._showNext,
+            'p': self._showPrevious,
+            'Left': self._showPrevious,
+            'd': self._deleteFile,
+            'Delete': self._deleteFile,
+            'h': self._showHelp,
+            'F1': self._showHelp,
+            'q': self._exitViewer,
+            'Escape': self._exitViewer
             }
-        if not event.keysym in keyDict:
+        if event.keysym not in keyDict:
             return
         keyDict[event.keysym]()
 
     def _showImage(self, *args):
-        self._canvas.delete("all")
+        self._canvas.delete('all')
         self._fillImgDict(self._ImgIndex)
         self._canvas.create_image(
             self._canvas.winfo_width()/2,
@@ -87,32 +89,32 @@ class viewer(tk.Toplevel):
             anchor='center',
             image=self._ImgDict[self._ImgIndex][1]
         )
-        self.title("Similar Image Viewer: %s --- Press F1 for Help" % self._ImgDict[self._ImgIndex][0])
+        self.title('Similar Image Viewer: %s --- Press F1 for Help' % self._ImgDict[self._ImgIndex][0])
 
     def _showNext(self):
         self._ImgIndex += 1
         self._ImgIndex = self._ImgIndex % len(self._filenames)
-        #if the filename is none skip to next
-        if self._filenames[self._ImgIndex] == None:
+        # if the filename is none skip to next
+        if self._filenames[self._ImgIndex] is None:
             self._showNext()
         self._showImage()
 
     def _showPrevious(self):
         self._ImgIndex -= 1
         self._ImgIndex = self._ImgIndex % len(self._filenames)
-        if self._filenames[self._ImgIndex] == None:
+        if self._filenames[self._ImgIndex] is None:
             self._showPrevious()
         self._showImage()
 
     def _deleteFile(self):
-        md5 = self._MD5s[self._ImgIndex]
-        fo = [self.Ctrl.FODict[md5][0]]
-        if not self.Ctrl.deleteFOs(fo, Owner=self):
+        checksum = self._checksums[self._ImgIndex]
+        fo = [self.Ctrl.FODict[checksum][0]]
+        if not self.Ctrl.deleteFOs(fo):
             return
 
         # remove the filename
         self._filenames[self._ImgIndex] = None
-        self._MD5s[self._ImgIndex] = None
+        self._checksums[self._ImgIndex] = None
         del self._ImgDict[self._ImgIndex]
         # check if all filenames are None
         if len(set(self._filenames)) > 1:
@@ -137,7 +139,7 @@ p, Left: show the previous images
 d, Delete: delete the file from your hard disk!
 q, Escape: quit the viewer
 '''
-        tkmessagebox.showinfo("Information", msg, parent=self)
+        tkmessagebox.showinfo('Information', msg, parent=self)
 
     def _exitViewer(self):
         self.Ctrl.Cfg.set('viewergeometry', self.geometry())

@@ -3,6 +3,7 @@ from PIL import Image, ImageTk, ImageChops
 
 pillowplus_table16 = [i/256 for i in range(65536)]
 
+
 def imageOpen(fn):
     try:
         img = Image.open(fn)
@@ -16,6 +17,7 @@ def imageOpen(fn):
         return None
     return img
 
+
 def imageResize(img, w, h):
     try:
         res = img.resize((w, h), Image.ANTIALIAS)
@@ -23,15 +25,19 @@ def imageResize(img, w, h):
         res = None
     return res
 
+
 def imageResizeToFit(img, w, h):
     ratio = max(img.size[0]/w, img.size[1]/h)
     return imageResize(img, int(img.size[0]/ratio), int(img.size[1]/ratio))
 
+
 def imageOpenAndResize(fn, w, h):
     return imageResize(imageOpen(fn), w, h)
 
+
 def imageOpenAndResizeToFit(fn, w, h):
     return imageResizeToFit(imageOpen(fn), w, h)
+
 
 def photoImageOpen(fn):
     img = imageOpen(fn)
@@ -39,17 +45,20 @@ def photoImageOpen(fn):
         return None
     return ImageTk.PhotoImage(img)
 
+
 def photoImageOpenAndResize(fn, w, h):
     img = imageResize(imageOpen(fn), w, h)
     if not img:
         return None
     return ImageTk.PhotoImage(img)
 
+
 def photoImageOpenAndResizeToFit(fn, w, h):
     img = imageResizeToFit(imageOpen(fn), w, h)
     if not img:
         return None
     return ImageTk.PhotoImage(img)
+
 
 def thumbnailOpen(fn, w, h, channel=None):
     img = imageOpen(fn)
@@ -72,13 +81,13 @@ def thumbnailOpen(fn, w, h, channel=None):
         return img
 
     try:
-        hsv = img.split() if img.getbands() == ("H", "S", "V") else img.convert("HSV").split()
+        hsv = img.split() if img.getbands() == ('H', 'S', 'V') else img.convert('HSV').split()
     except:
         return img
 
     if channel == 'Hue':
         img = Image.merge(
-            "HSV",
+            'HSV',
             (
                 hsv[0],
                 ImageChops.constant(hsv[0], 255),
@@ -90,6 +99,7 @@ def thumbnailOpen(fn, w, h, channel=None):
     if channel == 'Value':
         img = hsv[2]
     return img
+
 
 def photoThumbnailOpen(fn, w, h, channel=None):
     img = thumbnailOpen(fn, w, h, channel=channel)

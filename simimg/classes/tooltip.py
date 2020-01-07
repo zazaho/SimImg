@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+
 class Tooltip:
     '''
     It creates a tooltip for a given widget as the mouse goes on it.
@@ -32,9 +33,9 @@ class Tooltip:
         self.wraplength = wraplength  # in pixels, originally 180
         self.widget = widget
         self.text = text
-        self.widget.bind("<Enter>", self.onEnter)
-        self.widget.bind("<Leave>", self.onLeave)
-        self.widget.bind("<ButtonPress>", self.onLeave)
+        self.widget.bind('<Enter>', self.onEnter)
+        self.widget.bind('<Leave>', self.onLeave)
+        self.widget.bind('<ButtonPress>', self.onLeave)
         self.id = None
         self.tw = None
 
@@ -64,7 +65,7 @@ class Tooltip:
 
             s_width, s_height = w.winfo_screenwidth(), w.winfo_screenheight()
 
-            width, height = (label.winfo_reqwidth(),label.winfo_reqheight())
+            width, height = (label.winfo_reqwidth(), label.winfo_reqheight())
 
             mouse_x, mouse_y = w.winfo_pointerxy()
 
@@ -113,18 +114,19 @@ class Tooltip:
 
         win = ttk.Frame(self.tw)
 
-        label = ttk.Label(win,
-                          text=self.text,
-                          style="Tooltip.TLabel",
-                          wraplength=self.wraplength
+        label = ttk.Label(
+            win,
+            text=self.text,
+            style='Tooltip.TLabel',
+            wraplength=self.wraplength
         )
 
-        label.grid(sticky="nsew")
+        label.grid(sticky='nsew')
         win.grid()
 
         x, y = tip_pos_calculator(widget, label)
 
-        self.tw.wm_geometry("+%d+%d" % (x, y))
+        self.tw.wm_geometry('+%d+%d' % (x, y))
 
     def hide(self):
         tw = self.tw

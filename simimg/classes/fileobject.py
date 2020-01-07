@@ -5,116 +5,125 @@ from datetime import datetime
 from PIL import Image, ExifTags
 from ..utils import pillowplus as PP
 
+
 class FileObject():
     ' File object that contains all information relating to one file on disk '
-    def __init__(self, parent, FullPath=None, MD5HashesDict=None):
 
-        self.Cfg = parent.Cfg
-        self.FullPath = FullPath
-        self.DirName = os.path.dirname(self.FullPath)
-        self.FileName = os.path.basename(self.FullPath)
-        dummy, self.FileExtension = os.path.splitext(self.FileName)
+    def __init__(self, parent, FullPath=None, checksumFilenameDict=None):
+        self._Cfg = parent.Cfg
+        self.fullPath = FullPath
+        self.dirName = os.path.dirname(self.fullPath)
+        self.fileName = os.path.basename(self.fullPath)
+        dummy, self.fileExtension = os.path.splitext(self.fileName)
 
         self.hashDict = {}
 
-        # These are private variables that allow to call the corresponding method
+        # These are private variables that allow to call the
+        # corresponding method for cheap
         # If the variable is None we calculate the value
         # otherwise we return the value of this private variable
-        self._IsImage = None
-        self._md5 = MD5HashesDict[FullPath] if FullPath in MD5HashesDict else None
-        self._ExifTags = None
-        self._Thumbnail = None
-        self._DateTime = None
-        self._Size = None
+        self._isImage = None
+        self._checksum = checksumFilenameDict[FullPath] if FullPath in checksumFilenameDict else None
+        self._exifTags = None
+        self._thumbnail = None
+        self._dateTime = None
+        self._size = None
 
-        #It this file active
+        # It this file active
         self.active = True
 
-    def IsImage(self):
+    def isImage(self):
         ' Set IsImage to True if the file can be read by PIL '
-        if self._IsImage is None:
+        if self._isImage is None:
             try:
-                img = Image.open(self.FullPath)
-                self._IsImage = True
+                img = Image.open(self.fullPath)
+                self._isImage = True
                 # do this here to save time
-                self._Size = img.size
+                self._size = img.size
             except:
-                self._IsImage = False
-        return self._IsImage
+                self._isImage = False
+        return self._isImage
 
-    def md5(self):
-        if self._md5 is None:
-            hasher = hashlib.md5()
-            with open(self.FullPath, 'rb') as afile:
+    def checksum(self):
+        if self._checksum is None:
+            hasher = hashlib.sha1()
+            with open(self.fullPath, 'rb') as afile:
                 hasher.update(afile.read())
-                self._md5 = hasher.hexdigest()
-        return self._md5
+                self._checksum = hasher.hexdigest()
+        return self._checksum
 
-    def ExifTags(self):
-        if self._ExifTags is None:
+    def exifTags(self):
+        if self._exifTags is None:
             # default to empty basic values
-            self._ExifTags = {
+            self._exifTags = {
                 'Make': '',
                 'Model': '',
                 'DateTimeOriginal': '',
                 'DateTime': '',
                 'DateTimeDigitized': ''
             }
-            with Image.open(self.FullPath) as image:
+            with Image.open(self.fullPath) as image:
                 # image does not have method to get tags
-                if not hasattr(image,'_getexif'):
-                    return self._ExifTags
+                if not hasattr(image, '_getexif'):
+                    return self._exifTags
                 exif = image._getexif()
                 # image does not have tags
                 if not exif:
-                    return self._ExifTags
+                    return self._exifTags
                 for key, value in exif.items():
                     if key in ExifTags.TAGS:
-                        self._ExifTags[ExifTags.TAGS[key]] = value
-        return self._ExifTags
+                        self._exifTags[ExifTags.TAGS[key]] = value
+        return self._exifTags
 
-    def CameraMake(self):
-        return self.ExifTags()['Make']
+    def cameraMake(self):
+        return self.exifTags()['Make']
 
-    def CameraModel(self):
-        return self.ExifTags()['Model']
+    def cameraModel(self):
+        return self.exifTags()['Model']
 
-    def Date(self):
-        if self.ExifTags()['DateTimeOriginal']:
-            return self.ExifTags()['DateTimeOriginal']
-        if self.ExifTags()['DateTime']:
-            return self.ExifTags()['DateTime']
-        if self.ExifTags()['DateTimeDigitized']:
-            return self.ExifTags()['DateTimeDigitized']
+    def date(self):
+        if self.exifTags()['DateTimeOriginal']:
+            return self.exifTags()['DateTimeOriginal']
+        if self.exifTags()['DateTime']:
+            return self.exifTags()['DateTime']
+        if self.exifTags()['DateTimeDigitized']:
+            return self.exifTags()['DateTimeDigitized']
         return ''
 
-    def DateTime(self):
-        if self._DateTime is None:
-            thisDateString = self.Date()
+    def dateTime(self):
+        if self._dateTime is None:
+            thisDateString = self.date()
             if thisDateString == '':
-                self._DateTime = 'Missing'
-                return self._DateTime
+                self._dateTime = 'Missing'
+                return self._dateTime
             try:
-                self._DateTime = datetime.strptime(thisDateString ,'%Y:%m:%d %H:%M:%S')
+                self._dateTime = datetime.strptime(
+                    thisDateString,
+                    '%Y:%m:%d %H:%M:%S'
+                )
             except:
-                self._DateTime = 'Missing'
-        return self._DateTime
+                self._dateTime = 'Missing'
+        return self._dateTime
 
-    def Size(self):
-        if self._Size is None:
-            self._Size = (0, 0)
-            with Image.open(self.FullPath) as image:
-                self._Size = image.size
-        return self._Size
+    def size(self):
+        if self._size is None:
+            self._size = (0, 0)
+            with Image.open(self.fullPath) as image:
+                self._size = image.size
+        return self._size
 
-    def ShapeParameter(self):
-        w, h = self.Size()
+    def shapeParameter(self):
+        w, h = self.size()
         # (width-height)/(width+height)*100
         # positive for landscape, negative for portait
         return (w-h)/(w+h)*100
 
-    def Thumbnail(self):
-        if self._Thumbnail is None:
-            ThumbSize = self.Cfg.get('thumbnailsize')
-            self._Thumbnail = PP.photoImageOpenAndResizeToFit(self.FullPath, ThumbSize, ThumbSize)
-        return self._Thumbnail
+    def thumbnail(self):
+        if self._thumbnail is None:
+            ThumbSize = self._Cfg.get('thumbnailsize')
+            self._thumbnail = PP.photoImageOpenAndResizeToFit(
+                self.fullPath,
+                ThumbSize,
+                ThumbSize
+            )
+        return self._thumbnail

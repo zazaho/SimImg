@@ -6,11 +6,12 @@ from tkinter import filedialog as tkfiledialog
 from ..classes import tooltip as TT
 from ..utils import pillowplus as PP
 
+
 class CfgWindow(tk.Toplevel):
     def __init__(self, parent, Controller=None):
         super().__init__()
 
-        self.title("Settings")
+        self.title('Settings')
 
         self.parent = parent
         self.transient(self.parent)
@@ -33,78 +34,80 @@ class CfgWindow(tk.Toplevel):
         startupFrame.pack(fill='x', padx=5)
         startlabel = ttk.Label(
             startupFrame,
-            style="LargeText.TLabel",
-            text="Startup Folder"
+            style='LargeText.TLabel',
+            text='Startup Folder'
         )
         startentry = ttk.Entry(
             startupFrame,
             font=('', 11),
             textvariable=self.startupDir
         )
-        self.openImg = PP.photoImageOpenAndResizeToFit(os.path.join(iconpath, "open.png"), 16 , 16)
+        self.openImg = PP.photoImageOpenAndResizeToFit(os.path.join(iconpath, 'open.png'), 16 , 16)
         openbutton = ttk.Button(
             startupFrame,
             image=self.openImg,
-            style="Picture.TButton",
+            style='Picture.TButton',
             command=self._openFolder
         )
-        startlabel.pack(pady=5, side="left")
-        startentry.pack(pady=5, side="left")
-        openbutton.pack(side="left", padx=5)
+        startlabel.pack(pady=5, side='left')
+        startentry.pack(pady=5, side='left')
+        openbutton.pack(side='left', padx=5)
         msg = '''Folder to read upon starting the application.
 
 . Means the directory from which the script was started.
 
-Leave empty to start without reading files.'''
+Leave empty to start without reading files'''
         TT.Tooltip(startlabel, text=msg)
         TT.Tooltip(startentry, text=msg)
         TT.Tooltip(openbutton, text='Select Startup Folder')
 
         clearDBFrame = ttk.Frame(self)
         clearDBFrame.pack(fill='x', padx=5)
-        self.clearDBImg = PP.photoImageOpen(os.path.join(iconpath, "refresh.png"))
+        self.clearDBImg = PP.photoImageOpen(os.path.join(iconpath, 'refresh.png'))
         clearDBbutton = ttk.Button(
             clearDBFrame,
             image=self.clearDBImg,
-            text="Clear Database",
-            style="LargeText.TButton",
-            compound="left",
+            text='Clear Database',
+            style='LargeText.TButton',
+            compound='left',
             command=self._clearDB
         )
-        clearDBbutton.pack(side="left")
-        msg = '''Empty the database that holds the calculated image properties.'''
+        clearDBbutton.pack(side='left')
+        msg = 'Empty the database that holds the calculated image properties'
         TT.Tooltip(clearDBbutton, text=msg)
 
         toggleFrame = ttk.Frame(self)
         toggleFrame.pack(fill='x', padx=5)
         subdir = ttk.Checkbutton(toggleFrame,
-                                 text="Search in Subfolders",
-                                 style="LargeText.TCheckbutton",
+                                 text='Search in Subfolders',
+                                 style='LargeText.TCheckbutton',
                                  variable=self.recurse
         )
-        msg = '''Search recursively in the subfolders for image files.'''
+        msg = 'Search recursively in the subfolders for image files'
         TT.Tooltip(subdir, text=msg)
 
         cnfrm = ttk.Checkbutton(toggleFrame,
-                                text="Confirm File Delete",
-                                style="LargeText.TCheckbutton",
+                                text='Confirm File Delete',
+                                style='LargeText.TCheckbutton',
                                 variable=self.confirmDel
         )
-        msg = '''Ask before deleting files.'''
+        msg = 'Ask before deleting files'
         TT.Tooltip(cnfrm, text=msg)
 
-        gzp = ttk.Checkbutton(toggleFrame,
-                              text="Gzip File Instead of Delete",
-                              style="LargeText.TCheckbutton",
-                              variable=self.doGzip
+        gzp = ttk.Checkbutton(
+            toggleFrame,
+            text='Gzip File Instead of Delete',
+            style='LargeText.TCheckbutton',
+            variable=self.doGzip
         )
-        msg = '''Instead of deleting the file gzip it (adds .gz to the filename).'''
+        msg = 'Instead of deleting the file gzip it (adds .gz to the filename)'
         TT.Tooltip(gzp, text=msg)
 
-        svs = ttk.Checkbutton(toggleFrame,
-                              text="Save Settings on Exit",
-                              style="LargeText.TCheckbutton",
-                              variable=self.saveSettings
+        svs = ttk.Checkbutton(
+            toggleFrame,
+            text='Save Settings on Exit',
+            style='LargeText.TCheckbutton',
+            variable=self.saveSettings
         )
 
         subdir.pack(pady=5, anchor='w')
@@ -116,21 +119,21 @@ Leave empty to start without reading files.'''
         btnFrame.pack(fill='x')
         ttk.Button(
             btnFrame,
-            text="Ok",
+            text='Ok',
             width=15,
-            style="LargeText.TButton",
+            style='LargeText.TButton',
             command=self._ok
-        ).pack(padx=10, side="left")
+        ).pack(padx=10, side='left')
         ttk.Button(
             btnFrame,
-            text="Cancel",
+            text='Cancel',
             width=15,
-            style="LargeText.TButton",
+            style='LargeText.TButton',
             command=self._cancel
-        ).pack(padx=10, side="right")
+        ).pack(padx=10, side='right')
 
-        self.bind("<Escape>", self._cancel)
-        self.protocol("WM_DELETE_WINDOW", self._cancel)
+        self.bind('<Escape>', self._cancel)
+        self.protocol('WM_DELETE_WINDOW', self._cancel)
         self.grab_set()
         self.wait_window(self)
 

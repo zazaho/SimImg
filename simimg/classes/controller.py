@@ -21,9 +21,11 @@ from ..utils import database as DB
 from ..utils import handyfunctions as HF
 from ..utils import pooling as POOL
 
+
 # decorator to change cursor when calling a method that might take time
 def longrunning(f):
     ''' Show with the cursor that the program is doing a (long) calculation'''
+
     def wrapper(self, *args, **kwargs):
         self._busyCursorCount += 1
         self.TopWindow.config(cursor='watch')
@@ -35,6 +37,7 @@ def longrunning(f):
             self.TopWindow.config(cursor='')
     return wrapper
 
+
 # decorator to show message in status bar for the duration of a function call
 def tellstatus(msg):
     def decorator_tellstatus(f):
@@ -42,12 +45,14 @@ def tellstatus(msg):
             if msg:
                 self._showInStatusbar(msg)
             f(self, *args, **kwargs)
-            self._showInStatusbar("...")
+            self._showInStatusbar('...')
         return wrapper_tellstatus
     return decorator_tellstatus
 
+
 class Controller():
     'Controller object that initializes the program and reacts to events.'
+
     def __init__(self, parent):
 
         self.TopWindow = parent
@@ -60,44 +65,44 @@ class Controller():
         self.FODict = {}
         self._DBConnection = None
         self._fileList = []
-        self._filenameCommon = ""
+        self._filenameCommon = ''
         self._filenameUniqueDict = {}
         self._TPPositionDict = {}
-        self._matchingGroups = [[]]
-        self._MD5HashesDict = {}
-        self._Md5FilenameDict = {}
+        self._matchingGroups = {}
+        self._checksumFilenameDict = {}
+        self._filenameChecksumDict = {}
         self._busyCursorCount = 0
+        self._someConditionActive = False
 
         # call the exitProgram function when the user clicks the X
-        self.TopWindow.protocol("WM_DELETE_WINDOW", self.exitProgram)
+        self.TopWindow.protocol('WM_DELETE_WINDOW', self.exitProgram)
         # allow some key actions (Ctrl-A, Ctl-D, Ctrl-H, Ctrl-V and F1)
-        self.TopWindow.bind("<Key>", self._onKeyPress)
+        self.TopWindow.bind('<Key>', self._onKeyPress)
         # bind clicking in an empty area of the thumbPane to unselectThumbnails
-        self.TopWindow.ThumbPane.viewPort.bind("<Button-1>",  self.unselectThumbnails)
-        self.TopWindow.ThumbPane.canvas.bind("<Button-1>",  self.unselectThumbnails)
+        self.TopWindow.ThumbPane.viewPort.bind('<Button-1>', self.unselectThumbnails)
+        self.TopWindow.ThumbPane.canvas.bind('<Button-1>', self.unselectThumbnails)
 
         # put the toolbar in the self.TopWindow.ModulePane
         Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
-        Toolbar.pack(side="top", fill='x')
+        Toolbar.pack(side='top', fill='x')
 
-        _label = ttk.Label(
+        ttk.Label(
             self.TopWindow.ModulePane,
-            text="Display",
-            style="HeaderText.TLabel"
+            text='Display',
+            style='HeaderText.TLabel'
         ).pack(fill='x')
 
         ThumbOpt = MM.ThumbOptions(self.TopWindow.ModulePane, Controller=self)
-        ThumbOpt.pack(side="top", fill='x')
+        ThumbOpt.pack(side='top', fill='x')
 
-        _label = ttk.Label(
+        ttk.Label(
             self.TopWindow.ModulePane,
-            text="Filters",
-            style="HeaderText.TLabel"
+            text='Filters',
+            style='HeaderText.TLabel'
         ).pack(fill='x')
 
         # create the condition modules in the self.TopWindow.ModulePane
         # put them in a list so that we can easily iterate over them
-
         self._CMList = []
         self._CMList.extend([
             CM.ColorCondition(self.TopWindow.ModulePane, Controller=self),
@@ -107,7 +112,7 @@ class Controller():
             CM.ShapeCondition(self.TopWindow.ModulePane, Controller=self),
         ])
         for cm in self._CMList:
-            cm.pack(side="top", fill='x')
+            cm.pack(side='top', fill='x')
 
         self.startDatabase()
         self._getFileList()
@@ -120,11 +125,11 @@ class Controller():
             return
         if (event.state & 0x4) != 0:
             keyDict = {
-                'a':self.selectAllThumbnails,
-                'd':self.deleteSelected,
-                'h':self.hideSelected,
-                'v':self.viewSelected,
-                'q':self.exitProgram
+                'a': self.selectAllThumbnails,
+                'd': self.deleteSelected,
+                'h': self.hideSelected,
+                'v': self.viewSelected,
+                'q': self.exitProgram
             }
             if event.keysym in keyDict:
                 keyDict[event.keysym]()
@@ -134,15 +139,15 @@ class Controller():
         self.TopWindow.Statusbar.config(text=txt)
         self.TopWindow.Statusbar.update_idletasks()
 
-    def _showThumbXY(self, md5, X, Y):
+    def _showThumbXY(self, checksum, X, Y):
         # make sure that if a thumb is currently shown it is removed
         # and deleted
-        self._removeThumbXY(X,Y)
+        self._removeThumbXY(X, Y)
         # create a new thumbnail
         ThisThumb = IF.ImageFrame(
             self.TopWindow.ThumbPane.viewPort,
             Ctrl=self,
-            md5=md5,
+            checksum=checksum,
             X=X,
             Y=Y
         )
@@ -152,8 +157,8 @@ class Controller():
         self._TPPositionDict[(X, Y)] = ThisThumb
 
     def _removeThumbXY(self, X, Y):
-        if (X,Y) in self._TPPositionDict:
-            self._TPPositionDict[(X,Y)].destroy()
+        if (X, Y) in self._TPPositionDict:
+            self._TPPositionDict[(X, Y)].destroy()
             del self._TPPositionDict[(X, Y)]
 
     def _removeAllThumbs(self):
@@ -162,17 +167,17 @@ class Controller():
         self._TPPositionDict = {}
 
     def startDatabase(self, clear=None):
-        self._DBConnection = DB.CreateDBConnection(
+        self._DBConnection = DB.createConnection(
             self.Cfg.get('databasename')
         )
         if not self._DBConnection:
             sys.exit(1)
 
-        if not DB.CreateDBTables(self._DBConnection, clear=clear):
+        if not DB.createTables(self._DBConnection, clear=clear):
             sys.exit(1)
 
     def stopDatabase(self):
-        DB.CloseDBConnection(self._DBConnection)
+        DB.closeConnection(self._DBConnection)
 
     def exitProgram(self):
         self.stopDatabase()
@@ -200,16 +205,16 @@ class Controller():
         self.onChange()
 
     @longrunning
-    @tellstatus(msg="Gathering the files to show")
+    @tellstatus(msg='Gathering the files to show')
     def _getFileList(self, Replace=None, Add=None):
         pathList = []
-        #determine which mode we are called
+        # determine with which mode we are called
         # from openFolder
         if Replace:
             pathList = [Replace]
             oldFiles = []
             self.FODict = {}
-        # from add folder    
+        # from add folder
         if Add:
             pathList = [Add]
             oldFiles = self._fileList
@@ -249,44 +254,45 @@ class Controller():
         self._filenameUniqueDict.update(zip(self._fileList, filenameUniqueList))
 
     @longrunning
-    @tellstatus(msg="Processing file list")
+    @tellstatus(msg='Processing file list')
     def _processFilelist(self):
         ''' Things to do when starting with new image(s)/path'''
 
-        # calculate md5s in multiprocessing
-        self._getMD5Hashes()
+        # calculate checksums in multiprocessing
+        self._getChecksums()
 
         self._createFileobjects()
         if not self.FODict:
-            self._showInStatusbar("Warning: no files containing image data found")
+            self._showInStatusbar('Warning: no files containing image data found')
 
         # calculate thumbnails in multiprocessing
         self._setThumbnails()
 
     def _createFileobjects(self):
-        # Make list of image file objects with all files the installed PIL can read
-        ImageFileObjectList = []
+        # Make list of image file objects with all files PIL can read
+        fileObjectList = []
         # dont create FOs for files that already have a FODict
         existingfiles = []
         for fol in self.FODict.values():
-            existingfiles.extend([fo.FullPath for fo in fol])
+            existingfiles.extend([fo.fullPath for fo in fol])
 
         missingfilelist = list(set(self._fileList) - set(existingfiles))
         for FilePath in missingfilelist:
-            ThisFileObject = FO.FileObject(self,
-                                           FullPath=FilePath,
-                                           MD5HashesDict=self._MD5HashesDict
+            ThisFileObject = FO.FileObject(
+                self,
+                FullPath=FilePath,
+                checksumFilenameDict=self._checksumFilenameDict
             )
-            if ThisFileObject.IsImage():
-                ImageFileObjectList.append(ThisFileObject)
-                # do md5 hash and thumbnails
-                ThisFileObject.md5()
+            if ThisFileObject.isImage():
+                fileObjectList.append(ThisFileObject)
+                # do checksum hash and thumbnails
+                ThisFileObject.checksum()
 
-        if not ImageFileObjectList:
+        if not fileObjectList:
             return
 
-        # transform into a dict based on uniq md5
-        newFODict = HF.pairlist2dict([(i.md5(), i) for i in ImageFileObjectList])
+        # transform into a dict based on uniq checksum
+        newFODict = HF.pairlist2dict([(i.checksum(), i) for i in fileObjectList])
         self.FODict.update(newFODict)
 
     def _createViewWithoutConditions(self):
@@ -295,38 +301,22 @@ class Controller():
 
         # because there are no criteria display thumbnails in order
         # calculate how many thumbs fit in the viewPort
+        self.TopWindow.ThumbPane.update_idletasks()
         maxW = self.TopWindow.ThumbPane.winfo_width()
         thumbW = self.Cfg.get('thumbnailsize')
         nx = maxW // thumbW
 
         # maximum nx*ny thumbs to show
         thumbToShow = 0
-        for md5 in HF.sortMd5sByFilename(self.FODict.keys(), self._Md5FilenameDict):
-            if not self.FODict[md5][0].active:
+        for checksum in HF.sortChecksumsByFilename(self.FODict.keys(), self._filenameChecksumDict):
+            if not self.FODict[checksum][0].active:
                 continue
             X = thumbToShow % nx
             Y = thumbToShow // nx
-            self._showThumbXY(md5, X, Y)
+            self._showThumbXY(checksum, X, Y)
             thumbToShow += 1
             if thumbToShow >= self._maxThumbnails:
                 break
-
-    def _displayMatchingGroups(self):
-        #clear messages from the statusbar
-        self._showInStatusbar("...")
-        sortedGroupsList = HF.sortMatchingGroupsByFilename(self._matchingGroups, self._Md5FilenameDict)
-        numThumbsShown = 0
-        for Y, group in enumerate(sortedGroupsList):
-            for X, md5 in enumerate(group):
-                self._showThumbXY(md5, X, Y)
-                numThumbsShown += 1
-                # no point showing so many
-                if X > 25:
-                    self._showInStatusbar("Groups found a group with too many matches: truncated to 25")
-                    break
-            if numThumbsShown > self._maxThumbnails:
-                self._showInStatusbar("Warning too many matches: truncated to ~%s" % self._maxThumbnails)
-                return
 
     def _getMatchingGroups(self):
         ''' given the matching groups returned by each active condition module
@@ -335,21 +325,14 @@ class Controller():
         self._matchingGroups = {}
         matchingGroupDictsList = []
         MMMatchingGroupDictsList = []
-        activeMD5s = [md5 for md5, FO in self.FODict.items() if FO[0].active]
-        someConditionActive = False
+        activeChecksums = [checksum for checksum, FO in self.FODict.items() if FO[0].active]
         for cm in self._CMList:
             if not cm.active:
                 continue
-            someConditionActive = True
-            thisMatchingGroupDict = cm.matchingGroups(activeMD5s)
+            thisMatchingGroupDict = cm.matchingGroups(activeChecksums)
             matchingGroupDictsList.append(thisMatchingGroupDict)
             if cm.mustMatch.get():
                 MMMatchingGroupDictsList.append(thisMatchingGroupDict)
-
-        # nothing activated. Start-over
-        if not someConditionActive:
-            self._createViewWithoutConditions()
-            return
 
         matchingGroups = HF.mergeGroupDicts(matchingGroupDictsList)
 
@@ -360,14 +343,41 @@ class Controller():
 
         self._matchingGroups = matchingGroups
 
+    def _displayMatchingGroups(self):
+        # clear messages from the statusbar
+        self._showInStatusbar('...')
+        sortedGroupsList = HF.sortMatchingGroupsByFilename(self._matchingGroups, self._filenameChecksumDict)
+        numThumbsShown = 0
+        for Y, group in enumerate(sortedGroupsList):
+            for X, checksum in enumerate(group):
+                self._showThumbXY(checksum, X, Y)
+                numThumbsShown += 1
+                # no point showing so many
+                if X > 25:
+                    self._showInStatusbar('Groups found a group with too many matches: truncated to 25')
+                    break
+            if numThumbsShown > self._maxThumbnails:
+                self._showInStatusbar('Warning too many matches: truncated to ~%s' % self._maxThumbnails)
+                return
+
     @longrunning
     def onChange(self):
         # put everything to default
-        self._matchingGroups = [[]]
+        self._matchingGroups = {}
         # make sure to clean the interface
         self._removeAllThumbs()
-        self._getMatchingGroups()
-        self._displayMatchingGroups()
+
+        # check for active conditions
+        self._someConditionActive = False
+        for cm in self._CMList:
+            if cm.active:
+                self._someConditionActive = True
+                break
+        if self._someConditionActive:
+            self._getMatchingGroups()
+            self._displayMatchingGroups()
+        else:
+            self._createViewWithoutConditions()
 
     @longrunning
     def onThumbElementsChanged(self):
@@ -378,16 +388,10 @@ class Controller():
     def onThumbParamsChanged(self):
         # the parameters changed we should regenerate the thumbnails
         self._setThumbnails()
-        # check whether at least one conditions is active.
-        someConditionActive = False
-        for cm in self._CMList:
-            if cm.active:
-                someConditionActive = True
-                break
         # if one conditions is active just change the shown thumbnails
         # otherwise recreate the whole interface
         # including the number of thumbs per line if thumbnailsize changed
-        if someConditionActive:
+        if self._someConditionActive:
             for thumbframe in self._TPPositionDict.values():
                 thumbframe.createThumbContent()
                 thumbframe.showOptionalElements()
@@ -405,21 +409,21 @@ class Controller():
         self.onChange()
 
     # functions related to the selected thumbnails
-    def _selectedFOs(self, firstFOOnly = False):
+    def _selectedFOs(self, firstFOOnly=False):
         lst = []
         for tp in self._TPPositionDict.values():
             if tp.selected:
                 if firstFOOnly:
-                    lst.append(self.FODict[tp.md5][0])
+                    lst.append(self.FODict[tp.checksum][0])
                 else:
-                    lst.extend(self.FODict[tp.md5])
+                    lst.extend(self.FODict[tp.checksum])
         return lst
 
     def viewSelected(self):
-        fileinfo = [(fo.md5(), fo.FullPath) for fo in self._selectedFOs(firstFOOnly = True)]
+        fileinfo = [(fo.checksum(), fo.fullPath) for fo in self._selectedFOs(firstFOOnly=True)]
         if fileinfo:
-            VI.viewer(Fileinfo=fileinfo, Controller=self)
-            
+            VI.Viewer(Fileinfo=fileinfo, Controller=self)
+
     def hideSelected(self):
         for fo in self._selectedFOs():
             fo.active = False
@@ -431,32 +435,32 @@ class Controller():
         else:
             os.remove(Filename)
 
-    def deleteFOs(self, FOs, Owner=None):
+    def deleteFOs(self, FOs):
         somethingDeleted = False
         mustconfirm = self.Cfg.get('confirmdelete')
         onlyOneFO = len(FOs) == 1
         for fo in FOs:
-            filename = fo.FullPath
+            filename = fo.fullPath
             uniqueFilename = self._filenameUniqueDict[filename]
-            md5 = fo.md5()
+            checksum = fo.checksum()
             if mustconfirm:
                 answer = CDD.CDDialog(
-                    Owner,
+                    self.TopWindow,
                     Filename=uniqueFilename,
                     simple=onlyOneFO
                 ).result
             else:
-                answer = "yes"
-            if answer == "abort":
+                answer = 'yes'
+            if answer == 'abort':
                 break
-            if answer == "no":
+            if answer == 'no':
                 continue
-            if answer == "yestoall":
+            if answer == 'yestoall':
                 mustconfirm = False
-                answer = "yes"
-            if answer == "yes":
-                if md5 in self.FODict:
-                    del self.FODict[md5]
+                answer = 'yes'
+            if answer == 'yes':
+                if checksum in self.FODict:
+                    del self.FODict[checksum]
                 somethingDeleted = True
                 self._deleteFile(filename)
 
@@ -465,7 +469,7 @@ class Controller():
         return somethingDeleted
 
     def deleteSelected(self):
-        self.deleteFOs(self._selectedFOs(), Owner=self.TopWindow)
+        self.deleteFOs(self._selectedFOs())
 
     def unselectThumbnails(self, *args):
         for tp in self._TPPositionDict.values():
@@ -498,7 +502,7 @@ class Controller():
             return
 
         fromXY = self.lastSelectedXY
-        toXY = (X,Y)
+        toXY = (X, Y)
         if gridXYLargerOrEqual(fromXY, toXY):
             fromXY, toXY = toXY, fromXY
 
@@ -511,37 +515,37 @@ class Controller():
 
     # some routines related to expensive calculations done in a
     # multiprocessing pool
-    @tellstatus(msg="Calculating File Hash values, please be patient")
-    def _getMD5Hashes(self):
-        self._MD5HashesDict = POOL.GetMD5Hashes(self._fileList, self._MD5HashesDict)
-        self._Md5FilenameDict = {v:k for k, v in self._MD5HashesDict.items()}
+    @tellstatus(msg='Calculating File Hash values, please be patient')
+    def _getChecksums(self):
+        self._checksumFilenameDict = POOL.getChecksums(self._fileList, self._checksumFilenameDict)
+        self._filenameChecksumDict = dict(map(reversed, self._checksumFilenameDict.items()))
 
-    @tellstatus(msg="Making file thumbnails, please be patient")
+    @tellstatus(msg='Making file thumbnails, please be patient')
     def _setThumbnails(self):
-        MD5ThumbDict = POOL.GetMD5Thumbnails(
+        checksumThumbDict = POOL.getThumbnails(
             self.FODict,
             Thumbsize=self.Cfg.get('thumbnailsize'),
             channel=self.Cfg.get('channeltoshow'),
         )
-        self._showInStatusbar("...")
-        if not MD5ThumbDict:
+        self._showInStatusbar('...')
+        if not checksumThumbDict:
             return
-        for md5, thumb in MD5ThumbDict.items():
+        for checksum, thumb in checksumThumbDict.items():
             if not thumb:
-                del self.FODict[md5]
+                del self.FODict[checksum]
                 continue
 
             try:
                 pimage = ImageTk.PhotoImage(thumb)
             except:
-                del self.FODict[md5]
+                del self.FODict[checksum]
                 continue
 
-            fo = self.FODict[md5]
+            fo = self.FODict[checksum]
             for afo in fo:
-                afo._Thumbnail = pimage
+                afo._thumbnail = pimage
 
     @longrunning
-    @tellstatus(msg="Calculating Image Hash values, please be patient")
-    def setImageHashes(self, hashName=None):
-        POOL.GetImageHashes(self.FODict, hashName, self._DBConnection)
+    @tellstatus(msg='Calculating Image Hash values, please be patient')
+    def setHashes(self, hashName=None):
+        POOL.getHashes(self.FODict, hashName, self._DBConnection)

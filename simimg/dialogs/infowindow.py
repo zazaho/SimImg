@@ -21,4 +21,4 @@ The workflow is as follows:
 * Click the play button to inspect the selected images
 * Click the delete button to delete selected images
     '''
-    tkmessagebox.showinfo("Information", msg)
+    tkmessagebox.showinfo('Information', msg)

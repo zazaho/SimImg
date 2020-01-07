@@ -1,3 +1,11 @@
+version 0.7.2 (SH Jan  7 2020)
+- reduced maximum thumbnail size to avoid running out of memory
+- more systematic variable naming scheme
+- removed more code duplication from condition modules
+
+version 0.7.1 (SH Jan  6 2020)
+- fixed bug in initialising conditions that triggered many onChange events
+
 version 0.7.0 (SH Jan  6 2020)
 - removed more duplicate code using decorators in controller
 - removed dependencies on statistics module

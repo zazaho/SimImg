@@ -2,7 +2,8 @@ import os
 import sqlite3
 from ..utils import handyfunctions as HF
 
-def CreateDBConnection(db_file):
+
+def createConnection(db_file):
     'Create a connection to the DataBase'
 
     dirName = os.path.dirname(db_file)
@@ -11,14 +12,15 @@ def CreateDBConnection(db_file):
             os.mkdir(dirName)
         except OSError:
             return None
-            
+
     try:
         db_connection = sqlite3.connect(db_file)
         return db_connection
     except sqlite3.Error:
         return None
 
-def CreateDBTables(db_connection, clear=None):
+
+def createTables(db_connection, clear=None):
     'Create or empty the required tables in the DataBase'
 
     sql_delete_table = ' DROP TABLE IF EXISTS HashValueTable '
@@ -28,7 +30,7 @@ def CreateDBTables(db_connection, clear=None):
         db_cursor = db_connection.cursor()
         if clear:
             db_cursor.execute(sql_delete_table)
-            db_connection.execute("VACUUM") 
+            db_connection.execute('VACUUM')
         db_cursor.execute(sql_create_table)
 
         db_cursor.close()
@@ -37,16 +39,18 @@ def CreateDBTables(db_connection, clear=None):
     except sqlite3.Error:
         return False
 
-def CloseDBConnection(db_connection):
+
+def closeConnection(db_connection):
     try:
         db_connection.commit()
-        db_connection.execute("VACUUM") 
+        db_connection.execute('VACUUM')
         db_connection.close()
     except sqlite3.Error:
         return
-    
-def GetHashValueFromDataBase(md5, hashname, db_connection=None):
-    # # which function to use to translate the string to hash
+
+
+def getHash(checksum, hashname, db_connection=None):
+    # which function to use to translate the string to hash
     # convDict = {
     #     'HSV':HF.hexstring2array,
     #     'HSV (5 regions)':HF.hexstring2array,
@@ -61,7 +65,7 @@ def GetHashValueFromDataBase(md5, hashname, db_connection=None):
         db_cursor = db_connection.cursor()
         db_cursor.execute(
             'SELECT ImageHashValue FROM HashValueTable WHERE FileHash=? AND HashMethod=?',
-            (md5, hashname)
+            (checksum, hashname)
         )
         hashvalue = db_cursor.fetchone()
         db_cursor.close()
@@ -72,12 +76,13 @@ def GetHashValueFromDataBase(md5, hashname, db_connection=None):
         db_cursor.close()
     return None
 
-def SetHashValues(Md5HashValueTuples, hashname, db_connection=None):
 
-    if not Md5HashValueTuples:
+def setHash(checksumHashTuples, hashname, db_connection=None):
+
+    if not checksumHashTuples:
         return
 
-    # # which function to use to translate the hash to string
+    # which function to use to translate the hash to string
     # convDict = {
     #     'HSV':HF.array2hexstring,
     #     'HSV (5 regions)':HF.array2hexstring,
@@ -89,8 +94,8 @@ def SetHashValues(Md5HashValueTuples, hashname, db_connection=None):
     #     'Vertical':HF.array2hexstring,
     #     }
 
-    # tupled_data = [(md5, hashname, convDict[hashname](imagehashvalue)) for md5, imagehashvalue in Md5HashValueTuples]
-    tupled_data = [(md5, hashname, HF.array2hexstring(imagehashvalue)) for md5, imagehashvalue in Md5HashValueTuples]
+    # tupled_data = [(checksum, hashname, convDict[hashname](imagehashvalue)) for checksum, imagehashvalue in checksumHashValueTuples]
+    tupled_data = [(checksum, hashname, HF.array2hexstring(imagehashvalue)) for checksum, imagehashvalue in checksumHashTuples]
 
     db_cursor = db_connection.cursor()
     db_cursor.executemany(

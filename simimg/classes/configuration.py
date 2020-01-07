@@ -1,24 +1,36 @@
+'''communicate and read/write configuration info'''
 import sys
 import os.path
 import configparser
-from ..utils import handyfunctions as HF
+
 
 def str2bool(S):
-    '''convert a string to a boolean '''
-    if S[0] in [0, 'n', 'N', 'f', 'F']:
-        return False
-    if S[0] in [1, 'y', 'Y', 't', 'T']:
-        return True
+    '''convert a string to a boolean
+    we use only the first letter'''
+    return {
+        '0': False,
+        'n': False,
+        'N': False,
+        'f': False,
+        'F': False,
+        '1': True,
+        'y': True,
+        'Y': True,
+        't': True,
+        'T': True,
+    }[S[0]]
+
 
 class Configuration():
     ' Object that can initialise, change and inform about App configuration'
+
     def __init__(self, ScriptPath=None):
         # The path of the appdata and ini file
         ConfigPath = os.path.join(
             os.environ.get('APPDATA') or
             os.environ.get('XDG_CONFIG_HOME') or
             os.path.join(os.environ['HOME'], '.config'),
-            "simimg"
+            'simimg'
         )
         self.IniPath = os.path.join(ConfigPath, 'simimg.ini')
 
@@ -84,23 +96,23 @@ class Configuration():
 
         config = configparser.ConfigParser()
         config['simimg'] = {
-            'searchinsubfolders':self.get('searchinsubfolders'),
-            'confirmdelete':self.get('confirmdelete'),
-            'gzipinsteadofdelete':self.get('gzipinsteadofdelete'),
-            'savesettings':self.get('savesettings'),
-            'showbuttons':self.get('showbuttons'),
-            'filenameonthumbnail':self.get('filenameonthumbnail'),
-            'thumbnailsize':self.get('thumbnailsize'),
-            'startupfolder':self.get('startupfolder'),
-            'findergeometry':self.get('findergeometry'),
-            'viewergeometry':self.get('viewergeometry')
+            'searchinsubfolders': self.get('searchinsubfolders'),
+            'confirmdelete': self.get('confirmdelete'),
+            'gzipinsteadofdelete': self.get('gzipinsteadofdelete'),
+            'savesettings': self.get('savesettings'),
+            'showbuttons': self.get('showbuttons'),
+            'filenameonthumbnail': self.get('filenameonthumbnail'),
+            'thumbnailsize': self.get('thumbnailsize'),
+            'startupfolder': self.get('startupfolder'),
+            'findergeometry': self.get('findergeometry'),
+            'viewergeometry': self.get('viewergeometry')
         }
         with open(self.IniPath, 'w') as configfile:
             config.write(configfile)
 
     def get(self, parameter):
         'Return one value of the configuration'
-        if not parameter in self.ConfigurationDict:
+        if parameter not in self.ConfigurationDict:
             return None
         return self.ConfigurationDict[parameter]
 

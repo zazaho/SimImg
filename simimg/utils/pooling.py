@@ -1,7 +1,8 @@
 ''' Functions on the image files that take time.
-    Like file-hasing and image-hashing
+    Like file-hashing and image-hashing
     They are organised to be done in multiprocessing.'''
 import hashlib
+import time
 from operator import add
 import functools
 from multiprocessing import Pool
@@ -23,32 +24,37 @@ fiveboxes = [
     (0.5-fiveboxsize/2.0, 0.5-fiveboxsize/2.0, 0.5+fiveboxsize/2.0, 0.5+fiveboxsize/2.0)
 ]
 
+
 # not very careful but quick median function
-def statsmedian(a):
+def statsMedian(a):
     aa = sorted(a)
     return aa[round(len(aa)*0.50)]
 
+
 # not very careful but quick 4-quantiles function
-def statsquantiles(a):
+def statsQuantiles(a):
     aa = sorted(a)
     return [aa[round(len(aa)*i)] for i in [0.25, 0.5, 0.75]]
 
-def CalculateMD5Hash(file):
-    hasher = hashlib.md5()
+
+def calculateChecksum(file):
+    hasher = hashlib.sha1()
     with open(file, 'rb') as afile:
         hasher.update(afile.read())
     return (file, hasher.hexdigest())
 
-def GetMD5Hashes(filelist, hashValueDict):
-    '''return md5 hashing value for each file the list.'''
+
+def getChecksums(filelist, hashValueDict):
+    '''return checksum hashing value for each file the list.'''
     missingfilelist = list(set(filelist) - set(hashValueDict.keys()))
     with Pool() as pool:
-        calculatedHashes = pool.map(CalculateMD5Hash, missingfilelist)
+        calculatedHashes = pool.map(calculateChecksum, missingfilelist)
     hashValueDict.update(calculatedHashes)
     return hashValueDict
 
+
 def subImage(Img, FracBox):
-    ''' return a subImage from Image based on coordinates in dimensionless units'''
+    'return a subImage from Image based on coordinates in dimensionless units'
     width, height = Img.size
     left = round(width*FracBox[0])
     right = round(width*FracBox[2])
@@ -56,10 +62,11 @@ def subImage(Img, FracBox):
     top = round(height*FracBox[3])
     return Img.crop((left, bottom, right, top))
 
-def colhash(Img, colorspace=None, five=False):
+
+def colorHash(Img, colorspace=None, five=False):
     ''' Regrouped colour hashing function to avoid repeating code.'''
 
-    #requested colorspace defaults to HSV
+    # requested colorspace defaults to HSV
     cspace = colorspace if colorspace else 'HSV'
     # one box or five boxes requested
     boxes = fiveboxes if five else onebox
@@ -69,7 +76,7 @@ def colhash(Img, colorspace=None, five=False):
         Img = Img.convert(cspace)
 
     # resample to speed up the calculation
-    Img = Img.resize((100,100), Image.BOX)
+    Img = Img.resize((100, 100), Image.BOX)
 
     # split in bands
     channels = [ch.getdata() for ch in Img.split()]
@@ -82,35 +89,42 @@ def colhash(Img, colorspace=None, five=False):
             data = subImage(ch, bx)
             if cspace == 'HSV' and idx == 1:
                 data = list(data)
-                medianH = statsmedian(data)
-                quant = statsquantiles([(h-medianH+128) % 255 for h in data])
+                medianH = statsMedian(data)
+                quant = statsQuantiles([(h-medianH+128) % 255 for h in data])
                 values.append(round(medianH))
                 values.append(round(quant[2] - quant[0]))
             else:
-                quant = statsquantiles(data)
+                quant = statsQuantiles(data)
                 values.append(round(quant[1]))
                 values.append(round(quant[2] - quant[0]))
     return values
 
-def hsvhash(Img):
-    return colhash(Img, colorspace='HSV', five=False)
 
-def hsv5hash(Img):
-    return colhash(Img, colorspace='HSV', five=True)
+def hsvHash(Img):
+    return colorHash(Img, colorspace='HSV', five=False)
 
-def rgbhash(Img):
-    return colhash(Img, colorspace='RGB', five=False)
 
-def rgb5hash(Img):
-    return colhash(Img, colorspace='RGB', five=True)
+def hsv5Hash(Img):
+    return colorHash(Img, colorspace='HSV', five=True)
 
-def lhash(Img):
-    return colhash(Img, colorspace='L', five=False)
 
-def l5hash(Img):
-    return colhash(Img, colorspace='L', five=True)
+def rgbHash(Img):
+    return colorHash(Img, colorspace='RGB', five=False)
 
-def dhash(Img, doVertical=False):
+
+def rgb5Hash(Img):
+    return colorHash(Img, colorspace='RGB', five=True)
+
+
+def lHash(Img):
+    return colorHash(Img, colorspace='L', five=False)
+
+
+def l5Hash(Img):
+    return colorHash(Img, colorspace='L', five=True)
+
+
+def dHash(Img, doVertical=False):
     if doVertical:
         i8x8 = Img.convert('L').resize((8, 9), Image.BOX).transpose(Image.ROTATE_90)
     else:
@@ -125,85 +139,92 @@ def dhash(Img, doVertical=False):
         values.append(val)
     return values
 
-def dhash_horizontal(Img):
-    return dhash(Img)
 
-def dhash_vertical(Img):
-    return dhash(Img, doVertical=True)
+def dHashHorizontal(Img):
+    return dHash(Img)
 
-def CalculateImageHash(args):
-    md5, FullPath, hashName = args
+
+def dHashVertical(Img):
+    return dHash(Img, doVertical=True)
+
+
+def calculateHash(args):
+    checksum, fullPath, hashName = args
     funcdict = {
-        'HSV': hsvhash,
-        'HSV (5 regions)': hsv5hash,
-        'RGB': rgbhash,
-        'RGB (5 regions)': rgb5hash,
-        'Luminosity': lhash,
-        'Luminosity (5 regions)': l5hash,
-        'Horizontal': dhash_horizontal,
-        'Vertical': dhash_vertical,
+        'HSV': hsvHash,
+        'HSV (5 regions)': hsv5Hash,
+        'RGB': rgbHash,
+        'RGB (5 regions)': rgb5Hash,
+        'Luminosity': lHash,
+        'Luminosity (5 regions)': l5Hash,
+        'Horizontal': dHashHorizontal,
+        'Vertical': dHashVertical,
         }
-    return (md5, funcdict[hashName](PP.imageOpen(FullPath)))
+    return (checksum, funcdict[hashName](PP.imageOpen(fullPath)))
 
-def GetImageHashes(FODict, hashName, db_connection=None):
+
+def getHashes(FODict, hashName, db_connection=None):
     '''return hashing value according to selected hashName method
-    for each file the (file,md5) list.'''
+    for each file the (file,checksum) list.'''
 
-    ## create an empty dict to hold the results
-    hashValueDict = {} ## md5:hashValue
+    # create an empty dict to hold the results
+    hashValueDict = {} ## checksum:hashValue
 
-    ## create an empty list to hold md5,file,hashName tuples that need to be calculated
+    # create an empty list to hold checksum,file,hashName tuples
+    # that need to be calculated
     needCalculating = []
 
-    ## for each uniq md5 in the requested file in FODict
-    ## check if the FileObject has the hash value already list.
-    ## if yes take it
+    # for each uniq checksum in the requested file in FODict
+    # check if the FileObject has the hash value already list.
+    # if yes take it
     #
-    ## if none:
-    ## get the hash value for this method and this md5 from the database or None
+    # if none:
+    # get the hash value for this method and this checksum from the database or None
     #
-    ## if none add the info to the needCalculating list
+    # if none add the info to the needCalculating list
 
-    for md5, imageFileObjectList in FODict.items():
-        firstFO = imageFileObjectList[0]
+    for checksum, fileObjectList in FODict.items():
+        firstFO = fileObjectList[0]
         if hashName in firstFO.hashDict:
-            hashValueDict[md5] = firstFO.hashDict[hashName]
+            hashValueDict[checksum] = firstFO.hashDict[hashName]
             continue
 
-        hashValue = DB.GetHashValueFromDataBase(md5, hashName, db_connection=db_connection)
+        hashValue = DB.getHash(checksum, hashName, db_connection=db_connection)
         if hashValue is None:
-            needCalculating.append((md5, firstFO.FullPath, hashName))
+            needCalculating.append((checksum, firstFO.fullPath, hashName))
         else:
-            hashValueDict[md5] = hashValue
+            hashValueDict[checksum] = hashValue
 
-    ## For the md5 with None calculate the hashValue in a pool of workers
-    ## Returning (md5, imagehash)
+    # For the checksum with None calculate the hashValue in a pool of workers
+    # Returning (checksum, imagehash)
     if needCalculating:
 
         with Pool() as pool:
-            calculatedHashes = pool.map(CalculateImageHash, needCalculating)
+            calculatedHashes = pool.map(calculateHash, needCalculating)
 
         hashValueDict.update(calculatedHashes)
 
-        ## update the database with the new md5, method, hashValueDict
-        DB.SetHashValues(calculatedHashes, hashName, db_connection=db_connection)
+        # update the database with the new checksum, method, hashValueDict
+        DB.setHash(calculatedHashes, hashName, db_connection=db_connection)
 
     # write everything back to each fileobject
-    # behind every md5 key in the FODict is a list of fileobjects with corresponding md5
-    for md5, hashValue in hashValueDict.items():
-        for FO in FODict[md5]:
+    # every checksum key in the FODict contains a list of fileobjects that match checksum
+    for checksum, hashValue in hashValueDict.items():
+        for FO in FODict[checksum]:
             FO.hashDict[hashName] = hashValue
 
-def getOneThumb(arg):
-    md5, filename, tsize, channel = arg
-    img = PP.thumbnailOpen(filename, tsize, tsize, channel=channel)
-    return (md5, img)
 
-def GetMD5Thumbnails(FODict, Thumbsize=None, channel='Default'):
-    '''return thumbnail for each md5 in FODict.'''
-    args = [(md5, fo[0].FullPath, Thumbsize, channel) for md5, fo in FODict.items()]
-    ThumbDict = {} ## md5, thumbnail
+def getOneThumb(arg):
+    checksum, filename, tsize, channel = arg
+    img = PP.thumbnailOpen(filename, tsize, tsize, channel=channel)
+    return (checksum, img)
+
+
+def getThumbnails(FODict, Thumbsize=None, channel='Default'):
+    '''return thumbnail for each checksum in FODict.'''
+    args = [(checksum, fo[0].fullPath, Thumbsize, channel) for checksum, fo in FODict.items()]
     with Pool() as pool:
         calculatedthumbs = pool.map(getOneThumb, args)
+    ThumbDict = {}
     ThumbDict.update(calculatedthumbs)
     return ThumbDict
