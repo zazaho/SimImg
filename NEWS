@@ -1,3 +1,7 @@
+version 0.7.3 (SH Jan  8 2020)
+- zoom in viewer window using mouse wheel
+- class variables in condition modules
+
 version 0.7.2 (SH Jan  7 2020)
 - reduced maximum thumbnail size to avoid running out of memory
 - more systematic variable naming scheme
