@@ -18,14 +18,11 @@ from . import tooltip as TT
 
 class ConditionModule(ttk.Frame):
     'A frame that holds one selection criterion with options'
+    _conditionName = ''
+    _currentConfig = {}
 
     def __init__(self, parent, Controller=None):
         super().__init__(parent)
-        # these can be customised by children before calling __init__
-        if not self._conditionName:
-            self._conditionName = ''
-        if not self._currentConfig:
-            self._currentConfig = {}
 
         self.config(borderwidth=1, relief='sunken')
 
@@ -139,20 +136,12 @@ class ConditionModule(ttk.Frame):
 
 
 class HashingCondition(ConditionModule):
+    _currentConfig = {'method': None, 'limit': None}
+    _methods = ['']
+    method = ''
+    limit = 1
+
     def __init__(self, parent, *args, **kwargs):
-        if not self._conditionName:
-            self._conditionName = 'HASHING CONDITION'
-        # these can be customised by children before calling __init__
-        if not self._methods:
-            self._methods = ['']
-        if not self.method:
-            self.method = ''
-        if not self.limit:
-            self.method = 1
-        self._currentConfig = {'method': None, 'limit': None}
-        self._Combo = None
-        self._Scale = None
-        self._ScaleTip = None
         super().__init__(parent, *args, **kwargs)
 
     def _makeAdditionalWidgets(self):
@@ -207,11 +196,12 @@ class HashingCondition(ConditionModule):
 
 
 class GradientCondition(HashingCondition):
+    _conditionName = 'GRADIENTS'
+    _methods = ['Horizontal', 'Vertical']
+    method = 'Horizontal'
+    limit = 14
+
     def __init__(self, parent, *args, **kwargs):
-        self._conditionName = 'GRADIENTS'
-        self._methods = ['Horizontal', 'Vertical']
-        self.method = 'Horizontal'
-        self.limit = 14
         super().__init__(parent, *args, **kwargs)
 
     def _theymatch(self, checksumA, checksumB):
@@ -226,18 +216,19 @@ class GradientCondition(HashingCondition):
 
 
 class ColorCondition(HashingCondition):
+    _conditionName = 'COLOR DISTANCE'
+    _methods = [
+        'HSV',
+        'HSV (5 regions)',
+        'RGB',
+        'RGB (5 regions)',
+        'Luminosity',
+        'Luminosity (5 regions)'
+    ]
+    method = 'HSV (5 regions)'
+    limit = 10
+
     def __init__(self, parent, *args, **kwargs):
-        self._conditionName = 'COLOR DISTANCE'
-        self._methods = [
-            'HSV',
-            'HSV (5 regions)',
-            'RGB',
-            'RGB (5 regions)',
-            'Luminosity',
-            'Luminosity (5 regions)'
-            ]
-        self.method = 'HSV (5 regions)'
-        self.limit = 10
         super().__init__(parent, *args, **kwargs)
 
     def _theymatch(self, checksumA, checksumB):
@@ -262,32 +253,25 @@ class ColorCondition(HashingCondition):
 
 
 class ExifCondition(ConditionModule):
-    def __init__(self, parent, *args, **kwargs):
-        if not self._conditionName:
-            self._conditionName = 'EXIF CONDITION'
-        # these can be customised by children before calling __init__
-        if not self._scaleDict:
-            self._scaleDict = {'': 0}
-        if not self._initialScaleVal:
-            self._initialScaleVal = ''
-        self._currentConfig = {'missingmatches': None, 'scalevalue': None}
+    _currentConfig = {'missingmatches': None, 'scalevalue': None}
+    _scaleDict = {'': 0}
+    _initialScaleVal = ''
+    _showMissingMatches = True
 
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
         self.missingmatches = False
         self.scalevalue = self._scaleDict[self._initialScaleVal]
 
-        self._missingMatchesCheck = None
+    def _makeAdditionalWidgets(self):
         self._missingVar = tk.BooleanVar()
-        self._Scale = None
-        super().__init__(parent, *args, **kwargs)
-
-    def _makeAdditionalWidgets(self, showMissingMatchesToggle=False):
         self._missingMatchesCheck = ttk.Checkbutton(
             self,
             text='Missing Matches',
             variable=self._missingVar,
             command=self._toggleChanged,
         )
-        if showMissingMatchesToggle:
+        if self._showMissingMatches:
             self._missingMatchesCheck.pack(fill='x')
 
         labels = list(self._scaleDict)
@@ -315,13 +299,11 @@ class ExifCondition(ConditionModule):
 
 
 class CameraCondition(ExifCondition):
+    _conditionName = 'CAMERA MODEL'
+    _scaleDict = {'Same': True, 'Different': False}
+    _initialScaleVal = 'Same'
+
     def __init__(self, parent, *args, **kwargs):
-        self._conditionName = 'CAMERA MODEL'
-        self._scaleDict = {
-            'Same': True,
-            'Different': False,
-        }
-        self._initialScaleVal = 'Same'
         super().__init__(parent, *args, **kwargs)
 
     def _theymatch(self, checksumA, checksumB):
@@ -335,18 +317,19 @@ class CameraCondition(ExifCondition):
 
 
 class DateCondition(ExifCondition):
+    _conditionName = 'CLOSE IN TIME'
+    _scaleDict = {
+        '1 minute': 60,
+        '10 minutes': 600,
+        '1 hour': 3600,
+        '1 day': 24*3600,
+        '1 week': 7*24*3600,
+        '4 weeks': 4*7*24*3600,
+        '1 year': 365*24*3600
+    }
+    _initialScaleVal = '10 minutes'
+
     def __init__(self, parent, *args, **kwargs):
-        self._conditionName = 'CLOSE IN TIME'
-        self._scaleDict = {
-            '1 minute': 60,
-            '10 minutes': 600,
-            '1 hour': 3600,
-            '1 day': 24*3600,
-            '1 week': 7*24*3600,
-            '4 weeks': 4*7*24*3600,
-            '1 year': 365*24*3600
-        }
-        self._initialScaleVal = '10 minutes'
         super().__init__(parent, *args, **kwargs)
 
     def _theymatch(self, checksumA, checksumB):
@@ -360,19 +343,21 @@ class DateCondition(ExifCondition):
 
 
 class ShapeCondition(ExifCondition):
+    _conditionName = 'PICTURE SHAPE'
+    _scaleDict = {
+        'Different Size': -2,
+        'Portrait/Landscape': -1,
+        'Exact': 0,
+        '<5%': 5,
+        '<10%': 10,
+        '<20%': 20,
+        '<30%': 30,
+        '<50%': 50
+    }
+    _initialScaleVal = 'Portrait/Landscape'
+    _showMissingMatches = False
+
     def __init__(self, parent, *args, **kwargs):
-        self._conditionName = 'PICTURE SHAPE'
-        self._scaleDict = {
-            'Different Size': -2,
-            'Portrait/Landscape': -1,
-            'Exact': 0,
-            '<5%': 5,
-            '<10%': 10,
-            '<20%': 20,
-            '<30%': 30,
-            '<50%': 50
-        }
-        self._initialScaleVal = 'Portrait/Landscape'
         super().__init__(parent, *args, **kwargs)
 
     def _theymatch(self, checksumA, checksumB):

@@ -20,11 +20,30 @@ class Viewer(tk.Toplevel):
 
         self._ImgDict = {}
         self._ImgIndex = 0
+        # the pillow image object (not scaled photoimage)
+        self._Img = None
+
+        self._zoomLevelDict = {
+            1: 2,
+            2: 3,
+            3: 4,
+            4: 10,
+            5: 20,
+            6: 100,
+            }
+        self._zoomLevel = 0
+        self._zoomImg = None
+        self._zoomImgId = None
 
         self._canvas = tk.Canvas(self)
         self._canvas.pack(fill='both', expand=True)
         self._canvas.update_idletasks()
-        self._canvas.bind('<Button>', self._click)
+        self._canvas.bind('<Button-1>', self._click)
+        self._canvas.bind('<Button-2>', self._click)
+        self._canvas.bind("<Button-4>", self._changeZoom)
+        self._canvas.bind("<Button-5>", self._changeZoom)
+        self._canvas.bind("<MouseWheel>", self._changeZoom)
+        self._canvas.bind("<Motion>", self._showZoom)
 
         self.bind('<Configure>', self._showImage)
 
@@ -47,6 +66,7 @@ class Viewer(tk.Toplevel):
         # if we get here, we need to create and image tuple
         File = self._filenames[Index]
         Img = PP.imageOpen(File)
+        self.originalImage = Img
         W = Img.size[0]
         H = Img.size[1]
         # scale down if too large
@@ -82,12 +102,16 @@ class Viewer(tk.Toplevel):
 
     def _showImage(self, *args):
         self._canvas.delete('all')
+        # unset the Image object
+        self._Img = None
+        # reset the zoom level
+        self._zoomLevel = 0
         self._fillImgDict(self._ImgIndex)
         self._canvas.create_image(
             self._canvas.winfo_width()/2,
             self._canvas.winfo_height()/2,
             anchor='center',
-            image=self._ImgDict[self._ImgIndex][1]
+            image=self._ImgDict[self._ImgIndex][1],
         )
         self.title('Similar Image Viewer: %s --- Press F1 for Help' % self._ImgDict[self._ImgIndex][0])
 
@@ -122,6 +146,64 @@ class Viewer(tk.Toplevel):
         else:
             self.destroy()
 
+    def _changeZoom(self, event):
+        if (event.delta > 0 or event.num == 4):
+            if self._zoomLevel < len(self._zoomLevelDict):
+                self._zoomLevel += 1
+        elif (event.delta < 0 or event.num == 5):
+            if self._zoomLevel > 0:
+                self._zoomLevel -= 1
+        self._showZoom(event)
+
+    def _showZoom(self, event):
+
+        # remove the old zoom
+        if self._zoomImgId:
+            self._canvas.delete(self._zoomImgId)
+
+        # if no zoom requested return
+        if not self._zoomLevel:
+            return
+
+        fName, pImage, imgW, imgH, canvasW, canvasH = self._ImgDict[self._ImgIndex]
+
+        if not self._Img:
+            self._Img = PP.imageOpen(fName)
+
+        # size of the shown image in canvas units
+        shownImgW = pImage.width()
+        shownImgH = pImage.height()
+
+        # in normalised units
+        # taking care of possible empty space around the shown image
+        # half above/below or left/right
+        normX = (event.x - (canvasW - shownImgW)/2)/shownImgW
+        normY = (event.y - (canvasH - shownImgH)/2)/shownImgH
+
+        # size of the enlarged area in canvas pixels
+        zoomSize = round(0.5*max(canvasW, canvasH))
+
+        # the corresponding size of the enlarged area in normalised units
+        normSizeX = zoomSize/shownImgW
+        normSizeY = zoomSize/shownImgH
+
+        # calculate the corners of the box we want
+        X0 = imgW*(normX - normSizeX/2 / self._zoomLevelDict[self._zoomLevel])
+        X1 = imgW*(normX + normSizeX/2 / self._zoomLevelDict[self._zoomLevel])
+        Y0 = imgH*(normY - normSizeY/2 / self._zoomLevelDict[self._zoomLevel])
+        Y1 = imgH*(normY + normSizeY/2 / self._zoomLevelDict[self._zoomLevel])
+
+        # take ROI of the original image and scale it
+        self._zoomImg = ImageTk.PhotoImage(
+            PP.imageResize(self._Img.crop((X0, Y0, X1, Y1)), zoomSize, zoomSize)
+            )
+        self._zoomImgId = self._canvas.create_image(
+            event.x,
+            event.y,
+            anchor='center',
+            image=self._zoomImg
+        )
+
     def _showHelp(self):
         msg = '''
 SiMilar ImaGe viewer:
@@ -130,7 +212,7 @@ This windows show the selected images to be able to compare them.
 The mouse allow to browse though the images:
 Left button: forward
 Right button: backward
-The scrollwheel should also work
+The scrollwheel allow to zoom on part of the image
 
 The following keys are defined:
 i, F1: show this help
