@@ -56,11 +56,10 @@ class ThumbOptions(ttk.Frame):
 
         sizeVar = tk.IntVar()
         sizeVar.set(self._Ctrl.Cfg.get('thumbnailsize'))
-        self._Scale = CS.DelayedScale(
+        self._Scale = CS.LabelScale(
             self,
             from_=50,
             to=250,
-            resolution=10,
             takefocus=1,
             command=self._scaleChanged,
             variable=sizeVar,

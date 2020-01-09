@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 ''' Project to display similar images from an image catalog '''
 import os
 import tkinter as tk

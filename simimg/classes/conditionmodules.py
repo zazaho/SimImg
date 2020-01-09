@@ -15,7 +15,6 @@ from tkinter import ttk
 from . import customscales as CS
 from . import tooltip as TT
 
-
 class ConditionModule(ttk.Frame):
     'A frame that holds one selection criterion with options'
     _conditionName = ''
@@ -141,9 +140,6 @@ class HashingCondition(ConditionModule):
     method = ''
     limit = 1
 
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-
     def _makeAdditionalWidgets(self):
         self._Combo = ttk.Combobox(
             self,
@@ -156,7 +152,7 @@ class HashingCondition(ConditionModule):
         self._Combo.pack()
         limitVar = tk.IntVar()
         limitVar.set(self.limit)
-        self._Scale = CS.DelayedScale(
+        self._Scale = CS.LabelScale(
             self,
             from_=1,
             to=50,
@@ -201,9 +197,6 @@ class GradientCondition(HashingCondition):
     method = 'Horizontal'
     limit = 14
 
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-
     def _theymatch(self, checksumA, checksumB):
         hashA = self._Ctrl.FODict[checksumA][0].hashDict[self.method]
         hashB = self._Ctrl.FODict[checksumB][0].hashDict[self.method]
@@ -227,9 +220,6 @@ class ColorCondition(HashingCondition):
     ]
     method = 'HSV (5 regions)'
     limit = 10
-
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
 
     def _theymatch(self, checksumA, checksumB):
         hashA = self._Ctrl.FODict[checksumA][0].hashDict[self.method]
@@ -258,12 +248,9 @@ class ExifCondition(ConditionModule):
     _initialScaleVal = ''
     _showMissingMatches = True
 
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
+    def _makeAdditionalWidgets(self):
         self.missingmatches = False
         self.scalevalue = self._scaleDict[self._initialScaleVal]
-
-    def _makeAdditionalWidgets(self):
         self._missingVar = tk.BooleanVar()
         self._missingMatchesCheck = ttk.Checkbutton(
             self,
@@ -303,9 +290,6 @@ class CameraCondition(ExifCondition):
     _scaleDict = {'Same': True, 'Different': False}
     _initialScaleVal = 'Same'
 
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-
     def _theymatch(self, checksumA, checksumB):
         camA = self._Ctrl.FODict[checksumA][0].cameraModel()
         camB = self._Ctrl.FODict[checksumB][0].cameraModel()
@@ -328,9 +312,6 @@ class DateCondition(ExifCondition):
         '1 year': 365*24*3600
     }
     _initialScaleVal = '10 minutes'
-
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
 
     def _theymatch(self, checksumA, checksumB):
         dateA = self._Ctrl.FODict[checksumA][0].dateTime()
@@ -356,9 +337,6 @@ class ShapeCondition(ExifCondition):
     }
     _initialScaleVal = 'Portrait/Landscape'
     _showMissingMatches = False
-
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
 
     def _theymatch(self, checksumA, checksumB):
         if self.scalevalue == -2:

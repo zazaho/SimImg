@@ -2,7 +2,6 @@
     Like file-hashing and image-hashing
     They are organised to be done in multiprocessing.'''
 import hashlib
-import time
 from operator import add
 import functools
 from multiprocessing import Pool
@@ -168,7 +167,7 @@ def getHashes(FODict, hashName, db_connection=None):
     for each file the (file,checksum) list.'''
 
     # create an empty dict to hold the results
-    hashValueDict = {} ## checksum:hashValue
+    hashValueDict = {} # checksum:hashValue
 
     # create an empty list to hold checksum,file,hashName tuples
     # that need to be calculated
@@ -208,7 +207,8 @@ def getHashes(FODict, hashName, db_connection=None):
         DB.setHash(calculatedHashes, hashName, db_connection=db_connection)
 
     # write everything back to each fileobject
-    # every checksum key in the FODict contains a list of fileobjects that match checksum
+    # every checksum key in the FODict contains a list of fileobjects
+    # that match this checksum
     for checksum, hashValue in hashValueDict.items():
         for FO in FODict[checksum]:
             FO.hashDict[hashName] = hashValue

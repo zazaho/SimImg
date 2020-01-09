@@ -192,7 +192,7 @@ class Controller():
             self.onThumbParamsChanged()
 
     def addOrOpenFolder(self, action=None):
-        selectedFolder = tkfiledialog.askdirectory()
+        selectedFolder = tkfiledialog.askdirectory(mustexist=False)
         if not selectedFolder:
             return
         if not os.path.isdir(selectedFolder):

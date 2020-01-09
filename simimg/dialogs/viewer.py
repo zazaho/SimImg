@@ -12,9 +12,9 @@ class Viewer(tk.Toplevel):
 
         self._checksums, self._filenames = map(list, zip(*Fileinfo))
 
-        self.Ctrl = Controller
+        self._Ctrl = Controller
 
-        self.geometry(self.Ctrl.Cfg.get('viewergeometry'))
+        self.geometry(self._Ctrl.Cfg.get('viewergeometry'))
         self.bind('<Key>', self._key)
         self.protocol('WM_DELETE_WINDOW', self._exitViewer)
 
@@ -39,7 +39,7 @@ class Viewer(tk.Toplevel):
         self._canvas.pack(fill='both', expand=True)
         self._canvas.update_idletasks()
         self._canvas.bind('<Button-1>', self._click)
-        self._canvas.bind('<Button-2>', self._click)
+        self._canvas.bind('<Button-3>', self._click)
         self._canvas.bind("<Button-4>", self._changeZoom)
         self._canvas.bind("<Button-5>", self._changeZoom)
         self._canvas.bind("<MouseWheel>", self._changeZoom)
@@ -66,7 +66,7 @@ class Viewer(tk.Toplevel):
         # if we get here, we need to create and image tuple
         File = self._filenames[Index]
         Img = PP.imageOpen(File)
-        self.originalImage = Img
+        self._Img = Img
         W = Img.size[0]
         H = Img.size[1]
         # scale down if too large
@@ -76,7 +76,7 @@ class Viewer(tk.Toplevel):
 
     # clicks
     def _click(self, event):
-        if event.num in [1, 4]:
+        if event.num == 1:
             self._showNext()
         else:
             self._showPrevious()
@@ -132,8 +132,8 @@ class Viewer(tk.Toplevel):
 
     def _deleteFile(self):
         checksum = self._checksums[self._ImgIndex]
-        fo = [self.Ctrl.FODict[checksum][0]]
-        if not self.Ctrl.deleteFOs(fo):
+        fo = [self._Ctrl.FODict[checksum][0]]
+        if not self._Ctrl.deleteFOs(fo):
             return
 
         # remove the filename
@@ -224,6 +224,6 @@ q, Escape: quit the viewer
         tkmessagebox.showinfo('Information', msg, parent=self)
 
     def _exitViewer(self):
-        self.Ctrl.Cfg.set('viewergeometry', self.geometry())
+        self._Ctrl.Cfg.set('viewergeometry', self.geometry())
         del self._ImgDict
         self.destroy()

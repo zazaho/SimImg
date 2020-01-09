@@ -127,7 +127,7 @@ def existsAsSubGroup(g, GL):
 
 def sortMatchingGroupsByFilename(GDict, filenameChecksumDict):
     # sort each line
-    sortedLines = [sortChecksumsByFilename(checksums, filenameChecksumDict) for checksums in GDict.values()]
+    sortedLines = [sortChecksumsByFilename(c, filenameChecksumDict) for c in GDict.values()]
     # sort the final list of lists by the first element of each list
     return sorted(sortedLines, key=lambda k: filenameChecksumDict[k[0]])
 

@@ -78,18 +78,20 @@ Leave empty to start without reading files'''
 
         toggleFrame = ttk.Frame(self)
         toggleFrame.pack(fill='x', padx=5)
-        subdir = ttk.Checkbutton(toggleFrame,
-                                 text='Search in Subfolders',
-                                 style='LargeText.TCheckbutton',
-                                 variable=self.recurse
+        subdir = ttk.Checkbutton(
+            toggleFrame,
+            text='Search in Subfolders',
+            style='LargeText.TCheckbutton',
+            variable=self.recurse
         )
         msg = 'Search recursively in the subfolders for image files'
         TT.Tooltip(subdir, text=msg)
 
-        cnfrm = ttk.Checkbutton(toggleFrame,
-                                text='Confirm File Delete',
-                                style='LargeText.TCheckbutton',
-                                variable=self.confirmDel
+        cnfrm = ttk.Checkbutton(
+            toggleFrame,
+            text='Confirm File Delete',
+            style='LargeText.TCheckbutton',
+            variable=self.confirmDel
         )
         msg = 'Ask before deleting files'
         TT.Tooltip(cnfrm, text=msg)

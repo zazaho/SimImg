@@ -1,14 +1,14 @@
-import tkinter as tk
 from tkinter import ttk
 
 
-class DelayedScale(tk.Scale):
-    '''A scale widget that only fires the command when the mouse is released
-    if using the mouse to drag the slider'''
+class DelayedScale(ttk.Scale):
+    '''A ttk scale widget that only fires the command when the mouse is released
+       if using the mouse to drag the slider
+       We also modify the behaviour to always returns integer values'''
 
     def __init__(self, parent, *args, command=None, **kwargs):
+        self.realcommand = command
         super().__init__(parent, *args, command=self._command, **kwargs)
-        self.command = command
         self.bind('<ButtonPress-1>', self._scalePressed)
         self.bind('<ButtonRelease-1>', self._scaleReleased)
         self._mouseIsPressed = False
@@ -21,60 +21,76 @@ class DelayedScale(tk.Scale):
         self._command()
 
     def _command(self, *args):
+        val = self.get()
+        rval = int(val)
+        if val != rval:
+            super().set(rval)
+            return
         self.mousedowncommand()
         if self._mouseIsPressed:
             return
-        self.command()
+        if self.realcommand:
+            self.realcommand()
+
+    def get(self):
+        return int(super().get())
+
+    def set(self, val):
+        super().set(int(val))
 
     def mousedowncommand(self, *args):
         pass
 
+class LabelScale(ttk.Frame):
+    'A scale widget (slider) with a label to indicate its value'
 
-class TextScale(ttk.Frame):
-    'A scale widget (slider) with text rather than numerical labels'
-
-    def __init__(self, parent, *args,
-                 topLabel='',
-                 textLabels=None,
-                 **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
 
-        self.textLabels = textLabels
+        self._Label = ttk.Label(self, text='')
+        self._Label.pack()
 
-        if topLabel:
-            self.TSTopLabel = ttk.Label(self, text=topLabel)
-            self.TSTopLabel.pack()
+        self._Scale = DelayedScale(self, *args, **kwargs)
+        self._Scale.pack()
+        self._Scale.mousedowncommand = self._updateLabel
+        self._Label.config(text=self._int2label(self._Scale.get()))
 
-        self.TSValueLabel = ttk.Label(self, text='')
-        self.TSValueLabel.pack()
+    def _int2label(self, i):
+        return str(i)
 
-        self.TSScale = DelayedScale(
-            self,
-            from_=0,
-            to=len(self.textLabels)-1,
-            label='',
-            showvalue=False,
-            *args,
-            **kwargs
-        )
-        self.TSScale.mousedowncommand = self._updateTextLabel
-        self.TSScale.pack()
-        self.TSValueLabel.config(text=self.textLabels[self.TSScale.get()])
-
-    def _updateTextLabel(self):
-        self.TSValueLabel.config(text=self.textLabels[self.TSScale.get()])
+    def _updateLabel(self):
+        self._Label.config(text=self._int2label(self._Scale.get()))
 
     def get(self):
-        return self.textLabels[self.TSScale.get()]
+        return self._Scale.get()
 
-    def set(self, text):
-        self.TSValueLabel.config(text=text)
-        self.TSScale.set(self.textLabels.index(text))
+    def set(self, val):
+        self._Label.config(text=self._int2label(val))
+        self._Scale.set(val)
 
     def focus_set(self):
-        self.TSScale.focus_set()
+        self._Scale.focus_set()
 
-    def config(self, state=None, *args, **kwargs):
-        super().config()
-        if state:
-            self.TSScale.config(state=state)
+    def config(self, *args, **kwargs):
+        self._Scale.config(*args, **kwargs)
+            
+    def bind(self, *args, **kwargs):
+        self._Scale.bind(*args, **kwargs)
+
+
+class TextScale(LabelScale):
+    'A scale widget (slider) with text rather than numerical labels'
+
+    def __init__(self, parent, *args, textLabels=None, **kwargs):
+        self.textLabels = textLabels
+        super().__init__(parent, *args, from_=0, to=len(self.textLabels)-1, **kwargs)
+
+    def _int2label(self, i):
+        return self.textLabels[i]
+
+    def get(self):
+        return self._int2label(self._Scale.get())
+
+    def set(self, val):
+        self._Label.config(text=val)
+        self._Scale.set(self.textLabels.index(val))
