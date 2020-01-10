@@ -6,13 +6,25 @@ class DelayedScale(ttk.Scale):
        if using the mouse to drag the slider
        We also modify the behaviour to always returns integer values'''
 
-    def __init__(self, parent, *args, command=None, **kwargs):
+    def __init__(self, parent, *args, command=None, resolution=None, **kwargs):
         self.realcommand = command
+        self._step = int(resolution) if resolution else 1
         super().__init__(parent, *args, command=self._command, **kwargs)
         self.bind('<ButtonPress-1>', self._scalePressed)
         self.bind('<ButtonRelease-1>', self._scaleReleased)
+        self.bind('<Key-Left>', self._leftPressed)
+        self.bind('<Key-Right>', self._rightPressed)
+        self.bind('<ButtonPress-1>', self._scalePressed)
         self._mouseIsPressed = False
 
+    def _leftPressed(self, *args):
+        self.set(int(self.get()-self._step))
+        return 'break'
+    
+    def _rightPressed(self, *args):
+        self.set(int(self.get()+self._step))
+        return 'break'
+        
     def _scalePressed(self, *args):
         self._mouseIsPressed = True
 

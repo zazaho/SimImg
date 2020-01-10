@@ -13,6 +13,7 @@ from . import fileobject as FO
 from . import imageframe as IF
 from . import miscmodules as MM
 from . import toolbar as TB
+from . import tooltip as TT
 from ..dialogs import confirmdeletedialog as CDD
 from ..dialogs import configurationwindow as CW
 from ..dialogs import infowindow as IW
@@ -114,6 +115,26 @@ class Controller():
         for cm in self._CMList:
             cm.pack(side='top', fill='x')
 
+        moveheader = ttk.Label(
+            self.TopWindow.ModulePane,
+            text='Move',
+            style='HeaderText.TLabel'
+        )
+        moveheader.pack(fill='x')
+        msg = '''Move file(s) to the folder selected below.
+
+1) Click on the move button below each thumbnail
+
+2) For selected pictures by clicking on the move icon in the toolbar or pressing Ctrl-m
+
+3) Press m in the viewer window
+
+Right click on the folders below to set or change its path'''
+        TT.Tooltip(moveheader, text=msg)
+
+        self._MovePanel = MM.MovePanel(self.TopWindow.ModulePane, Controller=self)
+        self._MovePanel.pack(side='top', fill='x')
+
         self.startDatabase()
         self._getFileList()
         self._processFilelist()
@@ -128,6 +149,7 @@ class Controller():
                 'a': self.toggleSelectAllThumbnails,
                 'd': self.deleteSelected,
                 'h': self.hideSelected,
+                'm': self.moveSelected,
                 'v': self.viewSelected,
                 'q': self.exitProgram
             }
@@ -192,7 +214,7 @@ class Controller():
             self.onThumbParamsChanged()
 
     def addOrOpenFolder(self, action=None):
-        selectedFolder = tkfiledialog.askdirectory(mustexist=False)
+        selectedFolder = tkfiledialog.askdirectory()
         if not selectedFolder:
             return
         if not os.path.isdir(selectedFolder):
@@ -245,6 +267,14 @@ class Controller():
             else:
                 candidates.append(arg)
         self._fileList = [c for c in candidates if os.path.isfile(c)]
+        # check to make sure that the file list is not excessively long
+        # three times more than we can anyway show
+        # probably this means the program was started in the wrong directory
+        # and or recursive was set wrongly
+        if len(self._fileList) > 3*self._maxThumbnails:
+            # just to be safe we truncated the list
+            self._fileList = self._fileList[0:3*self._maxThumbnails]
+
         self._fileList.extend(oldFiles)
         self._fileList = list(set(self._fileList))
 
@@ -435,6 +465,44 @@ class Controller():
         else:
             os.remove(Filename)
 
+    def _moveFile(self, fn, dir):
+        if os.path.dirname(fn) == dir:
+            return False
+        try:
+            os.rename(
+                fn,
+                os.path.join(dir, os.path.basename(fn))
+            )
+        except:
+            return False
+        return True
+    
+    def moveFOs(self, FOs):
+        # check that a target folder is set
+        # if not give a warning and do nothing
+        targetDir = self._MovePanel.get()
+        if not targetDir:
+            self._showInStatusbar('Warning: no target folder set for moving files')
+            return
+        # check that the target folder 
+        # if not give a warning and do nothing
+        if not os.path.isdir(targetDir):
+            self._showInStatusbar(
+                'Warning: target folder %s for moving files is not valid' % targetDir
+            )
+            return
+        somethingMoved = False
+        for fo in FOs:
+            filename = fo.fullPath
+            checksum = fo.checksum()
+            if self._moveFile(filename, targetDir):
+                if checksum in self.FODict:
+                    del self.FODict[checksum]
+                somethingMoved = True
+        if somethingMoved:
+            self.onChange()
+        return somethingMoved
+    
     def deleteFOs(self, FOs, Owner=None):
         if not Owner:
             Owner = self.TopWindow
@@ -472,6 +540,9 @@ class Controller():
 
     def deleteSelected(self):
         self.deleteFOs(self._selectedFOs())
+
+    def moveSelected(self):
+        self.moveFOs(self._selectedFOs())
 
     def unselectThumbnails(self, *args):
         for tp in self._TPPositionDict.values():

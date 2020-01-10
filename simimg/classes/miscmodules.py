@@ -1,5 +1,7 @@
+import os
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog as tkfiledialog
 from ..classes import tooltip as TT
 from . import customscales as CS
 
@@ -43,12 +45,12 @@ class ThumbOptions(ttk.Frame):
         self.showbuttons.set(self._Ctrl.Cfg.get('showbuttons'))
         shb = ttk.Checkbutton(
             self,
-            text='Hide/Delete buttons',
+            text='Show buttons',
             variable=self.showbuttons,
             command=self._showOptionChanged
         )
         shb.pack(fill='x')
-        msg = 'Show the individual Hide/Delete buttons with each thumbnail'
+        msg = 'Show the individual Hide/Move/Delete buttons with each thumbnail'
         TT.Tooltip(shb, text=msg)
 
         label = ttk.Label(self, text='Thumbnail size')
@@ -60,6 +62,7 @@ class ThumbOptions(ttk.Frame):
             self,
             from_=50,
             to=250,
+            resolution=10,
             takefocus=1,
             command=self._scaleChanged,
             variable=sizeVar,
@@ -88,3 +91,53 @@ class ThumbOptions(ttk.Frame):
     def _doSelectAll(self, *args):
         self._Ctrl.toggleSelectAllThumbnails()
         return 'break'
+
+class MovePanel(ttk.Frame):
+    ' A frame that holds a list of target folders for moving files'
+
+    def __init__(self, parent, Controller=None):
+        super().__init__(parent)
+        self.config(borderwidth=1, relief='raised')
+
+        # keep a handle of the controller object
+        self._Ctrl = Controller
+
+        self._activeFolder = ''
+        self._folderDict = {}
+        self._activeFolderIdx = tk.IntVar()
+
+        for i in range(1, 4):
+            RB = ttk.Radiobutton(
+                self,
+                variable=self._activeFolderIdx,
+                text='right-click to set',
+                command=self._setActiveFolder,
+                value=i
+            )
+            RB.pack(anchor='w')
+            RB.bind('<Button-3>', self._changeFolder)
+
+    def _setActiveFolder(self):
+        if self._activeFolderIdx.get() in self._folderDict:
+            self._activeFolder = self._folderDict[self._activeFolderIdx.get()]
+        
+    def _changeFolder(self, event):
+        thisWidgetId = event.widget.cget("value")
+        selectedFolder = tkfiledialog.askdirectory(mustexist=False)
+        if not selectedFolder:
+            return
+        # try to create the directory
+        if not os.path.isdir(selectedFolder):
+            os.mkdir(selectedFolder)
+        if not os.path.isdir(selectedFolder):
+            return
+        self._folderDict[thisWidgetId] = selectedFolder
+        event.widget.config(text=os.path.basename(selectedFolder))
+        # set this button active if none are active
+        if self._activeFolderIdx.get() == 0:
+            self._activeFolderIdx.set(thisWidgetId)
+        # make sure the folder string is updated
+        self._setActiveFolder()
+        
+    def get(self):
+        return self._activeFolder

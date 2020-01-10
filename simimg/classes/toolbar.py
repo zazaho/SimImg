@@ -16,6 +16,7 @@ class Toolbar(ttk.Frame):
         iconpath = self.Ctrl.Cfg.get('iconpath')
         self.addImg = PP.photoImageOpen(os.path.join(iconpath, 'add.png'))
         self.deleteImg = PP.photoImageOpen(os.path.join(iconpath, 'delete.png'))
+        self.moveImg = PP.photoImageOpen(os.path.join(iconpath, 'move.png'))
         self.exitImg = PP.photoImageOpen(os.path.join(iconpath, 'exit.png'))
         self.hideImg = PP.photoImageOpen(os.path.join(iconpath, 'hide.png'))
         self.infoImg = PP.photoImageOpen(os.path.join(iconpath, 'info.png'))
@@ -37,6 +38,7 @@ class Toolbar(ttk.Frame):
 
         self.uncheckButton = ttk.Button(self, image=self.uncheckImg, style='Picture.TButton', command=self.Ctrl.toggleSelectAllThumbnails)
         self.deleteButton = ttk.Button(self, image=self.deleteImg, style='Picture.TButton', command=self.Ctrl.deleteSelected)
+        self.moveButton = ttk.Button(self, image=self.moveImg, style='Picture.TButton', command=self.Ctrl.moveSelected)
         self.hideButton = ttk.Button(self, image=self.hideImg, style='Picture.TButton', command=self.Ctrl.hideSelected)
         self.playButton = ttk.Button(self, image=self.playImg, style='Picture.TButton', command=self.Ctrl.viewSelected)
 
@@ -48,15 +50,17 @@ class Toolbar(ttk.Frame):
         self.openButton.grid(column=0, row=1)
         self.addButton.grid(column=1, row=1)
         #
+        self.hideButton.grid(column=2, row=1)
         self.refreshButton.grid(column=3, row=1)
 
-        self.uncheckButton.grid(column=0, row=2)
-        self.deleteButton.grid(column=1, row=2)
-        self.hideButton.grid(column=2, row=2)
+        self.deleteButton.grid(column=0, row=2)
+        self.moveButton.grid(column=1, row=2)
+        self.uncheckButton.grid(column=2, row=2)
         self.playButton.grid(column=3, row=2)
 
         TT.Tooltip(self.addButton, text='Add folder of images')
         TT.Tooltip(self.deleteButton, text='Delete Selected Images')
+        TT.Tooltip(self.moveButton, text='Move Selected Images')
         TT.Tooltip(self.exitButton, text='Quit')
         TT.Tooltip(self.hideButton, text='Hide Selected Images')
         TT.Tooltip(self.infoButton, text='Quick instructions')

@@ -35,6 +35,12 @@ class ImageFrame(ttk.Frame):
             command=self._hide,
             style='Thumb.TButton'
         )
+        self._moveButton = ttk.Button(
+            self,
+            text='Move',
+            command=self._move,
+            style='Thumb.TButton'
+        )
         self._deleteButton = ttk.Button(
             self,
             text='Delete',
@@ -81,15 +87,20 @@ class ImageFrame(ttk.Frame):
 
         if self._Ctrl.Cfg.get('showbuttons'):
             self._hideButton.pack(side='left')
-            self._deleteButton.pack(side='right')
+            self._moveButton.pack(side='left')
+            self._deleteButton.pack(side='left')
         else:
             self._hideButton.pack_forget()
+            self._moveButton.pack_forget()
             self._deleteButton.pack_forget()
 
     def _hide(self):
         for fo in self._Ctrl.FODict[self.checksum]:
             fo.active = False
             self._Ctrl.onChange()
+
+    def _move(self):
+        self._Ctrl.moveFOs(self._Ctrl.FODict[self.checksum])
 
     def _delete(self):
         self._Ctrl.deleteFOs(self._Ctrl.FODict[self.checksum])

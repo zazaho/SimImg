@@ -107,10 +107,12 @@ Pressing the Shift key while clicking will select all thumbnails between
 the current image and the last selected image.
 
 Clicking in an empty area of the thumbnail display area deselects all
-images. Pressing the little red check-mark button  (![](simimg/icons/uncheck.png)) in the toolbar area
-(top-left) also deselects all thumbnails.
+images. 
 
-Pressing Ctrl+a selects all thumbnails.
+The little red check-mark button  (![](simimg/icons/uncheck.png)) in the toolbar area
+(top-left) also switches between selects all and unselect all thumbnails.
+
+Pressing Ctrl+a toggles between selecting and unselecting all thumbnails.
 
 ## Actions for selected thumbnails
 The *Play* button (![](simimg/icons/play.png))  in the toolbar will show a window that allows
@@ -119,6 +121,8 @@ to view the selected images in larger versions (Ctrl+v).
 The *Minus* button (![](simimg/icons/hide.png)) will hide all selected thumbnails (Ctrl+h)
 
 The *Red-X* button (![](simimg/icons/delete.png)) will delete all selected thumbnails (Ctrl+d)
+
+The *Two folder* button (![](simimg/icons/move.png)) will move the selected thumbnails (Ctrl+m)
 
 ## Actions in the viewer window
 One design goal is a clean interface with a lot of room for the
@@ -129,13 +133,35 @@ The follow actions are available in the viewer window:
 
 * F1 or i: show a short help window
 
-* arrow right, scroll-wheel up or n: show the next picture
+* arrow right or n: show the next picture
 
-* arrow left, scroll-wheel down or p: show the previous picture
+* arrow left or p: show the previous picture
+
+* scrollwheel: zoom in on part of the picture
 
 * delete or d: delete the picture from disk
 
+* m: move the file to the move-target directory selected in the finder
+  window
+
 * escape of q: quit the viewer
+
+## Tips
+There are a few feature features that are not immediately obvious.
+*Camera Model* and *Picture Shape* can be set to different. By
+themselves these options are not useful because they will show most
+unrelated pictures together. They can become interesting in the
+following scenario:
+
+Several people have taken pictures of the same scene, you select
+pictures taken close in time or with similar colours. If you impose
+different *Camera Model* you can concentrate on similar pictures but
+taken by different people.
+
+The Folder select dialog for **move** does not allow to create folders
+on some platforms. Selecting the parent directoy and adding (by
+typing) the target folder you would like to create before pressing OK
+will create the directory.
 
 ## Technical remarks
 Some of the calculations can be time-consuming and Simimg tries to be

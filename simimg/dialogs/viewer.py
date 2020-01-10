@@ -72,7 +72,7 @@ class Viewer(tk.Toplevel):
         # scale down if too large
         if W > maxW or H > maxH:
             Img = PP.imageResizeToFit(Img, maxW, maxH)
-        self._ImgDict[Index] = (File, ImageTk.PhotoImage(Img), W, H, maxW, maxH)
+        self._ImgDict[Index] = (File, PP.TkPhotoImage(Img), W, H, maxW, maxH)
 
     # clicks
     def _click(self, event):
@@ -92,6 +92,7 @@ class Viewer(tk.Toplevel):
             'd': self._deleteFile,
             'Delete': self._deleteFile,
             'h': self._showHelp,
+            'm': self._moveFile,
             'F1': self._showHelp,
             'q': self._exitViewer,
             'Escape': self._exitViewer
@@ -134,6 +135,22 @@ class Viewer(tk.Toplevel):
         checksum = self._checksums[self._ImgIndex]
         fo = [self._Ctrl.FODict[checksum][0]]
         if not self._Ctrl.deleteFOs(fo, Owner=self):
+            return
+
+        # remove the filename
+        self._filenames[self._ImgIndex] = None
+        self._checksums[self._ImgIndex] = None
+        del self._ImgDict[self._ImgIndex]
+        # check if all filenames are None
+        if len(set(self._filenames)) > 1:
+            self._showNext()
+        else:
+            self.destroy()
+
+    def _moveFile(self):
+        checksum = self._checksums[self._ImgIndex]
+        fo = [self._Ctrl.FODict[checksum][0]]
+        if not self._Ctrl.moveFOs(fo):
             return
 
         # remove the filename
@@ -194,7 +211,7 @@ class Viewer(tk.Toplevel):
         Y1 = imgH*(normY + normSizeY/2 / self._zoomLevelDict[self._zoomLevel])
 
         # take ROI of the original image and scale it
-        self._zoomImg = ImageTk.PhotoImage(
+        self._zoomImg = PP.TkPhotoImage(
             PP.imageResize(self._Img.crop((X0, Y0, X1, Y1)), zoomSize, zoomSize)
             )
         self._zoomImgId = self._canvas.create_image(
@@ -219,6 +236,7 @@ i, F1: show this help
 n, Right, Spacebar: show the next image
 p, Left: show the previous images
 d, Delete: delete the file from your hard disk!
+m: move the file to the folder set in the main window
 q, Escape: quit the viewer
 '''
         tkmessagebox.showinfo('Information', msg, parent=self)

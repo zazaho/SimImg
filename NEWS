@@ -1,3 +1,11 @@
+version 0.7.6 (SH Jan 10 2020)
+- Add move files logic with 3 configurable target folders
+
+version 0.7.5 (SH Jan 10 2020)
+- A bit more safety when loading files:
+  Limit the number of files to scan to something reasonable (~1000)
+  Wrap PhotoImage in try...except to avoid out-of-memory
+
 version 0.7.4 (SH Jan  9 2020)
 - Using ttk sliders instead of unthemed tk sliders
 

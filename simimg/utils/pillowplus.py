@@ -38,26 +38,31 @@ def imageOpenAndResize(fn, w, h):
 def imageOpenAndResizeToFit(fn, w, h):
     return imageResizeToFit(imageOpen(fn), w, h)
 
+def TkPhotoImage(img):
+    try: 
+        return ImageTk.PhotoImage(img)
+    except:
+        return None
 
 def photoImageOpen(fn):
     img = imageOpen(fn)
     if not img:
         return None
-    return ImageTk.PhotoImage(img)
+    return TkPhotoImage(img)
 
 
 def photoImageOpenAndResize(fn, w, h):
     img = imageResize(imageOpen(fn), w, h)
     if not img:
         return None
-    return ImageTk.PhotoImage(img)
+    return TkPhotoImage(img)
 
 
 def photoImageOpenAndResizeToFit(fn, w, h):
     img = imageResizeToFit(imageOpen(fn), w, h)
     if not img:
         return None
-    return ImageTk.PhotoImage(img)
+    return TkPhotoImage(img)
 
 
 def thumbnailOpen(fn, w, h, channel=None):
@@ -105,4 +110,4 @@ def photoThumbnailOpen(fn, w, h, channel=None):
     img = thumbnailOpen(fn, w, h, channel=channel)
     if not img:
         return None
-    return ImageTk.PhotoImage(img)
+    return TkPhotoImage(img)
