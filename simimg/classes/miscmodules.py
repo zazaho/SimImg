@@ -86,5 +86,5 @@ class ThumbOptions(ttk.Frame):
         self._Ctrl.onThumbParamsChanged()
 
     def _doSelectAll(self, *args):
-        self._Ctrl.selectAllThumbnails()
+        self._Ctrl.toggleSelectAllThumbnails()
         return 'break'

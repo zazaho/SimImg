@@ -125,7 +125,7 @@ class Controller():
             return
         if (event.state & 0x4) != 0:
             keyDict = {
-                'a': self.selectAllThumbnails,
+                'a': self.toggleSelectAllThumbnails,
                 'd': self.deleteSelected,
                 'h': self.hideSelected,
                 'v': self.viewSelected,
@@ -435,7 +435,9 @@ class Controller():
         else:
             os.remove(Filename)
 
-    def deleteFOs(self, FOs):
+    def deleteFOs(self, FOs, Owner=None):
+        if not Owner:
+            Owner = self.TopWindow
         somethingDeleted = False
         mustconfirm = self.Cfg.get('confirmdelete')
         onlyOneFO = len(FOs) == 1
@@ -445,7 +447,7 @@ class Controller():
             checksum = fo.checksum()
             if mustconfirm:
                 answer = CDD.CDDialog(
-                    self.TopWindow,
+                    Owner,
                     Filename=uniqueFilename,
                     simple=onlyOneFO
                 ).result
@@ -476,9 +478,19 @@ class Controller():
             tp.select(False)
         self.lastSelectedXY = None
 
-    def selectAllThumbnails(self, *args):
+    def toggleSelectAllThumbnails(self, *args):
+        isAllSelected = True
         for tp in self._TPPositionDict.values():
-            tp.select(True)
+            if not tp.selected:
+                isAllSelected = False
+                break
+        if isAllSelected:
+            for tp in self._TPPositionDict.values():
+                tp.select(False)
+        else:
+            for tp in self._TPPositionDict.values():
+                tp.select(True)
+                
         self.lastSelectedXY = None
 
     def toggleSelectRow(self, Y, value):

@@ -130,7 +130,7 @@ class ConditionModule(ttk.Frame):
     # this is a trick to make sure that ctrl-a works on the thumbnails
     # even if the Scale has foocus
     def _doSelectAll(self, *args):
-        self._Ctrl.selectAllThumbnails()
+        self._Ctrl.toggleSelectAllThumbnails()
         return 'break'
 
 

@@ -35,7 +35,7 @@ class Toolbar(ttk.Frame):
         #
         self.refreshButton = ttk.Button(self, image=self.refreshImg, style='Picture.TButton', command=self.Ctrl.resetThumbnails)
 
-        self.uncheckButton = ttk.Button(self, image=self.uncheckImg, style='Picture.TButton', command=self.Ctrl.unselectThumbnails)
+        self.uncheckButton = ttk.Button(self, image=self.uncheckImg, style='Picture.TButton', command=self.Ctrl.toggleSelectAllThumbnails)
         self.deleteButton = ttk.Button(self, image=self.deleteImg, style='Picture.TButton', command=self.Ctrl.deleteSelected)
         self.hideButton = ttk.Button(self, image=self.hideImg, style='Picture.TButton', command=self.Ctrl.hideSelected)
         self.playButton = ttk.Button(self, image=self.playImg, style='Picture.TButton', command=self.Ctrl.viewSelected)
@@ -64,7 +64,7 @@ class Toolbar(ttk.Frame):
         TT.Tooltip(self.playButton, text='View Selected Images')
         TT.Tooltip(self.refreshButton, text='Start fresh with all images shown')
         TT.Tooltip(self.settingsButton, text='Settings')
-        TT.Tooltip(self.uncheckButton, text='Unselect all images')
+        TT.Tooltip(self.uncheckButton, text='Select/Unselect all images')
 
     def _openFolder(self, *args):
         self.Ctrl.addOrOpenFolder(action='open')

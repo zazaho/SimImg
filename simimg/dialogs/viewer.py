@@ -133,7 +133,7 @@ class Viewer(tk.Toplevel):
     def _deleteFile(self):
         checksum = self._checksums[self._ImgIndex]
         fo = [self._Ctrl.FODict[checksum][0]]
-        if not self._Ctrl.deleteFOs(fo):
+        if not self._Ctrl.deleteFOs(fo, Owner=self):
             return
 
         # remove the filename
