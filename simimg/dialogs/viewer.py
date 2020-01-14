@@ -1,6 +1,6 @@
+''' Module for show the viewer window '''
 import tkinter as tk
 from tkinter import messagebox as tkmessagebox
-from PIL import ImageTk
 from ..utils import pillowplus as PP
 
 
@@ -15,7 +15,6 @@ class Viewer(tk.Toplevel):
         self._Ctrl = Controller
 
         self.geometry(self._Ctrl.Cfg.get('viewergeometry'))
-        self.bind('<Key>', self._key)
         self.protocol('WM_DELETE_WINDOW', self._exitViewer)
 
         self._ImgDict = {}
@@ -34,6 +33,24 @@ class Viewer(tk.Toplevel):
         self._zoomLevel = 0
         self._zoomImg = None
         self._zoomImgId = None
+
+        self._keyDict = {
+            'space': self._showNext,
+            'n': self._showNext,
+            'Right': self._showNext,
+            'p': self._showPrevious,
+            'Left': self._showPrevious,
+            'd': self._deleteFile,
+            'Delete': self._deleteFile,
+            'h': self._showHelp,
+            'm': self._moveFile,
+            'F1': self._showHelp,
+            'q': self._exitViewer,
+            'Escape': self._exitViewer
+            }
+        for i in range(1, self._Ctrl.Cfg.get('numfolders')+1):
+            self._keyDict.update({str(i): lambda idx=i: self._moveFile(index=idx)})
+        self.bind('<Key>', self._key)
 
         self._canvas = tk.Canvas(self)
         self._canvas.pack(fill='both', expand=True)
@@ -83,23 +100,9 @@ class Viewer(tk.Toplevel):
 
     # keys
     def _key(self, event):
-        keyDict = {
-            'space': self._showNext,
-            'n': self._showNext,
-            'Right': self._showNext,
-            'p': self._showPrevious,
-            'Left': self._showPrevious,
-            'd': self._deleteFile,
-            'Delete': self._deleteFile,
-            'h': self._showHelp,
-            'm': self._moveFile,
-            'F1': self._showHelp,
-            'q': self._exitViewer,
-            'Escape': self._exitViewer
-            }
-        if event.keysym not in keyDict:
+        if event.keysym not in self._keyDict:
             return
-        keyDict[event.keysym]()
+        self._keyDict[event.keysym]()
 
     def _showImage(self, *args):
         self._canvas.delete('all')
@@ -147,10 +150,10 @@ class Viewer(tk.Toplevel):
         else:
             self.destroy()
 
-    def _moveFile(self):
+    def _moveFile(self, **kwargs):
         checksum = self._checksums[self._ImgIndex]
         fo = [self._Ctrl.FODict[checksum][0]]
-        if not self._Ctrl.moveFOs(fo):
+        if not self._Ctrl.moveFOs(fo, **kwargs):
             return
 
         # remove the filename
@@ -237,6 +240,7 @@ n, Right, Spacebar: show the next image
 p, Left: show the previous images
 d, Delete: delete the file from your hard disk!
 m: move the file to the folder set in the main window
+<n>: move the file to the folder #n move panel of the main window
 q, Escape: quit the viewer
 '''
         tkmessagebox.showinfo('Information', msg, parent=self)

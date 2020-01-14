@@ -29,6 +29,8 @@ class CfgWindow(tk.Toplevel):
         self.saveSettings.set(self.Ctrl.Cfg.get('savesettings'))
         self.startupDir = tk.StringVar()
         self.startupDir.set(self.Ctrl.Cfg.get('startupfolder'))
+        self.restoreFolders = tk.BooleanVar()
+        self.restoreFolders.set(self.Ctrl.Cfg.get('restoremovefolders'))
 
         startupFrame = ttk.Frame(self)
         startupFrame.pack(fill='x', padx=5)
@@ -112,10 +114,18 @@ Leave empty to start without reading files'''
             variable=self.saveSettings
         )
 
+        rfl = ttk.Checkbutton(
+            toggleFrame,
+            text='Remember Move Folders',
+            style='LargeText.TCheckbutton',
+            variable=self.restoreFolders
+        )
+
         subdir.pack(pady=5, anchor='w')
         cnfrm.pack(pady=5, anchor='w')
         gzp.pack(pady=5, anchor='w')
         svs.pack(pady=5, anchor='w')
+        rfl.pack(pady=5, anchor='w')
 
         btnFrame = ttk.Frame(self)
         btnFrame.pack(fill='x')
@@ -156,6 +166,7 @@ Leave empty to start without reading files'''
         self.Ctrl.Cfg.set('confirmdelete', self.confirmDel.get())
         self.Ctrl.Cfg.set('gzipinsteadofdelete', self.doGzip.get())
         self.Ctrl.Cfg.set('savesettings', self.saveSettings.get())
+        self.Ctrl.Cfg.set('restoremovefolders', self.restoreFolders.get())
         self.Ctrl.Cfg.set('startupfolder', self.startupDir.get())
         self._returntoparent()
 

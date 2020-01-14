@@ -477,10 +477,10 @@ Right click on the folders below to set or change its path'''
             return False
         return True
     
-    def moveFOs(self, FOs):
+    def moveFOs(self, FOs, **kwargs):
         # check that a target folder is set
         # if not give a warning and do nothing
-        targetDir = self._MovePanel.get()
+        targetDir = self._MovePanel.get(**kwargs)
         if not targetDir:
             self._showInStatusbar('Warning: no target folder set for moving files')
             return

@@ -1,3 +1,4 @@
+''' Some modules to be put in the left panel that are not related to image matching'''
 import os
 import tkinter as tk
 from tkinter import ttk
@@ -106,11 +107,17 @@ class MovePanel(ttk.Frame):
         self._folderDict = {}
         self._activeFolderIdx = tk.IntVar()
 
-        for i in range(1, 4):
+        for i in range(1, self._Ctrl.Cfg.get('numfolders')+1):
+            txt = 'right-click to set'
+            if self._Ctrl.Cfg.get('restoremovefolders'):
+                fld = self._Ctrl.Cfg.get('folder'+str(i))
+                if fld:
+                    self._folderDict[i] = fld
+                    txt = os.path.basename(fld)
             RB = ttk.Radiobutton(
                 self,
                 variable=self._activeFolderIdx,
-                text='right-click to set',
+                text=txt,
                 command=self._setActiveFolder,
                 value=i
             )
@@ -138,6 +145,11 @@ class MovePanel(ttk.Frame):
             self._activeFolderIdx.set(thisWidgetId)
         # make sure the folder string is updated
         self._setActiveFolder()
-        
-    def get(self):
-        return self._activeFolder
+        self._Ctrl.Cfg.set('folder'+str(thisWidgetId), self._activeFolder)
+
+    def get(self, index=None):
+        if not index:
+            return self._activeFolder
+        if not index in self._folderDict:
+            return None
+        return self._folderDict[index]

@@ -48,6 +48,8 @@ class Configuration():
         # not yet? configurable
         self.set('maxthumbnails', 300)
         self.set('channeltoshow', 'default')
+        self.set('numfolders', 3)
+
         # can be overwritten from ini file
         self.set('searchinsubfolders', False)
         self.set('confirmdelete', True)
@@ -59,6 +61,9 @@ class Configuration():
         self.set('startupfolder', '')
         self.set('findergeometry', '1200x800+0+0')
         self.set('viewergeometry', '1200x800+50+0')
+        self.set('restoremovefolders', False)
+        for i in range(1, self.get('numfolders')+1):
+            self.set('folder'+str(i), '')
 
     def _readConfiguration(self):
         '''Function to get configurable parameters from SimImg.ini.'''
@@ -75,6 +80,7 @@ class Configuration():
             startupDir = default.get('startupfolder', '.')
             finderGeometry = default.get('findergeometry', '1200x800+0+0')
             viewerGeometry = default.get('viewergeometry', '1200x800+50+0')
+            restoremovefolders = default.getstrbool('restoremovefolders', 'no')
             # store read values in ConfigurationDict
             self.set('searchinsubfolders', doRecursive)
             self.set('confirmdelete', confirmdelete)
@@ -86,6 +92,12 @@ class Configuration():
             self.set('startupfolder', startupDir)
             self.set('findergeometry', finderGeometry)
             self.set('viewergeometry', viewerGeometry)
+            self.set('restoremovefolders', restoremovefolders)
+
+            # restore move folders enabled
+            if restoremovefolders:
+                for i in range(1, self.get('numfolders')+1):
+                    self.set('folder'+str(i), default.get('folder'+str(i), ''))
 
     def writeConfiguration(self):
         'save configuration info'
@@ -105,8 +117,11 @@ class Configuration():
             'thumbnailsize': self.get('thumbnailsize'),
             'startupfolder': self.get('startupfolder'),
             'findergeometry': self.get('findergeometry'),
-            'viewergeometry': self.get('viewergeometry')
+            'viewergeometry': self.get('viewergeometry'),
+            'restoremovefolders': self.get('restoremovefolders'),
         }
+        for i in range(1, self.get('numfolders')+1):
+            config['simimg'].update({'folder'+str(i): self.get('folder'+str(i))})
         with open(self.IniPath, 'w') as configfile:
             config.write(configfile)
 

@@ -1,5 +1,13 @@
+version 0.7.7 (SH Jan 13 2020)
+- Improved the move logic.
+  * Chosen folders can now optionally be saved and restore
+  * In the view window number keys are shortcuts for move to a specific folder:
+  * pressing 1 will move the picture to the first folder in the list
+  * pressing 2 will move the picture to the second folder in the list
+    etc  
+
 version 0.7.6 (SH Jan 10 2020)
-- Add move files logic with 3 configurable target folders
+- Add move-file logic with 3 configurable target folders
 
 version 0.7.5 (SH Jan 10 2020)
 - A bit more safety when loading files:

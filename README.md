@@ -96,6 +96,9 @@ the file from your hard-disk.
 * **Delete** will remove the file from the display and from your
 hard-disk.
 
+* **Move** will Move the file to the folder selected in the move list
+on the bottom left.
+
 ## (De)selecting thumbnails
 You can select thumbnails by clicking on them; its background will turn
 blue to indicate that it is selected.
@@ -144,14 +147,19 @@ The follow actions are available in the viewer window:
 * m: move the file to the move-target directory selected in the finder
   window
 
+* 1: move the file to the **first** move-target directory
+
+* 2: move the file to the **second** move-target directory
+
+* 3: move the file to the **third** move-target directory
+
 * escape of q: quit the viewer
 
 ## Tips
-There are a few feature features that are not immediately obvious.
-*Camera Model* and *Picture Shape* can be set to different. By
-themselves these options are not useful because they will show most
-unrelated pictures together. They can become interesting in the
-following scenario:
+There are a few features that are not immediately obvious. *Camera
+Model* and *Picture Shape* can be set to "different". By themselves
+these options are not useful because they will show unrelated pictures
+together. They can become interesting in the following scenario:
 
 Several people have taken pictures of the same scene, you select
 pictures taken close in time or with similar colours. If you impose
