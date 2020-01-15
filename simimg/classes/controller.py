@@ -83,6 +83,10 @@ class Controller():
         self.TopWindow.ThumbPane.viewPort.bind('<Button-1>', self.unselectThumbnails)
         self.TopWindow.ThumbPane.canvas.bind('<Button-1>', self.unselectThumbnails)
 
+        # allow some key actions (Ctrl-A, Ctl-D, Ctrl-H, Ctrl-V and F1)
+        self.TopWindow.ThumbPane.bind('<Configure>', self._onConfigure)
+        self._TPWidth = 0
+        
         # put the toolbar in the self.TopWindow.ModulePane
         Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
         Toolbar.pack(side='top', fill='x')
@@ -139,6 +143,16 @@ Right click on the folders below to set or change its path'''
         self._getFileList()
         self._processFilelist()
         self.onChange()
+
+    def _onConfigure(self, event):
+        thumbW = self.Cfg.get('thumbnailsize') + 2
+        oldTPWidth = self._TPWidth
+        self._TPWidth = event.width
+        # check of the number of thumb columns will change
+        if oldTPWidth // thumbW == self._TPWidth // thumbW:
+            return
+        if not self._someConditionActive:
+            self._createViewWithoutConditions()
 
     def _onKeyPress(self, event):
         if event.keysym == 'F1':
@@ -333,7 +347,8 @@ Right click on the folders below to set or change its path'''
         # calculate how many thumbs fit in the viewPort
         self.TopWindow.ThumbPane.update_idletasks()
         maxW = self.TopWindow.ThumbPane.winfo_width()
-        thumbW = self.Cfg.get('thumbnailsize')
+        # 2 extra for the highlight thickness
+        thumbW = self.Cfg.get('thumbnailsize') + 2
         nx = maxW // thumbW
 
         # maximum nx*ny thumbs to show

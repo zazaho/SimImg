@@ -29,6 +29,7 @@ class ImageFrame(ttk.Frame):
         self._thumbCanvas.bind('<Button-1>', self._click)
 
         self._thumbCanvas.pack(side='top')
+        self._thumbCanvas.config(highlightthickness=1)
         self._hideButton = ttk.Button(
             self,
             text='Hide',
@@ -75,7 +76,7 @@ class ImageFrame(ttk.Frame):
             self._thumbCanvas.tag_lower(self._backtext, self._text)
 
             if len(self._Ctrl.FODict[self.checksum]) > 1:
-                self._thumbCanvas.config(highlightbackground='green', highlightthickness=2)
+                self._thumbCanvas.config(highlightbackground='green', highlightthickness=1)
 
     def showOptionalElements(self):
         if self._Ctrl.Cfg.get('filenameonthumbnail'):
