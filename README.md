@@ -29,15 +29,14 @@ The following options exist:
 
 * I have also implemented measurements of how similar the colours are
 between two images, as well as between 5 regions (the four corners and
-the central part). The measurement in HSV (hue-saturation-value) is
-supposed the best reflect how human perceive image information.
+the central part). The measurement in HSV (hue-saturation-value)
+supposedly reflects best how humans perceive image information.
 
 * You can further select the maximum allowed time-span between the
 moments the pictures were taken in order to be considered a match.
 
-* You can match on camera model. This means that to pictures
-  are considered to be a match if they were taken with the same
-  camera.
+* You can match on camera model. This means that to pictures are
+considered to be a match if they were taken with the same camera.
   
 * Finally you can match on image shape. You can choose:
 
@@ -59,13 +58,13 @@ Note that:
 2) If some condition(s) have **Must Match** set, other conditions without
 **Must Match** have no effect.
 
-3) When multiple conditions are active and no **Must Match** is set two
+3) When multiple conditions are active and no **Must Match** is set, two
 images are considered a pair if any of the conditions is satisfied.
 
 The actual use is to be able to better drill down the list. For
 example it allows to show only those groups that have similar colours
 **and** are taken with the same camera by switch on **Must Match** for
-both conditions
+both conditions.
 
 # What matching groups are shown?
 When the program starts, there are no active conditions and thumbnails
@@ -79,12 +78,18 @@ of matching thumbnails will be shown in a line. The only exception is a
 group that is already displayed in its entirety as a
 subgroup on another line.
 
+Simimg does its best to maintain the sorting order of the displayed
+files according to filename. This is chosen for two reasons. 1) it
+limits the visual changes when modifying parameters or conditions.
+This helps to understand the impact of the modification. 2) Many times
+the filename of holiday pictures represents a natural sorting order;
+for example the serial photo-number or a prefix chosen to indicate
+where a picture was taken. Maintaining this order, means related
+pictures have more chance of being presented close together.
+
 Note that completely identical files (exact copies of some image file)
 will not be shown twice. Instead one thumbnail will be shown with a
 green border around it.
-
-Note that for reasons of speed, the maximum number of thumbnails that
-will be shown will not exceed about 300.
 
 # Available functions
 ## Thumbnail buttons
@@ -127,6 +132,20 @@ The *Red-X* button (![](simimg/icons/delete.png)) will delete all selected thumb
 
 The *Two folder* button (![](simimg/icons/move.png)) will move the selected thumbnails (Ctrl+m)
 
+## Photo organisation functions
+Because the Finder window is also a great way to get an overview even
+without using the selection functions, I have implemented a very basic
+organisation option into it. These are represented by the *Move*
+folders. 
+
+Imagine you have 2 folders defined: "WebAlbum", "EditWithGimp". You
+peruse you photos, select and delete those that are poor, you select
+those that are nice but either need better framing or play a bit with
+the brightness. Active the "EditWithGimp" folder and press *Move*
+button (![](simimg/icons/move.png)). Next, you have found a number of
+great pictures that you want to publish. Select those active the
+"WebAlbum" target and press *Move*.
+
 ## Actions in the viewer window
 One design goal is a clean interface with a lot of room for the
 pictures themselves. Therefore there are no action buttons in the
@@ -140,7 +159,7 @@ The follow actions are available in the viewer window:
 
 * arrow left or p: show the previous picture
 
-* scrollwheel: zoom in on part of the picture
+* scrollwheel: zoom-in on part of the picture
 
 * delete or d: delete the picture from disk
 
@@ -153,7 +172,7 @@ The follow actions are available in the viewer window:
 
 * 3: move the file to the **third** move-target directory
 
-* escape of q: quit the viewer
+* escape or q: quit the viewer
 
 ## Tips
 There are a few features that are not immediately obvious. *Camera
@@ -172,15 +191,6 @@ typing) the target folder you would like to create before pressing OK
 will create the directory.
 
 ## Technical remarks
-Some of the calculations can be time-consuming and Simimg tries to be
-clever about not recalculating. It will store the calculated values in
-a database for future use. It recognises the pictures files by their
-MD5-hash which means that even if you move files or rename them, their
-image properties will not be recalculated.
-
-It attempts to do the most expensive calculations in parallel making
-optimal use of the CPU capabilities.
-
 I have seen quite a variety of 'success', meaning that some algorithm
 detects matches that I myself would also call a match. It depends a
 lot on the set of images that one uses as input. I find it useful to
@@ -190,11 +200,27 @@ selectors will tell you at which value the first match happens and at
 which value more than 10 matches are found. 
 
 In my experience, for the purpose of detecting the most interesting
-similar holiday pictures the "Average" and "Perception" algorithms can be useful
-but the "HSV (5 regions)" in the Colours Conditions gives the best results.
+similar holiday pictures the "Average" and "Perception" algorithms can
+be useful but the "HSV (5 regions)" in the Colours Conditions gives
+the best results.
 
 The other conditions should be considered optional to further limit
 the shown matches.
+
+Some of the calculations can be time-consuming and Simimg tries to be
+clever about not recalculating. It will store the calculated values in
+a database for future use. It recognises the pictures files by their
+MD5-hash which means that even if you move files or rename them, their
+image properties will not be recalculated.
+
+It attempts to do the most expensive calculations in parallel making
+optimal use of the CPU capabilities.
+
+Note that for reasons of speed, the maximum number of thumbnails that
+will be shown will not exceed about 300.
+
+Note that for reasons of speed and memory, the maximum number of files
+that will be loaded when adding a folder is 900.
 
 # Credit
 This project uses the following open source packages:
