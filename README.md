@@ -14,23 +14,23 @@ it can be used for this there are many and better solutions available.
 Upon starting Simimg from the command line, by default it will load
 the pictures it finds in the startup directory and sub-directories
 into the GUI. These are settings that can be changed within the GUI by
-clicking on settings. *In particular in the case you want to use the
-program by clicking on its icon, you may want to set an empty startup
-directory.*
+clicking on settings (![](simimg/icons/settings.png)). *In particular
+in the case you want to use the program by clicking on its icon, you
+may want to set an empty startup directory.*
 
-You can play with different options that take into account how similar
+You can play with different filters that take into account how similar
 two pictures are. These are the panels in the left section of the
-finder window. You can activate a condition by clicking on it name.
-The following options exist:
+finder window below the **Filters** title. You can activate a
+condition by clicking on it name. The following options exist:
 
-* Some gradient metrics adapted from ImageHash (dhash). Basically these
-  measure whether two images have similar patterns of brighter and
-  darker regions.
-
-* I have also implemented measurements of how similar the colours are
+* I have implemented measurements of how similar the colours are
 between two images, as well as between 5 regions (the four corners and
 the central part). The measurement in HSV (hue-saturation-value)
 supposedly reflects best how humans perceive image information.
+
+* Some gradient metrics adapted from ImageHash (dhash). Basically
+these measure whether two images have similar patterns of brighter and
+darker regions.
 
 * You can further select the maximum allowed time-span between the
 moments the pictures were taken in order to be considered a match.
@@ -58,8 +58,9 @@ Note that:
 2) If some condition(s) have **Must Match** set, other conditions without
 **Must Match** have no effect.
 
-3) When multiple conditions are active and no **Must Match** is set, two
-images are considered a pair if any of the conditions is satisfied.
+3) When multiple conditions are active and no **Must Match** is set,
+two images are considered a matching pair if any of the conditions is
+satisfied.
 
 The actual use is to be able to better drill down the list. For
 example it allows to show only those groups that have similar colours
@@ -70,22 +71,24 @@ both conditions.
 When the program starts, there are no active conditions and thumbnails
 of all files are shown in a grid sorted by filename.
 
-Once some conditions are activated or changed the display will be
+Once some filters are activated or changed the display will be
 updated.
 
-For each picture that has some matches in the collection, the groups
-of matching thumbnails will be shown in a line. The only exception is a
+For each picture that has some matches in the collection, the group
+of matching thumbnails will be shown in a row. The only exception is a
 group that is already displayed in its entirety as a
 subgroup on another line.
 
 Simimg does its best to maintain the sorting order of the displayed
-files according to filename. This is chosen for two reasons. 1) it
-limits the visual changes when modifying parameters or conditions.
-This helps to understand the impact of the modification. 2) Many times
-the filename of holiday pictures represents a natural sorting order;
-for example the serial photo-number or a prefix chosen to indicate
-where a picture was taken. Maintaining this order, means related
-pictures have more chance of being presented close together.
+files according to filename. This is chosen for two reasons. 
+
+1) it limits the visual changes when modifying parameters or
+conditions. This helps to understand the impact of the modification.
+
+2) Many times the filename of holiday pictures represents a natural
+sorting order; for example the serial photo-number or a prefix chosen
+to indicate where a picture was taken. Maintaining this order, means
+related pictures have more chance of being presented close together.
 
 Note that completely identical files (exact copies of some image file)
 will not be shown twice. Instead one thumbnail will be shown with a
@@ -93,7 +96,8 @@ green border around it.
 
 # Available functions
 ## Thumbnail buttons
-You can click on the **Hide** or **Delete** button below each image.
+You can click on the **Hide**, **Move** or **Delete** button below
+each image.
 
 * **Hide** will remove the thumbnail from the display but it will not delete
 the file from your hard-disk.
@@ -102,10 +106,10 @@ the file from your hard-disk.
 hard-disk.
 
 * **Move** will Move the file to the folder selected in the move list
-on the bottom left.
+on the bottom left. See below.
 
 ## (De)selecting thumbnails
-You can select thumbnails by clicking on them; its background will turn
+You can select a thumbnail by clicking on it; its background will turn
 blue to indicate that it is selected.
 
 Pressing the Control (Ctrl) key while clicking will select or deselect
@@ -140,11 +144,11 @@ folders.
 
 Imagine you have 2 folders defined: "WebAlbum", "EditWithGimp". You
 peruse you photos, select and delete those that are poor, you select
-those that are nice but either need better framing or play a bit with
-the brightness. Active the "EditWithGimp" folder and press *Move*
-button (![](simimg/icons/move.png)). Next, you have found a number of
-great pictures that you want to publish. Select those active the
-"WebAlbum" target and press *Move*.
+those that are nice but either need better framing or need playing a
+bit with the brightness. Activate the "EditWithGimp" folder and press
+*Move* button (![](simimg/icons/move.png)). Next, you have found a
+number of great pictures that you want to publish. Select those,
+activate the "WebAlbum" target and press *Move*.
 
 ## Actions in the viewer window
 One design goal is a clean interface with a lot of room for the
@@ -155,9 +159,9 @@ The follow actions are available in the viewer window:
 
 * F1 or i: show a short help window
 
-* arrow right or n: show the next picture
+* left mouse button, arrow-right or n: show the next picture
 
-* arrow left or p: show the previous picture
+* right mouse button, arrow left or p: show the previous picture
 
 * scrollwheel: zoom-in on part of the picture
 
@@ -200,9 +204,9 @@ selectors will tell you at which value the first match happens and at
 which value more than 10 matches are found. 
 
 In my experience, for the purpose of detecting the most interesting
-similar holiday pictures the "Average" and "Perception" algorithms can
-be useful but the "HSV (5 regions)" in the Colours Conditions gives
-the best results.
+similar holiday pictures the "Gradient (horizontal)" algorithm can be
+useful but the "HSV (5 regions)" in the Colours Conditions gives the
+best results.
 
 The other conditions should be considered optional to further limit
 the shown matches.
@@ -214,7 +218,7 @@ MD5-hash which means that even if you move files or rename them, their
 image properties will not be recalculated.
 
 It attempts to do the most expensive calculations in parallel making
-optimal use of the CPU capabilities.
+optimal use of your computers capabilities.
 
 Note that for reasons of speed, the maximum number of thumbnails that
 will be shown will not exceed about 300.
