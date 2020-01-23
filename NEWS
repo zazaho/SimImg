@@ -1,3 +1,7 @@
+version 0.8.1 (SH Jan 23 2020)
+- Spelling in the README
+- No code changes
+
 version 0.8.0 (SH Jan 16 2020)
 - Redisplay number of columns of thumbs when no conditions are active
   and the window is resized

@@ -10,6 +10,7 @@ class FileObject():
     ' File object that contains all information relating to one file on disk '
 
     def __init__(self, parent, FullPath=None, checksumFilenameDict=None):
+        self._Ctrl = parent
         self._Cfg = parent.Cfg
         self.fullPath = FullPath
         self.dirName = os.path.dirname(self.fullPath)
@@ -28,7 +29,6 @@ class FileObject():
         self._thumbnail = None
         self._dateTime = None
         self._size = None
-
         # It this file active
         self.active = True
 

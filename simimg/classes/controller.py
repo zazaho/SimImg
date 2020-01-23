@@ -1,6 +1,6 @@
 ''' Controller module:
 The main gateway between the information contained in the database,
-the fileinfo objects and the display of teh thumbnails.
+the fileinfo objects and the display of the thumbnails.
  '''
 import sys
 import os
@@ -331,7 +331,7 @@ Right click on the folders below to set or change its path'''
                 fileObjectList.append(ThisFileObject)
                 # do checksum hash and thumbnails
                 ThisFileObject.checksum()
-
+                
         if not fileObjectList:
             return
 
@@ -442,10 +442,6 @@ Right click on the folders below to set or change its path'''
                 thumbframe.showOptionalElements()
         else:
             self._createViewWithoutConditions()
-
-        for thumbframe in self._TPPositionDict.values():
-            thumbframe.createThumbContent()
-            thumbframe.showOptionalElements()
 
     def resetThumbnails(self):
         for foList in self.FODict.values():

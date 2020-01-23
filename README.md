@@ -5,7 +5,7 @@
 This is a python GUI for displaying pictures grouped according to
 similarity. The main aim of the program is to help identify groups of
 holiday snaps that resemble each-other and efficiently inspect those
-groups. It allows to easily keep only the best photos.
+groups. It allows you to easily keep only the best photos.
 
 The program is **not** designed to identify the same but modified pictures
 (recompressed jpgs, cropped images or adapted colours, etc.). Although
@@ -21,7 +21,7 @@ may want to set an empty startup directory.*
 You can play with different filters that take into account how similar
 two pictures are. These are the panels in the left section of the
 finder window below the **Filters** title. You can activate a
-condition by clicking on it name. The following options exist:
+filter by clicking on its name. The following options exist:
 
 * I have implemented measurements of how similar the colours are
 between two images, as well as between 5 regions (the four corners and
@@ -35,7 +35,7 @@ darker regions.
 * You can further select the maximum allowed time-span between the
 moments the pictures were taken in order to be considered a match.
 
-* You can match on camera model. This means that to pictures are
+* You can match on camera model. This means that two pictures are
 considered to be a match if they were taken with the same camera.
   
 * Finally you can match on image shape. You can choose:
@@ -49,26 +49,26 @@ considered to be a match if they were taken with the same camera.
 Some of the selection criteria have additional parameters that you can
 play with.
 
-Each condition has a **Must Match** checkbox. If this is switched on,
-only those pairs that satisfy this condition are considered matches.
+Each filter has a **Must Match** checkbox. If this is switched on,
+only those pairs that satisfy this filter are considered matches.
 Note that:
 
-1) **Must Match** has no effect if only one condition is active.
+1) **Must Match** has no effect if only one filter is active.
 
-2) If some condition(s) have **Must Match** set, other conditions without
+2) If some filter(s) have **Must Match** set, other filters without
 **Must Match** have no effect.
 
-3) When multiple conditions are active and no **Must Match** is set,
+3) When multiple filters are active and no **Must Match** is set,
 two images are considered a matching pair if any of the conditions is
 satisfied.
 
 The actual use is to be able to better drill down the list. For
 example it allows to show only those groups that have similar colours
-**and** are taken with the same camera by switch on **Must Match** for
-both conditions.
+**and** are taken with the same camera by switching on **Must Match** for
+both filters.
 
 # What matching groups are shown?
-When the program starts, there are no active conditions and thumbnails
+When the program starts, there are no active filters and thumbnails
 of all files are shown in a grid sorted by filename.
 
 Once some filters are activated or changed the display will be
@@ -82,8 +82,8 @@ subgroup on another line.
 Simimg does its best to maintain the sorting order of the displayed
 files according to filename. This is chosen for two reasons. 
 
-1) it limits the visual changes when modifying parameters or
-conditions. This helps to understand the impact of the modification.
+1) It limits the visual changes when modifying parameters or filters.
+This helps to understand the impact of the modification.
 
 2) Many times the filename of holiday pictures represents a natural
 sorting order; for example the serial photo-number or a prefix chosen
@@ -118,11 +118,11 @@ the entire line of thumbnails.
 Pressing the Shift key while clicking will select all thumbnails between
 the current image and the last selected image.
 
-Clicking in an empty area of the thumbnail display area deselects all
-images. 
+Clicking in an empty part of the thumbnail display area deselects all
+images.
 
 The little red check-mark button  (![](simimg/icons/uncheck.png)) in the toolbar area
-(top-left) also switches between selects all and unselect all thumbnails.
+(top-left) also switches between select-all and unselect-all thumbnails.
 
 Pressing Ctrl+a toggles between selecting and unselecting all thumbnails.
 
@@ -137,10 +137,10 @@ The *Red-X* button (![](simimg/icons/delete.png)) will delete all selected thumb
 The *Two folder* button (![](simimg/icons/move.png)) will move the selected thumbnails (Ctrl+m)
 
 ## Photo organisation functions
-Because the Finder window is also a great way to get an overview even
-without using the selection functions, I have implemented a very basic
+Because the Finder window is also a great way to get an overview, even
+without using the filtering functions, I have implemented a very basic
 organisation option into it. These are represented by the *Move*
-folders. 
+folders.
 
 Imagine you have 2 folders defined: "WebAlbum", "EditWithGimp". You
 peruse you photos, select and delete those that are poor, you select
@@ -205,11 +205,11 @@ which value more than 10 matches are found.
 
 In my experience, for the purpose of detecting the most interesting
 similar holiday pictures the "Gradient (horizontal)" algorithm can be
-useful but the "HSV (5 regions)" in the Colours Conditions gives the
+useful but the "HSV (5 regions)" in the Colours Distance gives the
 best results.
 
-The other conditions should be considered optional to further limit
-the shown matches.
+The other filters should be considered optional to further limit the
+shown matches.
 
 Some of the calculations can be time-consuming and Simimg tries to be
 clever about not recalculating. It will store the calculated values in
@@ -220,11 +220,11 @@ image properties will not be recalculated.
 It attempts to do the most expensive calculations in parallel making
 optimal use of your computers capabilities.
 
-Note that for reasons of speed, the maximum number of thumbnails that
+Note that, for reasons of speed, the maximum number of thumbnails that
 will be shown will not exceed about 300.
 
-Note that for reasons of speed and memory, the maximum number of files
-that will be loaded when adding a folder is 900.
+Note that, for reasons of speed and memory, the maximum number of
+files that will be loaded when adding a folder is 900.
 
 # Credit
 This project uses the following open source packages:
