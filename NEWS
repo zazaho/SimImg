@@ -1,3 +1,12 @@
+version 0.9.1 (SH Sep 27 2020)
+- Remove debug print statement
+- Remove not working show image size on thumbnail
+- Make sure the configuration window appears centered on the main window
+
+version 0.9.0 (SH Sep 27 2020)
+- Added option to scale up small images while making thumbnails
+- Allow to hide the options of the condition modules to save screen space
+
 version 0.8.1 (SH Jan 23 2020)
 - Spelling in the README
 - No code changes

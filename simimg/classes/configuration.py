@@ -58,6 +58,7 @@ class Configuration():
         self.set('showbuttons', True)
         self.set('filenameonthumbnail', False)
         self.set('thumbnailsize', 150)
+        self.set('upscalethumbnails', False)
         self.set('startupfolder', '')
         self.set('findergeometry', '1200x800+0+0')
         self.set('viewergeometry', '1200x800+50+0')
@@ -77,6 +78,7 @@ class Configuration():
             showbuttons = default.getstrbool('showbuttons', 'yes')
             filenameonthumbnail = default.getstrbool('filenameonthumbnail', 'no')
             thumbSize = default.getint('thumbnailsize', 150)
+            doUpscaleThumbnails = default.getstrbool('upscalethumbnails', 'no')
             startupDir = default.get('startupfolder', '.')
             finderGeometry = default.get('findergeometry', '1200x800+0+0')
             viewerGeometry = default.get('viewergeometry', '1200x800+50+0')
@@ -89,6 +91,7 @@ class Configuration():
             self.set('showbuttons', showbuttons)
             self.set('filenameonthumbnail', filenameonthumbnail)
             self.set('thumbnailsize', thumbSize)
+            self.set('upscalethumbnails', doUpscaleThumbnails)
             self.set('startupfolder', startupDir)
             self.set('findergeometry', finderGeometry)
             self.set('viewergeometry', viewerGeometry)
@@ -99,6 +102,13 @@ class Configuration():
                 for i in range(1, self.get('numfolders')+1):
                     self.set('folder'+str(i), default.get('folder'+str(i), ''))
 
+            # restore folded folder state
+            for k in default.keys():
+                if k[-7:] == '_folded':
+                    is_folded = default.getstrbool(k, 'no')
+                    self.set(k, is_folded)
+
+                    
     def writeConfiguration(self):
         'save configuration info'
 
@@ -115,6 +125,7 @@ class Configuration():
             'showbuttons': self.get('showbuttons'),
             'filenameonthumbnail': self.get('filenameonthumbnail'),
             'thumbnailsize': self.get('thumbnailsize'),
+            'upscalethumbnails': self.get('upscalethumbnails'),
             'startupfolder': self.get('startupfolder'),
             'findergeometry': self.get('findergeometry'),
             'viewergeometry': self.get('viewergeometry'),
@@ -122,6 +133,13 @@ class Configuration():
         }
         for i in range(1, self.get('numfolders')+1):
             config['simimg'].update({'folder'+str(i): self.get('folder'+str(i))})
+
+        # add the folding state of the condition modules
+        folding_dict = self.get('folding_dict')
+        if isinstance(folding_dict, dict):
+            for k, v in folding_dict.items():
+                config['simimg'].update({f'{k}_folded': str(v)})
+
         with open(self.IniPath, 'w') as configfile:
             config.write(configfile)
 

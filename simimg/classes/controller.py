@@ -22,7 +22,6 @@ from ..utils import database as DB
 from ..utils import handyfunctions as HF
 from ..utils import pooling as POOL
 
-
 # decorator to change cursor when calling a method that might take time
 def longrunning(f):
     ''' Show with the cursor that the program is doing a (long) calculation'''
@@ -118,6 +117,9 @@ class Controller():
         ])
         for cm in self._CMList:
             cm.pack(side='top', fill='x')
+            # restore the saved folded/unfolded state
+            if self.Cfg.get(f'{cm.name}_folded'):
+                cm.toggleFolding()
 
         moveheader = ttk.Label(
             self.TopWindow.ModulePane,
@@ -218,13 +220,20 @@ Right click on the folders below to set or change its path'''
     def exitProgram(self):
         self.stopDatabase()
         self.Cfg.set('findergeometry', self.TopWindow.geometry())
+        # make a dictionary of cm.name: is_folded
+        folding_dict = {cm.name: cm.is_folded for cm in self._CMList}
+        self.Cfg.set('folding_dict', folding_dict)
         self.Cfg.writeConfiguration()
         self.TopWindow.quit()
 
     def configureProgram(self):
         oldThumbsize = self.Cfg.get('thumbnailsize')
+        oldUpscale = self.Cfg.get('upscalethumbnails')
         CW.CfgWindow(self.TopWindow, Controller=self)
-        if self.Cfg.get('thumbnailsize') != oldThumbsize:
+        if (
+                self.Cfg.get('thumbnailsize') != oldThumbsize or
+                self.Cfg.get('upscalethumbnails') != oldUpscale
+        ):
             self.onThumbParamsChanged()
 
     def addOrOpenFolder(self, action=None):
@@ -620,6 +629,7 @@ Right click on the folders below to set or change its path'''
             self.FODict,
             Thumbsize=self.Cfg.get('thumbnailsize'),
             channel=self.Cfg.get('channeltoshow'),
+            upscale=self.Cfg.get('upscalethumbnails'),
         )
         self._showInStatusbar('...')
         if not checksumThumbDict:

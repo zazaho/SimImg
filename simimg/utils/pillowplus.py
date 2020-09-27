@@ -65,7 +65,7 @@ def photoImageOpenAndResizeToFit(fn, w, h):
     return TkPhotoImage(img)
 
 
-def thumbnailOpen(fn, w, h, channel=None):
+def thumbnailOpen(fn, w, h, channel=None, upscale=False):
     img = imageOpen(fn)
     if not img:
         return None
@@ -74,8 +74,14 @@ def thumbnailOpen(fn, w, h, channel=None):
         # this is needed because thumbnail does not check that the file can
         # be actually loaded
         img.load()
-        img.thumbnail((w, h))
-    except:
+        # if upscale is true and image is smaller than requested 
+        if upscale and img.size[0] < w and img.size[1] < h:
+            # scale up
+            img = imageResizeToFit(img, w, h)
+        else:
+            # scale down
+            img.thumbnail((w, h))
+    except Exception:
         return None
 
     if (
@@ -106,8 +112,8 @@ def thumbnailOpen(fn, w, h, channel=None):
     return img
 
 
-def photoThumbnailOpen(fn, w, h, channel=None):
-    img = thumbnailOpen(fn, w, h, channel=channel)
+def photoThumbnailOpen(fn, w, h, channel=None, upscale=False):
+    img = thumbnailOpen(fn, w, h, channel=channel, upscale=False)
     if not img:
         return None
     return TkPhotoImage(img)

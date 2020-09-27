@@ -215,14 +215,20 @@ def getHashes(FODict, hashName, db_connection=None):
 
 
 def getOneThumb(arg):
-    checksum, filename, tsize, channel = arg
-    img = PP.thumbnailOpen(filename, tsize, tsize, channel=channel)
+    checksum, filename, tsize, channel, upscale = arg
+    img = PP.thumbnailOpen(
+        filename,
+        tsize,
+        tsize,
+        channel=channel,
+        upscale=upscale
+    )
     return (checksum, img)
 
 
-def getThumbnails(FODict, Thumbsize=None, channel='Default'):
+def getThumbnails(FODict, Thumbsize=None, channel='Default', upscale=False):
     '''return thumbnail for each checksum in FODict.'''
-    args = [(checksum, fo[0].fullPath, Thumbsize, channel) for checksum, fo in FODict.items()]
+    args = [(checksum, fo[0].fullPath, Thumbsize, channel, upscale) for checksum, fo in FODict.items()]
     with Pool() as pool:
         calculatedthumbs = pool.map(getOneThumb, args)
     ThumbDict = {}

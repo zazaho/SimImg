@@ -21,6 +21,8 @@ class CfgWindow(tk.Toplevel):
 
         self.recurse = tk.BooleanVar()
         self.recurse.set(self.Ctrl.Cfg.get('searchinsubfolders'))
+        self.upscale = tk.BooleanVar()
+        self.upscale.set(self.Ctrl.Cfg.get('upscalethumbnails'))
         self.confirmDel = tk.BooleanVar()
         self.confirmDel.set(self.Ctrl.Cfg.get('confirmdelete'))
         self.doGzip = tk.BooleanVar()
@@ -89,6 +91,15 @@ Leave empty to start without reading files'''
         msg = 'Search recursively in the subfolders for image files'
         TT.Tooltip(subdir, text=msg)
 
+        upscale = ttk.Checkbutton(
+            toggleFrame,
+            text='Zoom small images as thumbnails',
+            style='LargeText.TCheckbutton',
+            variable=self.upscale
+        )
+        msg = 'While making thumbnail stretch small images to the thumbnail size'
+        TT.Tooltip(upscale, text=msg)
+
         cnfrm = ttk.Checkbutton(
             toggleFrame,
             text='Confirm File Delete',
@@ -122,6 +133,7 @@ Leave empty to start without reading files'''
         )
 
         subdir.pack(pady=5, anchor='w')
+        upscale.pack(pady=5, anchor='w')
         cnfrm.pack(pady=5, anchor='w')
         gzp.pack(pady=5, anchor='w')
         svs.pack(pady=5, anchor='w')
@@ -146,6 +158,7 @@ Leave empty to start without reading files'''
 
         self.bind('<Escape>', self._cancel)
         self.protocol('WM_DELETE_WINDOW', self._cancel)
+        self.geometry = self.parent.geometry()
         self.grab_set()
         self.wait_window(self)
 
@@ -163,6 +176,7 @@ Leave empty to start without reading files'''
 
     def _ok(self, *args):
         self.Ctrl.Cfg.set('searchinsubfolders', self.recurse.get())
+        self.Ctrl.Cfg.set('upscalethumbnails', self.upscale.get())
         self.Ctrl.Cfg.set('confirmdelete', self.confirmDel.get())
         self.Ctrl.Cfg.set('gzipinsteadofdelete', self.doGzip.get())
         self.Ctrl.Cfg.set('savesettings', self.saveSettings.get())

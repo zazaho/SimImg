@@ -17,6 +17,7 @@ from . import tooltip as TT
 
 class ConditionModule(ttk.Frame):
     'A frame that holds one selection criterion with options'
+    name = ''
     _conditionName = ''
     _currentConfig = {}
 
@@ -34,12 +35,22 @@ class ConditionModule(ttk.Frame):
         self._matchingInfo = []
         self._checksums = {}
 
-        self._label = ttk.Label(self, text=self._conditionName)
-        self._label.bind('<Button-1>', self._activeToggled)
-        self._label.pack(fill='x')
+        header_frame = ttk.Frame(self)
+        header_frame.pack(fill='x')
 
+        self._label = ttk.Label(header_frame, text=self._conditionName)
+        self._label.bind('<Button-1>', self._activeToggled)
+        self._label.pack(side='left', fill='x')
+
+        self._fold_button = ttk.Label(header_frame, text='^')
+        self._fold_button.bind('<Button-1>', self.toggleFolding)
+        self._fold_button.pack(side='right', fill='x')
+        self.is_folded = False
+
+        self._options_frame = ttk.Frame(self)
+        self._options_frame.pack(fill='x')
         self._mustMatchToggle = ttk.Checkbutton(
-            self,
+            self._options_frame,
             text='Must Match',
             variable=self.mustMatch,
             command=self._somethingChanged
@@ -65,6 +76,16 @@ class ConditionModule(ttk.Frame):
             self.config(relief='sunken')
             for widget in self._childWidgets:
                 widget.config(state='disabled')
+
+    def toggleFolding(self, *args):
+        self.is_folded = not self.is_folded
+        if self.is_folded:
+            self._fold_button.config(text='v')
+            self._options_frame.pack_forget()
+        else:
+            self._fold_button.config(text='^')
+            self._options_frame.pack()
+
 
     def _activeToggled(self, *args):
         self._setActive(not self.active)
@@ -142,7 +163,7 @@ class HashingCondition(ConditionModule):
 
     def _makeAdditionalWidgets(self):
         self._Combo = ttk.Combobox(
-            self,
+            self._options_frame,
             values=self._methods,
             width=15,
             state='readonly',
@@ -153,7 +174,7 @@ class HashingCondition(ConditionModule):
         limitVar = tk.IntVar()
         limitVar.set(self.limit)
         self._Scale = CS.LabelScale(
-            self,
+            self._options_frame,
             from_=1,
             to=50,
             takefocus=1,
@@ -192,6 +213,7 @@ class HashingCondition(ConditionModule):
 
 
 class GradientCondition(HashingCondition):
+    name = 'gradients'
     _conditionName = 'GRADIENTS'
     _methods = ['Horizontal', 'Vertical']
     method = 'Horizontal'
@@ -209,6 +231,7 @@ class GradientCondition(HashingCondition):
 
 
 class ColorCondition(HashingCondition):
+    name = 'colordistance'
     _conditionName = 'COLOR DISTANCE'
     _methods = [
         'HSV',
@@ -253,7 +276,7 @@ class ExifCondition(ConditionModule):
         self.scalevalue = self._scaleDict[self._initialScaleVal]
         self._missingVar = tk.BooleanVar()
         self._missingMatchesCheck = ttk.Checkbutton(
-            self,
+            self._options_frame,
             text='Missing Matches',
             variable=self._missingVar,
             command=self._toggleChanged,
@@ -265,7 +288,7 @@ class ExifCondition(ConditionModule):
         scaleVar = tk.IntVar()
         scaleVar.set(labels.index(self._initialScaleVal))
         self._Scale = CS.TextScale(
-            self,
+            self._options_frame,
             textLabels=labels,
             command=self._scaleChanged,
             variable=scaleVar,
@@ -286,6 +309,7 @@ class ExifCondition(ConditionModule):
 
 
 class CameraCondition(ExifCondition):
+    name = 'cameramodel'
     _conditionName = 'CAMERA MODEL'
     _scaleDict = {'Same': True, 'Different': False}
     _initialScaleVal = 'Same'
@@ -301,6 +325,7 @@ class CameraCondition(ExifCondition):
 
 
 class DateCondition(ExifCondition):
+    name = 'closeintime'
     _conditionName = 'CLOSE IN TIME'
     _scaleDict = {
         '1 minute': 60,
@@ -324,6 +349,7 @@ class DateCondition(ExifCondition):
 
 
 class ShapeCondition(ExifCondition):
+    name = 'pictureshape'
     _conditionName = 'PICTURE SHAPE'
     _scaleDict = {
         'Different Size': -2,

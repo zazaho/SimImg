@@ -6,6 +6,7 @@ from .classes import configuration as CONF
 from .classes import controller as CTRL
 from .classes import scrollframe as SF
 
+
 class simim_app(tk.Tk):
     ''' Main window for sorting and managing pictures'''
 
@@ -43,7 +44,13 @@ class simim_app(tk.Tk):
         style.configure('BoldText.TLabel', font=('', 12, 'bold'))
 
         style.configure('Picture.TButton', relief='flat', padding=0)
-        style.configure('Thumb.TButton', relief='flat', padding=0, font=('', 8), width=-1)
+        style.configure(
+            'Thumb.TButton',
+            relief='flat',
+            padding=0,
+            font=('', 8),
+            width=-1
+        )
 
         style.configure('Tooltip.TLabel',
                         background='#FFFFE1',
@@ -63,10 +70,12 @@ class simim_app(tk.Tk):
         # and the display of those data
         self.Ctrl = CTRL.Controller(self)
 
+
 def main():
     scriptpath = os.path.join(os.path.dirname(os.path.realpath(__file__)))
     app = simim_app(ScriptPath=scriptpath)
     app.mainloop()
+
 
 if __name__ == '__main__':
     main()
