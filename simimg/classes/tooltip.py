@@ -3,7 +3,7 @@ from tkinter import ttk
 
 
 class Tooltip:
-    '''
+    """
     It creates a tooltip for a given widget as the mouse goes on it.
 
     http://www.daniweb.com/programming/software-development/
@@ -21,28 +21,31 @@ class Tooltip:
         - to add customizable background color, padding, waittime and
           wraplength on creation
       by Alberto Vassena on 2016.11.05.
-    '''
+    """
 
-    def __init__(self, widget,
-                 *,
-                 text='widget info',
-                 waittime=400,
-                 wraplength=250):
+    def __init__(
+            self,
+            widget,
+            *,
+            text="widget info",
+            waittime=400,
+            wraplength=250,
+    ):
 
         self.waittime = waittime  # in miliseconds, originally 500
         self.wraplength = wraplength  # in pixels, originally 180
         self.widget = widget
         self.text = text
-        self.widget.bind('<Enter>', self.onEnter)
-        self.widget.bind('<Leave>', self.onLeave)
-        self.widget.bind('<ButtonPress>', self.onLeave)
+        self.widget.bind("<Enter>", self.onEnter)
+        self.widget.bind("<Leave>", self.onLeave)
+        self.widget.bind("<ButtonPress>", self.onLeave)
         self.id = None
         self.tw = None
 
-    def onEnter(self, event=None):
+    def onEnter(self, _):
         self.schedule()
 
-    def onLeave(self, event=None):
+    def onLeave(self, _):
         self.unschedule()
         self.hide()
 
@@ -72,12 +75,8 @@ class Tooltip:
             x1, y1 = mouse_x + tip_delta[0], mouse_y + tip_delta[1]
             x2, y2 = x1 + width, y1 + height
 
-            x_delta = x2 - s_width
-            if x_delta < 0:
-                x_delta = 0
-            y_delta = y2 - s_height
-            if y_delta < 0:
-                y_delta = 0
+            x_delta = max(x2 - s_width, 0)
+            y_delta = max(y2 - s_height, 0)
 
             offscreen = (x_delta, y_delta) != (0, 0)
 
@@ -117,16 +116,16 @@ class Tooltip:
         label = ttk.Label(
             win,
             text=self.text,
-            style='Tooltip.TLabel',
+            style="Tooltip.TLabel",
             wraplength=self.wraplength
         )
 
-        label.grid(sticky='nsew')
+        label.grid(sticky="nsew")
         win.grid()
 
         x, y = tip_pos_calculator(widget, label)
 
-        self.tw.wm_geometry('+%d+%d' % (x, y))
+        self.tw.wm_geometry(f"+{x}+{y}")
 
     def hide(self):
         tw = self.tw

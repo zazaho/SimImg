@@ -1,4 +1,4 @@
-''' Some some utililty for reading and dealing with pillow images'''
+""" Some some utililty for reading and dealing with pillow images"""
 from PIL import Image, ImageTk, ImageChops
 
 pillowplus_table16 = [i/256 for i in range(65536)]
@@ -8,11 +8,11 @@ def imageOpen(fn):
     try:
         img = Image.open(fn)
         if (
-                img.format == 'PNG' and
-                img.mode == 'I' and
+                img.format == "PNG" and
+                img.mode == "I" and
                 max(img.getdata()) > 255
         ):
-            img = img.point(pillowplus_table16, 'L')
+            img = img.point(pillowplus_table16, "L")
     except:
         return None
     return img
@@ -39,7 +39,7 @@ def imageOpenAndResizeToFit(fn, w, h):
     return imageResizeToFit(imageOpen(fn), w, h)
 
 def TkPhotoImage(img):
-    try: 
+    try:
         return ImageTk.PhotoImage(img)
     except:
         return None
@@ -74,46 +74,46 @@ def thumbnailOpen(fn, w, h, channel=None, upscale=False):
         # this is needed because thumbnail does not check that the file can
         # be actually loaded
         img.load()
-        # if upscale is true and image is smaller than requested 
+        # if upscale is true and image is smaller than requested
         if upscale and img.size[0] < w and img.size[1] < h:
             # scale up
             img = imageResizeToFit(img, w, h)
         else:
             # scale down
             img.thumbnail((w, h))
-    except Exception:
+    except:
         return None
 
     if (
             not channel or
-            channel == 'Default' or
+            channel == "Default" or
             len(img.getbands()) == 1
     ):
         return img
 
     try:
-        hsv = img.split() if img.getbands() == ('H', 'S', 'V') else img.convert('HSV').split()
+        hsv = img.split() if img.getbands() == ("H", "S", "V") else img.convert("HSV").split()
     except:
         return img
 
-    if channel == 'Hue':
+    if channel == "Hue":
         img = Image.merge(
-            'HSV',
+            "HSV",
             (
                 hsv[0],
                 ImageChops.constant(hsv[0], 255),
                 ImageChops.constant(hsv[0], 255),
             )
             )
-    if channel == 'Saturation':
+    if channel == "Saturation":
         img = hsv[1]
-    if channel == 'Value':
+    if channel == "Value":
         img = hsv[2]
     return img
 
 
 def photoThumbnailOpen(fn, w, h, channel=None, upscale=False):
-    img = thumbnailOpen(fn, w, h, channel=channel, upscale=False)
+    img = thumbnailOpen(fn, w, h, channel=channel, upscale=upscale)
     if not img:
         return None
     return TkPhotoImage(img)

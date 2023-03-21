@@ -1,30 +1,32 @@
-''' Classes that implement different criteria for selecting matching images.
+""" Classes that implement different criteria for selecting matching images.
     It should have at least:
     A name label
     A active switch (click on the name label)
     A switch to make this criterion obligatory (must match)
     A method to do something when _somethingChanged
     A method to determine which imagepairs from a list of pairs match
-'''
-import math
-from operator import add
-import itertools
+"""
 import functools
+import itertools
+import math
 import tkinter as tk
+from operator import add
 from tkinter import ttk
-from . import customscales as CS
-from . import tooltip as TT
+
+import simimg.classes.customscales as CS
+import simimg.classes.tooltip as TT
+
 
 class ConditionModule(ttk.Frame):
-    'A frame that holds one selection criterion with options'
-    name = ''
-    _conditionName = ''
+    "A frame that holds one selection criterion with options"
+    name = ""
+    _conditionName = ""
     _currentConfig = {}
 
     def __init__(self, parent, Controller=None):
         super().__init__(parent)
 
-        self.config(borderwidth=1, relief='sunken')
+        self.config(borderwidth=1, relief="sunken")
 
         # keep a handle of the controller object
         self._Ctrl = Controller
@@ -36,29 +38,32 @@ class ConditionModule(ttk.Frame):
         self._checksums = {}
 
         header_frame = ttk.Frame(self)
-        header_frame.pack(fill='x')
+        header_frame.pack(fill="x")
 
         self._label = ttk.Label(header_frame, text=self._conditionName)
-        self._label.bind('<Button-1>', self._activeToggled)
-        self._label.pack(side='left', fill='x')
+        self._label.bind("<Button-1>", self._activeToggled)
+        self._label.pack(side="left", fill="x")
 
-        self._fold_button = ttk.Label(header_frame, text='^')
-        self._fold_button.bind('<Button-1>', self.toggleFolding)
-        self._fold_button.pack(side='right', fill='x')
+        self._fold_button = ttk.Label(header_frame, text="^")
+        self._fold_button.bind("<Button-1>", self.toggleFolding)
+        self._fold_button.pack(side="right", fill="x")
         self.is_folded = False
 
         self._options_frame = ttk.Frame(self)
-        self._options_frame.pack(fill='x')
+        self._options_frame.pack(fill="x")
         self._mustMatchToggle = ttk.Checkbutton(
             self._options_frame,
-            text='Must Match',
+            text="Must Match",
             variable=self.mustMatch,
             command=self._somethingChanged
         )
-        self._mustMatchToggle.pack(fill='x')
+        self._mustMatchToggle.pack(fill="x")
         self._childWidgets = [self._mustMatchToggle]
         self._makeAdditionalWidgets()
         self._setActive(False)
+
+        self.missingmatches = None
+        self.scalevalue = None
 
     def _makeAdditionalWidgets(self):
         pass
@@ -66,26 +71,25 @@ class ConditionModule(ttk.Frame):
     def _setActive(self, value):
         self.active = value
         if self.active:
-            self.config(relief='raised')
+            self.config(relief="raised")
             for widget in self._childWidgets:
-                if widget.winfo_class() == 'TCombobox':
-                    widget.config(state='readonly')
+                if widget.winfo_class() == "TCombobox":
+                    widget.config(state="readonly")
                 else:
-                    widget.config(state='normal')
+                    widget.config(state="normal")
         else:
-            self.config(relief='sunken')
+            self.config(relief="sunken")
             for widget in self._childWidgets:
-                widget.config(state='disabled')
+                widget.config(state="disabled")
 
     def toggleFolding(self, *args):
         self.is_folded = not self.is_folded
         if self.is_folded:
-            self._fold_button.config(text='v')
+            self._fold_button.config(text="v")
             self._options_frame.pack_forget()
         else:
-            self._fold_button.config(text='^')
+            self._fold_button.config(text="^")
             self._options_frame.pack()
-
 
     def _activeToggled(self, *args):
         self._setActive(not self.active)
@@ -97,12 +101,12 @@ class ConditionModule(ttk.Frame):
     def _updateFromPrevious(self, checksums):
         # check that the checksums or the widget parameters changed from before
         # if not simply return false to indicate that nothing is updated
-        foundADifference = (self._checksums != set(checksums))
-        for param in self._currentConfig:
+        foundADifference = self._checksums != set(checksums)
+        for param, value in self._currentConfig.items():
             if foundADifference:
                 # one difference is enough
                 break
-            if getattr(self, param) != self._currentConfig[param]:
+            if getattr(self, param) != value:
                 foundADifference = True
 
         if not foundADifference:
@@ -152,13 +156,13 @@ class ConditionModule(ttk.Frame):
     # even if the Scale has foocus
     def _doSelectAll(self, *args):
         self._Ctrl.toggleSelectAllThumbnails()
-        return 'break'
+        return "break"
 
 
 class HashingCondition(ConditionModule):
-    _currentConfig = {'method': None, 'limit': None}
-    _methods = ['']
-    method = ''
+    _currentConfig = {"method": None, "limit": None}
+    _methods = [""]
+    method = ""
     limit = 1
 
     def _makeAdditionalWidgets(self):
@@ -166,10 +170,10 @@ class HashingCondition(ConditionModule):
             self._options_frame,
             values=self._methods,
             width=15,
-            state='readonly',
+            state="readonly",
         )
         self._Combo.set(self.method)
-        self._Combo.bind('<<ComboboxSelected>>', self._comboChanged)
+        self._Combo.bind("<<ComboboxSelected>>", self._comboChanged)
         self._Combo.pack()
         limitVar = tk.IntVar()
         limitVar.set(self.limit)
@@ -180,11 +184,11 @@ class HashingCondition(ConditionModule):
             takefocus=1,
             command=self._scaleChanged,
             variable=limitVar,
-            orient='horizontal',
+            orient="horizontal",
         )
-        self._Scale.bind('<Control-a>', self._doSelectAll)
+        self._Scale.bind("<Control-a>", self._doSelectAll)
         self._Scale.pack()
-        self._ScaleTip = TT.Tooltip(self._Scale, text='')
+        self._ScaleTip = TT.Tooltip(self._Scale, text="")
         self._childWidgets.extend([self._Combo, self._Scale])
 
     def _comboChanged(self, *args):
@@ -204,19 +208,22 @@ class HashingCondition(ConditionModule):
 
     def _postMatching(self):
         if not self._matchingInfo:
-            self._ScaleTip.text = ''
+            self._ScaleTip.text = ""
         elif len(self._matchingInfo) < 10:
-            self._ScaleTip.text = 'Min: %d' % (math.ceil(min(self._matchingInfo)))
+            self._ScaleTip.text = f"Min: {math.ceil(min(self._matchingInfo))}"
         else:
             self._matchingInfo.sort()
-            self._ScaleTip.text = 'min=%d; >10 pairs=%d' % (math.ceil(min(self._matchingInfo)), math.ceil(self._matchingInfo[9]))
+            self._ScaleTip.text = (
+                f"min={math.ceil(min(self._matchingInfo))}; "
+                f">10 pairs={math.ceil(self._matchingInfo[9])}"
+            )
 
 
 class GradientCondition(HashingCondition):
-    name = 'gradients'
-    _conditionName = 'GRADIENTS'
-    _methods = ['Horizontal', 'Vertical']
-    method = 'Horizontal'
+    name = "gradients"
+    _conditionName = "GRADIENTS"
+    _methods = ["Horizontal", "Vertical"]
+    method = "Horizontal"
     limit = 14
 
     def _theymatch(self, checksumA, checksumB):
@@ -224,24 +231,24 @@ class GradientCondition(HashingCondition):
         hashB = self._Ctrl.FODict[checksumB][0].hashDict[self.method]
         dist = functools.reduce(
             add,
-            [format(hashA[i] ^ hashB[i], 'b').count('1') for i in range(len(hashA))]
+            [format(hashA[i] ^ hashB[i], "b").count("1") for i in range(len(hashA))]
         )
         self._matchingInfo.append(dist)
         return dist <= self.limit
 
 
 class ColorCondition(HashingCondition):
-    name = 'colordistance'
-    _conditionName = 'COLOR DISTANCE'
+    name = "colordistance"
+    _conditionName = "COLOR DISTANCE"
     _methods = [
-        'HSV',
-        'HSV (5 regions)',
-        'RGB',
-        'RGB (5 regions)',
-        'Luminosity',
-        'Luminosity (5 regions)'
+        "HSV",
+        "HSV (5 regions)",
+        "RGB",
+        "RGB (5 regions)",
+        "Luminosity",
+        "Luminosity (5 regions)"
     ]
-    method = 'HSV (5 regions)'
+    method = "HSV (5 regions)"
     limit = 10
 
     def _theymatch(self, checksumA, checksumB):
@@ -252,7 +259,7 @@ class ColorCondition(HashingCondition):
         # back to 0. The correct distance is the minimum of:
         # (h1-h2) % 255 and (h2-h1) % 255
         # in all other cases use abs(v1 -v2)
-        if self.method in ['HSV', 'HSV (5 regions)']:
+        if self.method in ["HSV", "HSV (5 regions)"]:
             distArr = [
                 abs(hashA[i]-hashB[i]) if i % 6
                 else min((hashA[i]-hashB[i]) % 255, (hashB[i]-hashA[i]) % 255)
@@ -266,9 +273,9 @@ class ColorCondition(HashingCondition):
 
 
 class ExifCondition(ConditionModule):
-    _currentConfig = {'missingmatches': None, 'scalevalue': None}
-    _scaleDict = {'': 0}
-    _initialScaleVal = ''
+    _currentConfig = {"missingmatches": None, "scalevalue": None}
+    _scaleDict = {"": 0}
+    _initialScaleVal = ""
     _showMissingMatches = True
 
     def _makeAdditionalWidgets(self):
@@ -277,12 +284,12 @@ class ExifCondition(ConditionModule):
         self._missingVar = tk.BooleanVar()
         self._missingMatchesCheck = ttk.Checkbutton(
             self._options_frame,
-            text='Missing Matches',
+            text="Missing Matches",
             variable=self._missingVar,
             command=self._toggleChanged,
         )
         if self._showMissingMatches:
-            self._missingMatchesCheck.pack(fill='x')
+            self._missingMatchesCheck.pack(fill="x")
 
         labels = list(self._scaleDict)
         scaleVar = tk.IntVar()
@@ -292,9 +299,9 @@ class ExifCondition(ConditionModule):
             textLabels=labels,
             command=self._scaleChanged,
             variable=scaleVar,
-            orient='horizontal'
+            orient="horizontal"
         )
-        self._Scale.bind('<Control-a>', self._doSelectAll)
+        self._Scale.bind("<Control-a>", self._doSelectAll)
         self._Scale.pack()
         self._childWidgets.extend([self._missingMatchesCheck, self._Scale])
 
@@ -309,59 +316,59 @@ class ExifCondition(ConditionModule):
 
 
 class CameraCondition(ExifCondition):
-    name = 'cameramodel'
-    _conditionName = 'CAMERA MODEL'
-    _scaleDict = {'Same': True, 'Different': False}
-    _initialScaleVal = 'Same'
+    name = "cameramodel"
+    _conditionName = "CAMERA MODEL"
+    _scaleDict = {"Same": True, "Different": False}
+    _initialScaleVal = "Same"
 
     def _theymatch(self, checksumA, checksumB):
         camA = self._Ctrl.FODict[checksumA][0].cameraModel()
         camB = self._Ctrl.FODict[checksumB][0].cameraModel()
-        if camA == '':
+        if camA == "":
             return False
-        if self.missingmatches and camB == '':
+        if self.missingmatches and camB == "":
             return True
         return (camA == camB) == self.scalevalue
 
 
 class DateCondition(ExifCondition):
-    name = 'closeintime'
-    _conditionName = 'CLOSE IN TIME'
+    name = "closeintime"
+    _conditionName = "CLOSE IN TIME"
     _scaleDict = {
-        '1 minute': 60,
-        '10 minutes': 600,
-        '1 hour': 3600,
-        '1 day': 24*3600,
-        '1 week': 7*24*3600,
-        '4 weeks': 4*7*24*3600,
-        '1 year': 365*24*3600
+        "1 minute": 60,
+        "10 minutes": 600,
+        "1 hour": 3600,
+        "1 day": 24*3600,
+        "1 week": 7*24*3600,
+        "4 weeks": 4*7*24*3600,
+        "1 year": 365*24*3600
     }
-    _initialScaleVal = '10 minutes'
+    _initialScaleVal = "10 minutes"
 
     def _theymatch(self, checksumA, checksumB):
         dateA = self._Ctrl.FODict[checksumA][0].dateTime()
         dateB = self._Ctrl.FODict[checksumB][0].dateTime()
-        if dateA == 'Missing':
+        if dateA == "Missing":
             return False
-        if dateB == 'Missing':
+        if dateB == "Missing":
             return self.missingmatches
         return abs((dateA - dateB).total_seconds()) <= self.scalevalue
 
 
 class ShapeCondition(ExifCondition):
-    name = 'pictureshape'
-    _conditionName = 'PICTURE SHAPE'
+    name = "pictureshape"
+    _conditionName = "PICTURE SHAPE"
     _scaleDict = {
-        'Different Size': -2,
-        'Portrait/Landscape': -1,
-        'Exact': 0,
-        '<5%': 5,
-        '<10%': 10,
-        '<20%': 20,
-        '<30%': 30,
-        '<50%': 50
+        "Different Size": -2,
+        "Portrait/Landscape": -1,
+        "Exact": 0,
+        "<5%": 5,
+        "<10%": 10,
+        "<20%": 20,
+        "<30%": 30,
+        "<50%": 50
     }
-    _initialScaleVal = 'Portrait/Landscape'
+    _initialScaleVal = "Portrait/Landscape"
     _showMissingMatches = False
 
     def _theymatch(self, checksumA, checksumB):

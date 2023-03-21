@@ -1,40 +1,42 @@
-''' Controller module:
+""" Controller module:
 The main gateway between the information contained in the database,
 the fileinfo objects and the display of the thumbnails.
- '''
-import sys
-import os
+ """
 import glob
+import os
+import sys
 from tkinter import ttk
 from tkinter import filedialog as tkfiledialog
+
 from PIL import ImageTk
-from . import conditionmodules as CM
-from . import fileobject as FO
-from . import imageframe as IF
-from . import miscmodules as MM
-from . import toolbar as TB
-from . import tooltip as TT
-from ..dialogs import confirmdeletedialog as CDD
-from ..dialogs import configurationwindow as CW
-from ..dialogs import infowindow as IW
-from ..dialogs import viewer as VI
-from ..utils import database as DB
-from ..utils import handyfunctions as HF
-from ..utils import pooling as POOL
+
+import simimg.classes.conditionmodules as CM
+import simimg.classes.fileobject as FO
+import simimg.classes.imageframe as IF
+import simimg.classes.miscmodules as MM
+import simimg.classes.toolbar as TB
+import simimg.classes.tooltip as TT
+import simimg.dialogs.configurationwindow as CW
+import simimg.dialogs.confirmdeletedialog as CDD
+import simimg.dialogs.infowindow as IW
+import simimg.dialogs.viewer as VI
+import simimg.utils.database as DB
+import simimg.utils.handyfunctions as HF
+import simimg.utils.pooling as POOL
 
 # decorator to change cursor when calling a method that might take time
 def longrunning(f):
-    ''' Show with the cursor that the program is doing a (long) calculation'''
+    """ Show with the cursor that the program is doing a (long) calculation"""
 
     def wrapper(self, *args, **kwargs):
-        self._busyCursorCount += 1
-        self.TopWindow.config(cursor='watch')
+        self.busyCursorCount += 1
+        self.TopWindow.config(cursor="watch")
         f(self, *args, **kwargs)
-        self._busyCursorCount -= 1
+        self.busyCursorCount -= 1
         # make sure not to go below 0
-        self._busyCursorCount = max(0, self._busyCursorCount)
-        if not self._busyCursorCount:
-            self.TopWindow.config(cursor='')
+        self.busyCursorCount = max(0, self.busyCursorCount)
+        if not self.busyCursorCount:
+            self.TopWindow.config(cursor="")
     return wrapper
 
 
@@ -43,15 +45,15 @@ def tellstatus(msg):
     def decorator_tellstatus(f):
         def wrapper_tellstatus(self, *args, **kwargs):
             if msg:
-                self._showInStatusbar(msg)
+                self.showInStatusbar(msg)
             f(self, *args, **kwargs)
-            self._showInStatusbar('...')
+            self.showInStatusbar("...")
         return wrapper_tellstatus
     return decorator_tellstatus
 
 
 class Controller():
-    'Controller object that initializes the program and reacts to events.'
+    "Controller object that initializes the program and reacts to events."
 
     def __init__(self, parent):
 
@@ -59,51 +61,51 @@ class Controller():
         self.Cfg = parent.Cfg
         self.lastSelectedXY = None
 
-        self._maxThumbnails = self.Cfg.get('maxthumbnails')
+        self._maxThumbnails = self.Cfg.get("maxthumbnails")
 
         # empty starting values
         self.FODict = {}
         self._DBConnection = None
         self._fileList = []
-        self._filenameCommon = ''
+        self._filenameCommon = ""
         self._filenameUniqueDict = {}
         self._TPPositionDict = {}
         self._matchingGroups = {}
         self._checksumFilenameDict = {}
         self._filenameChecksumDict = {}
-        self._busyCursorCount = 0
+        self.busyCursorCount = 0
         self._someConditionActive = False
 
         # call the exitProgram function when the user clicks the X
-        self.TopWindow.protocol('WM_DELETE_WINDOW', self.exitProgram)
+        self.TopWindow.protocol("WM_DELETE_WINDOW", self.exitProgram)
         # allow some key actions (Ctrl-A, Ctl-D, Ctrl-H, Ctrl-V and F1)
-        self.TopWindow.bind('<Key>', self._onKeyPress)
+        self.TopWindow.bind("<Key>", self._onKeyPress)
         # bind clicking in an empty area of the thumbPane to unselectThumbnails
-        self.TopWindow.ThumbPane.viewPort.bind('<Button-1>', self.unselectThumbnails)
-        self.TopWindow.ThumbPane.canvas.bind('<Button-1>', self.unselectThumbnails)
+        self.TopWindow.ThumbPane.viewPort.bind("<Button-1>", self.unselectThumbnails)
+        self.TopWindow.ThumbPane.canvas.bind("<Button-1>", self.unselectThumbnails)
 
         # allow some key actions (Ctrl-A, Ctl-D, Ctrl-H, Ctrl-V and F1)
-        self.TopWindow.ThumbPane.bind('<Configure>', self._onConfigure)
+        self.TopWindow.ThumbPane.bind("<Configure>", self._onConfigure)
         self._TPWidth = 0
-        
+
         # put the toolbar in the self.TopWindow.ModulePane
         Toolbar = TB.Toolbar(self.TopWindow.ModulePane, Controller=self)
-        Toolbar.pack(side='top', fill='x')
+        Toolbar.pack(side="top", fill="x")
 
         ttk.Label(
             self.TopWindow.ModulePane,
-            text='Display',
-            style='HeaderText.TLabel'
-        ).pack(fill='x')
+            text="Display",
+            style="HeaderText.TLabel"
+        ).pack(fill="x")
 
         ThumbOpt = MM.ThumbOptions(self.TopWindow.ModulePane, Controller=self)
-        ThumbOpt.pack(side='top', fill='x')
+        ThumbOpt.pack(side="top", fill="x")
 
         ttk.Label(
             self.TopWindow.ModulePane,
-            text='Filters',
-            style='HeaderText.TLabel'
-        ).pack(fill='x')
+            text="Filters",
+            style="HeaderText.TLabel"
+        ).pack(fill="x")
 
         # create the condition modules in the self.TopWindow.ModulePane
         # put them in a list so that we can easily iterate over them
@@ -116,18 +118,18 @@ class Controller():
             CM.ShapeCondition(self.TopWindow.ModulePane, Controller=self),
         ])
         for cm in self._CMList:
-            cm.pack(side='top', fill='x')
+            cm.pack(side="top", fill="x")
             # restore the saved folded/unfolded state
-            if self.Cfg.get(f'{cm.name}_folded'):
+            if self.Cfg.get(f"{cm.name}_folded"):
                 cm.toggleFolding()
 
         moveheader = ttk.Label(
             self.TopWindow.ModulePane,
-            text='Move',
-            style='HeaderText.TLabel'
+            text="Move",
+            style="HeaderText.TLabel"
         )
-        moveheader.pack(fill='x')
-        msg = '''Move file(s) to the folder selected below.
+        moveheader.pack(fill="x")
+        msg = """Move file(s) to the folder selected below.
 
 1) Click on the move button below each thumbnail
 
@@ -135,11 +137,11 @@ class Controller():
 
 3) Press m in the viewer window
 
-Right click on the folders below to set or change its path'''
+Right click on the folders below to set or change its path"""
         TT.Tooltip(moveheader, text=msg)
 
         self._MovePanel = MM.MovePanel(self.TopWindow.ModulePane, Controller=self)
-        self._MovePanel.pack(side='top', fill='x')
+        self._MovePanel.pack(side="top", fill="x")
 
         self.startDatabase()
         self._getFileList()
@@ -147,7 +149,7 @@ Right click on the folders below to set or change its path'''
         self.onChange()
 
     def _onConfigure(self, event):
-        thumbW = self.Cfg.get('thumbnailsize') + 2
+        thumbW = self.Cfg.get("thumbnailsize") + 2
         oldTPWidth = self._TPWidth
         self._TPWidth = event.width
         # check of the number of thumb columns will change
@@ -157,23 +159,23 @@ Right click on the folders below to set or change its path'''
             self._createViewWithoutConditions()
 
     def _onKeyPress(self, event):
-        if event.keysym == 'F1':
+        if event.keysym == "F1":
             IW.showInfoDialog()
             return
         if (event.state & 0x4) != 0:
             keyDict = {
-                'a': self.toggleSelectAllThumbnails,
-                'd': self.deleteSelected,
-                'h': self.hideSelected,
-                'm': self.moveSelected,
-                'v': self.viewSelected,
-                'q': self.exitProgram
+                "a": self.toggleSelectAllThumbnails,
+                "d": self.deleteSelected,
+                "h": self.hideSelected,
+                "m": self.moveSelected,
+                "v": self.viewSelected,
+                "q": self.exitProgram
             }
             if event.keysym in keyDict:
                 keyDict[event.keysym]()
                 return
 
-    def _showInStatusbar(self, txt):
+    def showInStatusbar(self, txt):
         self.TopWindow.Statusbar.config(text=txt)
         self.TopWindow.Statusbar.update_idletasks()
 
@@ -206,7 +208,7 @@ Right click on the folders below to set or change its path'''
 
     def startDatabase(self, clear=None):
         self._DBConnection = DB.createConnection(
-            self.Cfg.get('databasename')
+            self.Cfg.get("databasename")
         )
         if not self._DBConnection:
             sys.exit(1)
@@ -219,20 +221,20 @@ Right click on the folders below to set or change its path'''
 
     def exitProgram(self):
         self.stopDatabase()
-        self.Cfg.set('findergeometry', self.TopWindow.geometry())
+        self.Cfg.set("findergeometry", self.TopWindow.geometry())
         # make a dictionary of cm.name: is_folded
         folding_dict = {cm.name: cm.is_folded for cm in self._CMList}
-        self.Cfg.set('folding_dict', folding_dict)
+        self.Cfg.set("folding_dict", folding_dict)
         self.Cfg.writeConfiguration()
         self.TopWindow.quit()
 
     def configureProgram(self):
-        oldThumbsize = self.Cfg.get('thumbnailsize')
-        oldUpscale = self.Cfg.get('upscalethumbnails')
+        oldThumbsize = self.Cfg.get("thumbnailsize")
+        oldUpscale = self.Cfg.get("upscalethumbnails")
         CW.CfgWindow(self.TopWindow, Controller=self)
         if (
-                self.Cfg.get('thumbnailsize') != oldThumbsize or
-                self.Cfg.get('upscalethumbnails') != oldUpscale
+                self.Cfg.get("thumbnailsize") != oldThumbsize or
+                self.Cfg.get("upscalethumbnails") != oldUpscale
         ):
             self.onThumbParamsChanged()
 
@@ -242,7 +244,7 @@ Right click on the folders below to set or change its path'''
             return
         if not os.path.isdir(selectedFolder):
             return
-        if action == 'add':
+        if action == "add":
             self._getFileList(Add=selectedFolder)
         else:
             self._getFileList(Replace=selectedFolder)
@@ -250,7 +252,7 @@ Right click on the folders below to set or change its path'''
         self.onChange()
 
     @longrunning
-    @tellstatus(msg='Gathering the files to show')
+    @tellstatus(msg="Gathering the files to show")
     def _getFileList(self, Replace=None, Add=None):
         pathList = []
         # determine with which mode we are called
@@ -266,14 +268,14 @@ Right click on the folders below to set or change its path'''
 
         # from startup
         if not Replace and not Add:
-            pathList = self.Cfg.get('cmdlinearguments')
+            pathList = self.Cfg.get("cmdlinearguments")
             oldFiles = []
             self.FODict = {}
 
         # from startup without arguments
         if not pathList:
             oldFiles = []
-            startupFolder = self.Cfg.get('startupfolder')
+            startupFolder = self.Cfg.get("startupfolder")
             # start empty
             if not startupFolder:
                 self._fileList = []
@@ -281,12 +283,12 @@ Right click on the folders below to set or change its path'''
             pathList = [startupFolder]
 
         # now we know which folders to search
-        doRecurse = self.Cfg.get('searchinsubfolders')
+        doRecurse = self.Cfg.get("searchinsubfolders")
         candidates = []
         for arg in pathList:
             arg = os.path.abspath(arg)
             if os.path.isdir(arg):
-                candidates.extend(glob.glob(arg+'/**', recursive=doRecurse))
+                candidates.extend(glob.glob(arg+"/**", recursive=doRecurse))
             else:
                 candidates.append(arg)
         self._fileList = [c for c in candidates if os.path.isfile(c)]
@@ -307,16 +309,16 @@ Right click on the folders below to set or change its path'''
         self._filenameUniqueDict.update(zip(self._fileList, filenameUniqueList))
 
     @longrunning
-    @tellstatus(msg='Processing file list')
+    @tellstatus(msg="Processing file list")
     def _processFilelist(self):
-        ''' Things to do when starting with new image(s)/path'''
+        """ Things to do when starting with new image(s)/path"""
 
         # calculate checksums in multiprocessing
         self._getChecksums()
 
         self._createFileobjects()
         if not self.FODict:
-            self._showInStatusbar('Warning: no files containing image data found')
+            self.showInStatusbar("Warning: no files containing image data found")
 
         # calculate thumbnails in multiprocessing
         self._setThumbnails()
@@ -336,11 +338,11 @@ Right click on the folders below to set or change its path'''
                 FullPath=FilePath,
                 checksumFilenameDict=self._checksumFilenameDict
             )
-            if ThisFileObject.isImage():
+            if ThisFileObject.isImage:
                 fileObjectList.append(ThisFileObject)
                 # do checksum hash and thumbnails
                 ThisFileObject.checksum()
-                
+
         if not fileObjectList:
             return
 
@@ -349,7 +351,7 @@ Right click on the folders below to set or change its path'''
         self.FODict.update(newFODict)
 
     def _createViewWithoutConditions(self):
-        'Create an overview of all images without conditions'
+        "Create an overview of all images without conditions"
         self._removeAllThumbs()
 
         # because there are no criteria display thumbnails in order
@@ -357,7 +359,7 @@ Right click on the folders below to set or change its path'''
         self.TopWindow.ThumbPane.update_idletasks()
         maxW = self.TopWindow.ThumbPane.winfo_width()
         # 2 extra for the highlight thickness
-        thumbW = self.Cfg.get('thumbnailsize') + 2
+        thumbW = self.Cfg.get("thumbnailsize") + 2
         nx = maxW // thumbW
 
         # maximum nx*ny thumbs to show
@@ -373,8 +375,8 @@ Right click on the folders below to set or change its path'''
                 break
 
     def _getMatchingGroups(self):
-        ''' given the matching groups returned by each active condition module
-           make a master list of image groups '''
+        """ given the matching groups returned by each active condition module
+           make a master list of image groups """
 
         self._matchingGroups = {}
         matchingGroupDictsList = []
@@ -399,8 +401,11 @@ Right click on the folders below to set or change its path'''
 
     def _displayMatchingGroups(self):
         # clear messages from the statusbar
-        self._showInStatusbar('...')
-        sortedGroupsList = HF.sortMatchingGroupsByFilename(self._matchingGroups, self._filenameChecksumDict)
+        self.showInStatusbar("...")
+        sortedGroupsList = HF.sortMatchingGroupsByFilename(
+            self._matchingGroups,
+            self._filenameChecksumDict
+        )
         numThumbsShown = 0
         for Y, group in enumerate(sortedGroupsList):
             for X, checksum in enumerate(group):
@@ -408,10 +413,14 @@ Right click on the folders below to set or change its path'''
                 numThumbsShown += 1
                 # no point showing so many
                 if X > 25:
-                    self._showInStatusbar('Groups found a group with too many matches: truncated to 25')
+                    self.showInStatusbar(
+                        "Groups found a group with too many matches: truncated to 25"
+                    )
                     break
             if numThumbsShown > self._maxThumbnails:
-                self._showInStatusbar('Warning too many matches: truncated to ~%s' % self._maxThumbnails)
+                self.showInStatusbar(
+                    f"Warning too many matches: truncated to ~{self._maxThumbnails}"
+                )
                 return
 
     @longrunning
@@ -480,37 +489,37 @@ Right click on the folders below to set or change its path'''
         self.onChange()
 
     def _deleteFile(self, Filename):
-        if self.Cfg.get('gzipinsteadofdelete'):
+        if self.Cfg.get("gzipinsteadofdelete"):
             HF.gzipfile(Filename)
         else:
             os.remove(Filename)
 
-    def _moveFile(self, fn, dir):
-        if os.path.dirname(fn) == dir:
+    def _moveFile(self, fn, dirname):
+        if os.path.dirname(fn) == dirname:
             return False
         try:
             os.rename(
                 fn,
-                os.path.join(dir, os.path.basename(fn))
+                os.path.join(dirname, os.path.basename(fn))
             )
         except:
             return False
         return True
-    
+
     def moveFOs(self, FOs, **kwargs):
         # check that a target folder is set
         # if not give a warning and do nothing
         targetDir = self._MovePanel.get(**kwargs)
         if not targetDir:
-            self._showInStatusbar('Warning: no target folder set for moving files')
-            return
-        # check that the target folder 
+            self.showInStatusbar("Warning: no target folder set for moving files")
+            return None
+        # check that the target folder
         # if not give a warning and do nothing
         if not os.path.isdir(targetDir):
-            self._showInStatusbar(
-                'Warning: target folder %s for moving files is not valid' % targetDir
+            self.showInStatusbar(
+                f"Warning: target folder {targetDir} for moving files is not valid"
             )
-            return
+            return None
         somethingMoved = False
         for fo in FOs:
             filename = fo.fullPath
@@ -522,12 +531,12 @@ Right click on the folders below to set or change its path'''
         if somethingMoved:
             self.onChange()
         return somethingMoved
-    
+
     def deleteFOs(self, FOs, Owner=None):
         if not Owner:
             Owner = self.TopWindow
         somethingDeleted = False
-        mustconfirm = self.Cfg.get('confirmdelete')
+        mustconfirm = self.Cfg.get("confirmdelete")
         onlyOneFO = len(FOs) == 1
         for fo in FOs:
             filename = fo.fullPath
@@ -540,15 +549,15 @@ Right click on the folders below to set or change its path'''
                     simple=onlyOneFO
                 ).result
             else:
-                answer = 'yes'
-            if answer == 'abort':
+                answer = "yes"
+            if answer == "abort":
                 break
-            if answer == 'no':
+            if answer == "no":
                 continue
-            if answer == 'yestoall':
+            if answer == "yestoall":
                 mustconfirm = False
-                answer = 'yes'
-            if answer == 'yes':
+                answer = "yes"
+            if answer == "yes":
                 if checksum in self.FODict:
                     del self.FODict[checksum]
                 somethingDeleted = True
@@ -581,7 +590,7 @@ Right click on the folders below to set or change its path'''
         else:
             for tp in self._TPPositionDict.values():
                 tp.select(True)
-                
+
         self.lastSelectedXY = None
 
     def toggleSelectRow(self, Y, value):
@@ -618,20 +627,20 @@ Right click on the folders below to set or change its path'''
 
     # some routines related to expensive calculations done in a
     # multiprocessing pool
-    @tellstatus(msg='Calculating File Hash values, please be patient')
+    @tellstatus(msg="Calculating File Hash values, please be patient")
     def _getChecksums(self):
         self._checksumFilenameDict = POOL.getChecksums(self._fileList, self._checksumFilenameDict)
         self._filenameChecksumDict = dict(map(reversed, self._checksumFilenameDict.items()))
 
-    @tellstatus(msg='Making file thumbnails, please be patient')
+    @tellstatus(msg="Making file thumbnails, please be patient")
     def _setThumbnails(self):
         checksumThumbDict = POOL.getThumbnails(
             self.FODict,
-            Thumbsize=self.Cfg.get('thumbnailsize'),
-            channel=self.Cfg.get('channeltoshow'),
-            upscale=self.Cfg.get('upscalethumbnails'),
+            Thumbsize=self.Cfg.get("thumbnailsize"),
+            channel=self.Cfg.get("channeltoshow"),
+            upscale=self.Cfg.get("upscalethumbnails"),
         )
-        self._showInStatusbar('...')
+        self.showInStatusbar("...")
         if not checksumThumbDict:
             return
         for checksum, thumb in checksumThumbDict.items():
@@ -650,6 +659,6 @@ Right click on the folders below to set or change its path'''
                 afo._thumbnail = pimage
 
     @longrunning
-    @tellstatus(msg='Calculating Image Hash values, please be patient')
+    @tellstatus(msg="Calculating Image Hash values, please be patient")
     def setHashes(self, hashName=None):
         POOL.getHashes(self.FODict, hashName, self._DBConnection)

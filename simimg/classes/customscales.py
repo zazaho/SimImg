@@ -2,29 +2,29 @@ from tkinter import ttk
 
 
 class DelayedScale(ttk.Scale):
-    '''A ttk scale widget that only fires the command when the mouse is released
+    """A ttk scale widget that only fires the command when the mouse is released
        if using the mouse to drag the slider
-       We also modify the behaviour to always returns integer values'''
+       We also modify the behaviour to always returns integer values"""
 
     def __init__(self, parent, *args, command=None, resolution=None, **kwargs):
         self.realcommand = command
         self._step = int(resolution) if resolution else 1
         super().__init__(parent, *args, command=self._command, **kwargs)
-        self.bind('<ButtonPress-1>', self._scalePressed)
-        self.bind('<ButtonRelease-1>', self._scaleReleased)
-        self.bind('<Key-Left>', self._leftPressed)
-        self.bind('<Key-Right>', self._rightPressed)
-        self.bind('<ButtonPress-1>', self._scalePressed)
+        self.bind("<ButtonPress-1>", self._scalePressed)
+        self.bind("<ButtonRelease-1>", self._scaleReleased)
+        self.bind("<Key-Left>", self._leftPressed)
+        self.bind("<Key-Right>", self._rightPressed)
+        self.bind("<ButtonPress-1>", self._scalePressed)
         self._mouseIsPressed = False
 
     def _leftPressed(self, *args):
         self.set(int(self.get()-self._step))
-        return 'break'
-    
+        return "break"
+
     def _rightPressed(self, *args):
         self.set(int(self.get()+self._step))
-        return 'break'
-        
+        return "break"
+
     def _scalePressed(self, *args):
         self._mouseIsPressed = True
 
@@ -44,22 +44,22 @@ class DelayedScale(ttk.Scale):
         if self.realcommand:
             self.realcommand()
 
-    def get(self):
+    def get(self, *args):
         return int(super().get())
 
-    def set(self, val):
-        super().set(int(val))
+    def set(self, value):
+        super().set(int(value))
 
     def mousedowncommand(self, *args):
         pass
 
 class LabelScale(ttk.Frame):
-    'A scale widget (slider) with a label to indicate its value'
+    "A scale widget (slider) with a label to indicate its value"
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
 
-        self._Label = ttk.Label(self, text='')
+        self._Label = ttk.Label(self, text="")
         self._Label.pack()
 
         self._Scale = DelayedScale(self, *args, **kwargs)
@@ -85,13 +85,13 @@ class LabelScale(ttk.Frame):
 
     def config(self, *args, **kwargs):
         self._Scale.config(*args, **kwargs)
-            
+
     def bind(self, *args, **kwargs):
         self._Scale.bind(*args, **kwargs)
 
 
 class TextScale(LabelScale):
-    'A scale widget (slider) with text rather than numerical labels'
+    "A scale widget (slider) with text rather than numerical labels"
 
     def __init__(self, parent, *args, textLabels=None, **kwargs):
         self.textLabels = textLabels

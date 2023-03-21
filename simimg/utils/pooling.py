@@ -1,13 +1,16 @@
-''' Functions on the image files that take time.
-    Like file-hashing and image-hashing
-    They are organised to be done in multiprocessing.'''
-import hashlib
-from operator import add
+"""Functions on the image files that take time. Like file-hashing and
+image-hashing They are organised to be done in multiprocessing.
+
+"""
 import functools
+import hashlib
 from multiprocessing import Pool
+from operator import add
+
 from PIL import Image
-from . import database as DB
-from . import pillowplus as PP
+
+import simimg.utils.database as DB
+import simimg.utils.pillowplus as PP
 
 # box that contains the whole image
 onebox = [(0.0, 0.0, 1.0, 1.0)]
@@ -38,13 +41,13 @@ def statsQuantiles(a):
 
 def calculateChecksum(file):
     hasher = hashlib.sha1()
-    with open(file, 'rb') as afile:
+    with open(file, "rb") as afile:
         hasher.update(afile.read())
     return (file, hasher.hexdigest())
 
 
 def getChecksums(filelist, hashValueDict):
-    '''return checksum hashing value for each file the list.'''
+    """return checksum hashing value for each file the list."""
     missingfilelist = list(set(filelist) - set(hashValueDict.keys()))
     with Pool() as pool:
         calculatedHashes = pool.map(calculateChecksum, missingfilelist)
@@ -53,7 +56,7 @@ def getChecksums(filelist, hashValueDict):
 
 
 def subImage(Img, FracBox):
-    'return a subImage from Image based on coordinates in dimensionless units'
+    "return a subImage from Image based on coordinates in dimensionless units"
     width, height = Img.size
     left = round(width*FracBox[0])
     right = round(width*FracBox[2])
@@ -63,10 +66,10 @@ def subImage(Img, FracBox):
 
 
 def colorHash(Img, colorspace=None, five=False):
-    ''' Regrouped colour hashing function to avoid repeating code.'''
+    """ Regrouped colour hashing function to avoid repeating code."""
 
     # requested colorspace defaults to HSV
-    cspace = colorspace if colorspace else 'HSV'
+    cspace = colorspace if colorspace else "HSV"
     # one box or five boxes requested
     boxes = fiveboxes if five else onebox
 
@@ -86,7 +89,7 @@ def colorHash(Img, colorspace=None, five=False):
         # get a measurement for each channel
         for idx, ch in enumerate(channels):
             data = subImage(ch, bx)
-            if cspace == 'HSV' and idx == 1:
+            if cspace == "HSV" and idx == 1:
                 data = list(data)
                 medianH = statsMedian(data)
                 quant = statsQuantiles([(h-medianH+128) % 255 for h in data])
@@ -100,34 +103,34 @@ def colorHash(Img, colorspace=None, five=False):
 
 
 def hsvHash(Img):
-    return colorHash(Img, colorspace='HSV', five=False)
+    return colorHash(Img, colorspace="HSV", five=False)
 
 
 def hsv5Hash(Img):
-    return colorHash(Img, colorspace='HSV', five=True)
+    return colorHash(Img, colorspace="HSV", five=True)
 
 
 def rgbHash(Img):
-    return colorHash(Img, colorspace='RGB', five=False)
+    return colorHash(Img, colorspace="RGB", five=False)
 
 
 def rgb5Hash(Img):
-    return colorHash(Img, colorspace='RGB', five=True)
+    return colorHash(Img, colorspace="RGB", five=True)
 
 
 def lHash(Img):
-    return colorHash(Img, colorspace='L', five=False)
+    return colorHash(Img, colorspace="L", five=False)
 
 
 def l5Hash(Img):
-    return colorHash(Img, colorspace='L', five=True)
+    return colorHash(Img, colorspace="L", five=True)
 
 
 def dHash(Img, doVertical=False):
     if doVertical:
-        i8x8 = Img.convert('L').resize((8, 9), Image.BOX).transpose(Image.ROTATE_90)
+        i8x8 = Img.convert("L").resize((8, 9), Image.BOX).transpose(Image.ROTATE_90)
     else:
-        i8x8 = Img.convert('L').resize((9, 8), Image.BOX)
+        i8x8 = Img.convert("L").resize((9, 8), Image.BOX)
 
     values = []
     for y in range(8):
@@ -150,21 +153,21 @@ def dHashVertical(Img):
 def calculateHash(args):
     checksum, fullPath, hashName = args
     funcdict = {
-        'HSV': hsvHash,
-        'HSV (5 regions)': hsv5Hash,
-        'RGB': rgbHash,
-        'RGB (5 regions)': rgb5Hash,
-        'Luminosity': lHash,
-        'Luminosity (5 regions)': l5Hash,
-        'Horizontal': dHashHorizontal,
-        'Vertical': dHashVertical,
-        }
+        "HSV": hsvHash,
+        "HSV (5 regions)": hsv5Hash,
+        "RGB": rgbHash,
+        "RGB (5 regions)": rgb5Hash,
+        "Luminosity": lHash,
+        "Luminosity (5 regions)": l5Hash,
+        "Horizontal": dHashHorizontal,
+        "Vertical": dHashVertical,
+    }
     return (checksum, funcdict[hashName](PP.imageOpen(fullPath)))
 
 
 def getHashes(FODict, hashName, db_connection=None):
-    '''return hashing value according to selected hashName method
-    for each file the (file,checksum) list.'''
+    """return hashing value according to selected hashName method
+    for each file the (file,checksum) list."""
 
     # create an empty dict to hold the results
     hashValueDict = {} # checksum:hashValue
@@ -226,9 +229,12 @@ def getOneThumb(arg):
     return (checksum, img)
 
 
-def getThumbnails(FODict, Thumbsize=None, channel='Default', upscale=False):
-    '''return thumbnail for each checksum in FODict.'''
-    args = [(checksum, fo[0].fullPath, Thumbsize, channel, upscale) for checksum, fo in FODict.items()]
+def getThumbnails(FODict, Thumbsize=None, channel="Default", upscale=False):
+    """return thumbnail for each checksum in FODict."""
+    args = [
+        (checksum, fo[0].fullPath, Thumbsize, channel, upscale)
+        for checksum, fo in FODict.items()
+    ]
     with Pool() as pool:
         calculatedthumbs = pool.map(getOneThumb, args)
     ThumbDict = {}

@@ -1,8 +1,8 @@
 from tkinter import messagebox as tkmessagebox
 
 def showInfoDialog():
-    ''' show basic info about this program '''
-    msg = '''
+    """ show basic info about this program """
+    msg = """
 SiMilar ImaGe finder:
 
 This program is designed to display groups of pictures that are similar.
@@ -20,5 +20,5 @@ The workflow is as follows:
 * Select images by clicking on the thumbnail (background turns blue)
 * Click the play button to inspect the selected images
 * Click the delete button to delete selected images
-    '''
-    tkmessagebox.showinfo('Information', msg)
+    """
+    tkmessagebox.showinfo("Information", msg)

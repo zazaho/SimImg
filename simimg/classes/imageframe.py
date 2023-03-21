@@ -1,10 +1,10 @@
-''' class related to the display of one thumbnail '''
+""" class related to the display of one thumbnail """
 import tkinter as tk
 from tkinter import ttk
 
 
 class ImageFrame(ttk.Frame):
-    ' A frame that holds one image thumbnail with its buttons'
+    " A frame that holds one image thumbnail with its buttons"
 
     def __init__(self, parent, checksum=None, Ctrl=None, X=None, Y=None):
         super().__init__(parent)
@@ -15,7 +15,7 @@ class ImageFrame(ttk.Frame):
         self.Y = Y
 
         self._Ctrl = Ctrl
-        self._tSize = Ctrl.Cfg.get('thumbnailsize')
+        self._tSize = Ctrl.Cfg.get("thumbnailsize")
         self._text = None
         self._backtext = None
 
@@ -24,48 +24,48 @@ class ImageFrame(ttk.Frame):
             width=self._tSize,
             height=self._tSize
         )
-        self._thumbCanvas.defBgClr = self._thumbCanvas.cget('background')
-        self._thumbCanvas.selBgClr = 'blue'
-        self._thumbCanvas.bind('<Button-1>', self._click)
+        self._thumbCanvas.defBgClr = self._thumbCanvas.cget("background")
+        self._thumbCanvas.selBgClr = "blue"
+        self._thumbCanvas.bind("<Button-1>", self._click)
 
-        self._thumbCanvas.pack(side='top')
+        self._thumbCanvas.pack(side="top")
         self._thumbCanvas.config(highlightthickness=1)
         self._hideButton = ttk.Button(
             self,
-            text='Hide',
+            text="Hide",
             command=self._hide,
-            style='Thumb.TButton'
+            style="Thumb.TButton"
         )
         self._moveButton = ttk.Button(
             self,
-            text='Move',
+            text="Move",
             command=self._move,
-            style='Thumb.TButton'
+            style="Thumb.TButton"
         )
         self._deleteButton = ttk.Button(
             self,
-            text='Delete',
+            text="Delete",
             command=self._delete,
-            style='Thumb.TButton'
+            style="Thumb.TButton"
         )
         self.createThumbContent()
         self.showOptionalElements()
 
     def createThumbContent(self):
-        self._tSize = self._Ctrl.Cfg.get('thumbnailsize')
-        self._thumbCanvas.delete('all')
+        self._tSize = self._Ctrl.Cfg.get("thumbnailsize")
+        self._thumbCanvas.delete("all")
         self._thumbCanvas.config(width=self._tSize, height=self._tSize)
         if self.checksum:
             self._thumbCanvas.create_image(
                 self._tSize/2,
                 self._tSize/2,
-                anchor='center',
+                anchor="center",
                 image=self._Ctrl.FODict[self.checksum][0].thumbnail()
             )
             self._text = self._thumbCanvas.create_text(
                 self._tSize/2,
                 self._tSize,
-                anchor='s',
+                anchor="s",
                 text=self._Ctrl.FODict[self.checksum][0].fileName,
             )
             self._backtext = self._thumbCanvas.create_rectangle(
@@ -76,20 +76,20 @@ class ImageFrame(ttk.Frame):
             self._thumbCanvas.tag_lower(self._backtext, self._text)
 
             if len(self._Ctrl.FODict[self.checksum]) > 1:
-                self._thumbCanvas.config(highlightbackground='green', highlightthickness=1)
+                self._thumbCanvas.config(highlightbackground="green", highlightthickness=1)
 
     def showOptionalElements(self):
-        if self._Ctrl.Cfg.get('filenameonthumbnail'):
-            self._thumbCanvas.itemconfigure(self._text, state='normal')
-            self._thumbCanvas.itemconfigure(self._backtext, state='normal')
+        if self._Ctrl.Cfg.get("filenameonthumbnail"):
+            self._thumbCanvas.itemconfigure(self._text, state="normal")
+            self._thumbCanvas.itemconfigure(self._backtext, state="normal")
         else:
-            self._thumbCanvas.itemconfigure(self._text, state='hidden')
-            self._thumbCanvas.itemconfigure(self._backtext, state='hidden')
+            self._thumbCanvas.itemconfigure(self._text, state="hidden")
+            self._thumbCanvas.itemconfigure(self._backtext, state="hidden")
 
-        if self._Ctrl.Cfg.get('showbuttons'):
-            self._hideButton.pack(side='left')
-            self._moveButton.pack(side='left')
-            self._deleteButton.pack(side='left')
+        if self._Ctrl.Cfg.get("showbuttons"):
+            self._hideButton.pack(side="left")
+            self._moveButton.pack(side="left")
+            self._deleteButton.pack(side="left")
         else:
             self._hideButton.pack_forget()
             self._moveButton.pack_forget()

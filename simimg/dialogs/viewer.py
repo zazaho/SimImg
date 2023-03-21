@@ -1,11 +1,12 @@
-''' Module for show the viewer window '''
+""" Module for show the viewer window """
 import tkinter as tk
 from tkinter import messagebox as tkmessagebox
-from ..utils import pillowplus as PP
+
+import simimg.utils.pillowplus as PP
 
 
 class Viewer(tk.Toplevel):
-    'A viewer window to display the selected pictures'
+    "A viewer window to display the selected pictures"
 
     def __init__(self, Fileinfo=None, Controller=None):
         super().__init__()
@@ -14,8 +15,8 @@ class Viewer(tk.Toplevel):
 
         self._Ctrl = Controller
 
-        self.geometry(self._Ctrl.Cfg.get('viewergeometry'))
-        self.protocol('WM_DELETE_WINDOW', self._exitViewer)
+        self.geometry(self._Ctrl.Cfg.get("viewergeometry"))
+        self.protocol("WM_DELETE_WINDOW", self._exitViewer)
 
         self._ImgDict = {}
         self._ImgIndex = 0
@@ -35,34 +36,34 @@ class Viewer(tk.Toplevel):
         self._zoomImgId = None
 
         self._keyDict = {
-            'space': self._showNext,
-            'n': self._showNext,
-            'Right': self._showNext,
-            'p': self._showPrevious,
-            'Left': self._showPrevious,
-            'd': self._deleteFile,
-            'Delete': self._deleteFile,
-            'h': self._showHelp,
-            'm': self._moveFile,
-            'F1': self._showHelp,
-            'q': self._exitViewer,
-            'Escape': self._exitViewer
+            "space": self._showNext,
+            "n": self._showNext,
+            "Right": self._showNext,
+            "p": self._showPrevious,
+            "Left": self._showPrevious,
+            "d": self._deleteFile,
+            "Delete": self._deleteFile,
+            "h": self._showHelp,
+            "m": self._moveFile,
+            "F1": self._showHelp,
+            "q": self._exitViewer,
+            "Escape": self._exitViewer
             }
-        for i in range(1, self._Ctrl.Cfg.get('numfolders')+1):
+        for i in range(1, self._Ctrl.Cfg.get("numfolders")+1):
             self._keyDict.update({str(i): lambda idx=i: self._moveFile(index=idx)})
-        self.bind('<Key>', self._key)
+        self.bind("<Key>", self._key)
 
         self._canvas = tk.Canvas(self)
-        self._canvas.pack(fill='both', expand=True)
+        self._canvas.pack(fill="both", expand=True)
         self._canvas.update_idletasks()
-        self._canvas.bind('<Button-1>', self._click)
-        self._canvas.bind('<Button-3>', self._click)
+        self._canvas.bind("<Button-1>", self._click)
+        self._canvas.bind("<Button-3>", self._click)
         self._canvas.bind("<Button-4>", self._changeZoom)
         self._canvas.bind("<Button-5>", self._changeZoom)
         self._canvas.bind("<MouseWheel>", self._changeZoom)
         self._canvas.bind("<Motion>", self._showZoom)
 
-        self.bind('<Configure>', self._showImage)
+        self.bind("<Configure>", self._showImage)
 
     def _fillImgDict(self, Index):
         maxW = self._canvas.winfo_width()
@@ -105,7 +106,7 @@ class Viewer(tk.Toplevel):
         self._keyDict[event.keysym]()
 
     def _showImage(self, *args):
-        self._canvas.delete('all')
+        self._canvas.delete("all")
         # unset the Image object
         self._Img = None
         # reset the zoom level
@@ -114,10 +115,12 @@ class Viewer(tk.Toplevel):
         self._canvas.create_image(
             self._canvas.winfo_width()/2,
             self._canvas.winfo_height()/2,
-            anchor='center',
+            anchor="center",
             image=self._ImgDict[self._ImgIndex][1],
         )
-        self.title('Similar Image Viewer: %s --- Press F1 for Help' % self._ImgDict[self._ImgIndex][0])
+        self.title(
+            f"Similar Image Viewer: {self._ImgDict[self._ImgIndex][0]} --- Press F1 for Help"
+        )
 
     def _showNext(self):
         self._ImgIndex += 1
@@ -220,12 +223,12 @@ class Viewer(tk.Toplevel):
         self._zoomImgId = self._canvas.create_image(
             event.x,
             event.y,
-            anchor='center',
+            anchor="center",
             image=self._zoomImg
         )
 
     def _showHelp(self):
-        msg = '''
+        msg = """
 SiMilar ImaGe viewer:
 
 This windows show the selected images to be able to compare them.
@@ -242,10 +245,10 @@ d, Delete: delete the file from your hard disk!
 m: move the file to the folder set in the main window
 <n>: move the file to the folder #n move panel of the main window
 q, Escape: quit the viewer
-'''
-        tkmessagebox.showinfo('Information', msg, parent=self)
+"""
+        tkmessagebox.showinfo("Information", msg, parent=self)
 
     def _exitViewer(self):
-        self._Ctrl.Cfg.set('viewergeometry', self.geometry())
+        self._Ctrl.Cfg.set("viewergeometry", self.geometry())
         del self._ImgDict
         self.destroy()
