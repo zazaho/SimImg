@@ -1,0 +1,30 @@
+
+[project]
+name = "simimg"
+version = "0.9.2"
+description = "Similar Image Finder"
+authors = [
+    {name = "sacha", email = "sachahony@gmail.com"},
+    {name = "Sacha Hony", email = "zazahohonini@gmail.com"},
+]
+dependencies = [
+    "Pillow",
+]
+requires-python = ">=3"
+license = {text = "MIT"}
+readme = "README.md"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/zazaho/SimImg"
+
+[project.scripts]
+simimg = "simimg.simimg:main"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
