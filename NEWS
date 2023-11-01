@@ -1,3 +1,6 @@
+version 0.9.3 (SH Nov  1 2023)
+- Implement flip in viewer
+
 version 0.9.2 (SH Mar 21 2023)
 - Code cleaning and a few optimisations
 - No more relative imports
