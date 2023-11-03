@@ -206,7 +206,7 @@ class Viewer(tk.Toplevel):
         if not self._zoomLevel:
             return
 
-        fName, pImage, imgW, imgH, canvasW, canvasH = self._ImgDict[self._ImgIndex]
+        fName, pImage, imgW, imgH, canvasW, canvasH, Flipped = self._ImgDict[self._ImgIndex]
 
         if not self._Img:
             self._Img = PP.imageOpen(fName)

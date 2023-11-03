@@ -170,6 +170,8 @@ The follow actions are available in the viewer window:
 * m: move the file to the move-target directory selected in the finder
   window
 
+* f: flip the image horizontally
+
 * 1: move the file to the **first** move-target directory
 
 * 2: move the file to the **second** move-target directory

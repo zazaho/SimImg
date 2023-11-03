@@ -1,3 +1,6 @@
+version 0.9.4 (SH Nov  2 2023)
+- Unbreak zooming functionality due to flipping feature
+
 version 0.9.3 (SH Nov  1 2023)
 - Implement flip in viewer
 
