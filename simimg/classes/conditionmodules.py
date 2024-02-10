@@ -346,8 +346,8 @@ class DateCondition(ExifCondition):
     _initialScaleVal = "10 minutes"
 
     def _theymatch(self, checksumA, checksumB):
-        dateA = self._Ctrl.FODict[checksumA][0].dateTime()
-        dateB = self._Ctrl.FODict[checksumB][0].dateTime()
+        dateA = self._Ctrl.FODict[checksumA][0].dateTime
+        dateB = self._Ctrl.FODict[checksumB][0].dateTime
         if dateA == "Missing":
             return False
         if dateB == "Missing":
@@ -373,8 +373,8 @@ class ShapeCondition(ExifCondition):
 
     def _theymatch(self, checksumA, checksumB):
         if self.scalevalue == -2:
-            sizeA = self._Ctrl.FODict[checksumA][0].size()
-            sizeB = self._Ctrl.FODict[checksumB][0].size()
+            sizeA = self._Ctrl.FODict[checksumA][0].size
+            sizeB = self._Ctrl.FODict[checksumB][0].size
             return set(sizeA) != set(sizeB)
         shapeA = self._Ctrl.FODict[checksumA][0].shapeParameter()
         shapeB = self._Ctrl.FODict[checksumB][0].shapeParameter()

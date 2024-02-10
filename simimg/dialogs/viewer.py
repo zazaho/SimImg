@@ -1,7 +1,9 @@
 """ Module for show the viewer window """
 import tkinter as tk
+from copy import copy
+from functools import partial
 from tkinter import messagebox as tkmessagebox
-from PIL.ImageOps import mirror
+from PIL.ImageOps import autocontrast, equalize, grayscale, mirror
 
 import simimg.utils.pillowplus as PP
 
@@ -23,9 +25,14 @@ class Viewer(tk.Toplevel):
         self._ImgIndex = 0
         # the pillow image object (not scaled photoimage)
         self._Img = None
-        # can be "y", "n" or "d" for default
-        self._wantFlipped = "d"
-
+        self._func_map = {
+            "contrast": autocontrast,
+            "equalize": equalize,
+            "grayscale": grayscale,
+            "flip": mirror,
+        }
+        self._default_imageops = {k: "d" for k in self._func_map}
+        self._wantedImageOps = copy(self._default_imageops)
         self._zoomLevelDict = {
             1: 2,
             2: 3,
@@ -48,7 +55,10 @@ class Viewer(tk.Toplevel):
             "Delete": self._deleteFile,
             "h": self._showHelp,
             "m": self._moveFile,
-            "f": self._flipImage,
+            "c": partial(self._toggleImageOp, opp="contrast"),
+            "e": partial(self._toggleImageOp, opp="equalize"),
+            "f": partial(self._toggleImageOp, opp="flip"),
+            "g": partial(self._toggleImageOp, opp="grayscale"),
             "F1": self._showHelp,
             "q": self._exitViewer,
             "Escape": self._exitViewer
@@ -74,34 +84,36 @@ class Viewer(tk.Toplevel):
         maxH = self._canvas.winfo_height()
         # check if this image already exists?
         if Index in self._ImgDict:
-            File, Img, W, H, targetW, targetH, Flipped = self._ImgDict[Index]
+            File, Img, W, H, targetW, targetH, ImageOps = self._ImgDict[Index]
             # if default set to the previous flipping state
-            if self._wantFlipped == "d":
-                self._wantFlipped = Flipped
+            for k, v in self._wantedImageOps.items():
+                if v == "d":
+                    self._wantedImageOps[k] = ImageOps[k]
             # check if this image has the right dimensions.
             # if the max-dimensions did not change, fine!
-            if Flipped == self._wantFlipped and targetW == maxW and targetH == maxH:
+            if ImageOps == self._wantedImageOps and targetW == maxW and targetH == maxH:
                 return
             # if the dimensions did change,  but the image is:
             # small than the old target and smaller than the new target
             # no scaling was done and should be done, fine!
-            if Flipped == self._wantFlipped and W <= maxW and W <= targetW and H <= maxH and H <= targetH:
+            if ImageOps == self._wantedImageOps and W <= maxW and W <= targetW and H <= maxH and H <= targetH:
                 return
 
         # if we get here, we need to create and image tuple
         File = self._filenames[Index]
         Img = PP.imageOpen(File)
-        if self._wantFlipped == "y":
-            Img = mirror(Img)
-        else:
-            self._wantFlipped = "n"
+        for k, v in self._wantedImageOps.items():
+            if v == "y":
+                Img = self._func_map[k](Img)
+            else:
+                self._wantedImageOps[k] = "n"
         self._Img = Img
         W = Img.size[0]
         H = Img.size[1]
         # scale down if too large
         if W > maxW or H > maxH:
             Img = PP.imageResizeToFit(Img, maxW, maxH)
-        self._ImgDict[Index] = (File, PP.TkPhotoImage(Img), W, H, maxW, maxH, self._wantFlipped)
+        self._ImgDict[Index] = (File, PP.TkPhotoImage(Img), W, H, maxW, maxH, copy(self._wantedImageOps))
 
     # clicks
     def _click(self, event):
@@ -123,7 +135,7 @@ class Viewer(tk.Toplevel):
         # reset the zoom level
         self._zoomLevel = 0
         self._fillImgDict(self._ImgIndex)
-        
+
         self._canvas.create_image(
             self._canvas.winfo_width()/2,
             self._canvas.winfo_height()/2,
@@ -135,7 +147,7 @@ class Viewer(tk.Toplevel):
         )
 
     def _showNext(self):
-        self._wantFlipped = "d"
+        self._wantedImageOps = copy(self._default_imageops)
         self._ImgIndex += 1
         self._ImgIndex = self._ImgIndex % len(self._filenames)
         # if the filename is none skip to next
@@ -144,7 +156,7 @@ class Viewer(tk.Toplevel):
         self._showImage()
 
     def _showPrevious(self):
-        self._wantFlipped = "d"
+        self._wantedImageOps = copy(self._default_imageops)
         self._ImgIndex -= 1
         self._ImgIndex = self._ImgIndex % len(self._filenames)
         if self._filenames[self._ImgIndex] is None:
@@ -183,8 +195,8 @@ class Viewer(tk.Toplevel):
         else:
             self.destroy()
 
-    def _flipImage(self, **kwargs):
-        self._wantFlipped = "y" if self._wantFlipped == "n" else "n"
+    def _toggleImageOp(self, opp, **kwargs):
+        self._wantedImageOps[opp] = "y" if self._wantedImageOps[opp] == "n" else "n"
         self._showImage()
 
     def _changeZoom(self, event):
@@ -206,7 +218,7 @@ class Viewer(tk.Toplevel):
         if not self._zoomLevel:
             return
 
-        fName, pImage, imgW, imgH, canvasW, canvasH, Flipped = self._ImgDict[self._ImgIndex]
+        fName, pImage, imgW, imgH, canvasW, canvasH, _ = self._ImgDict[self._ImgIndex]
 
         if not self._Img:
             self._Img = PP.imageOpen(fName)
@@ -260,6 +272,10 @@ i, F1: show this help
 n, Right, Spacebar: show the next image
 p, Left: show the previous images
 d, Delete: delete the file from your hard disk!
+f: flip the image horizontally
+c: toggle automatically adjusting the contrast
+e: toggle equalizing the image
+g: toggle converting the image to grayscale
 m: move the file to the folder set in the main window
 <n>: move the file to the folder #n move panel of the main window
 q, Escape: quit the viewer

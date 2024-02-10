@@ -172,6 +172,12 @@ The follow actions are available in the viewer window:
 
 * f: flip the image horizontally
 
+* c: toggle automatically adjusting the contrast
+
+* e: toggle equalizing the image
+
+* g: toggle converting the image to grayscale
+
 * 1: move the file to the **first** move-target directory
 
 * 2: move the file to the **second** move-target directory
