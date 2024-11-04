@@ -78,6 +78,7 @@ class Viewer(tk.Toplevel):
         self._canvas.bind("<Motion>", self._showZoom)
 
         self.bind("<Configure>", self._showImage)
+        self._showImage()
 
     def _fillImgDict(self, Index):
         maxW = self._canvas.winfo_width()
