@@ -97,7 +97,14 @@ class Viewer(tk.Toplevel):
             # if the dimensions did change,  but the image is:
             # small than the old target and smaller than the new target
             # no scaling was done and should be done, fine!
-            if ImageOps == self._wantedImageOps and W <= maxW and W <= targetW and H <= maxH and H <= targetH:
+            if (
+                    ImageOps == self._wantedImageOps
+                    and W <= maxW
+                    and W <= targetW
+                    and H <= maxH
+                    and H <= targetH
+                    and not self._Ctrl.Cfg.get("smartzoomtofit")
+            ):
                 return
 
         # if we get here, we need to create and image tuple
@@ -112,7 +119,16 @@ class Viewer(tk.Toplevel):
         W = Img.size[0]
         H = Img.size[1]
         # scale down if too large
-        if W > maxW or H > maxH:
+        # scale up if smartzoomtofit and smaller than the window but not too small
+        if (
+                (W > maxW or H > maxH)
+                or
+                (
+                    self._Ctrl.Cfg.get("smartzoomtofit")
+                    and W > 0.3 * maxW
+                    and H > 0.3 * maxH
+                )
+        ):
             Img = PP.imageResizeToFit(Img, maxW, maxH)
         self._ImgDict[Index] = (File, PP.TkPhotoImage(Img), W, H, maxW, maxH, copy(self._wantedImageOps))
 

@@ -34,6 +34,8 @@ class CfgWindow(tk.Toplevel):
         self.startupDir.set(self.Ctrl.Cfg.get("startupfolder"))
         self.restoreFolders = tk.BooleanVar()
         self.restoreFolders.set(self.Ctrl.Cfg.get("restoremovefolders"))
+        self.smartzoomtofit = tk.BooleanVar()
+        self.smartzoomtofit.set(self.Ctrl.Cfg.get("smartzoomtofit"))
 
         startupFrame = ttk.Frame(self)
         startupFrame.pack(fill="x", padx=5)
@@ -133,12 +135,20 @@ Leave empty to start without reading files"""
             variable=self.restoreFolders
         )
 
+        ztf = ttk.Checkbutton(
+            toggleFrame,
+            text="Smart Zoom to Fit Folders",
+            style="LargeText.TCheckbutton",
+            variable=self.smartzoomtofit
+        )
+
         subdir.pack(pady=5, anchor="w")
         upscale.pack(pady=5, anchor="w")
         cnfrm.pack(pady=5, anchor="w")
         gzp.pack(pady=5, anchor="w")
         svs.pack(pady=5, anchor="w")
         rfl.pack(pady=5, anchor="w")
+        ztf.pack(pady=5, anchor="w")
 
         btnFrame = ttk.Frame(self)
         btnFrame.pack(fill="x")
@@ -182,6 +192,7 @@ Leave empty to start without reading files"""
         self.Ctrl.Cfg.set("gzipinsteadofdelete", self.doGzip.get())
         self.Ctrl.Cfg.set("savesettings", self.saveSettings.get())
         self.Ctrl.Cfg.set("restoremovefolders", self.restoreFolders.get())
+        self.Ctrl.Cfg.set("smartzoomtofit", self.smartzoomtofit.get())
         self.Ctrl.Cfg.set("startupfolder", self.startupDir.get())
         self._returntoparent()
 

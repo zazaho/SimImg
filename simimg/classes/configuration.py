@@ -63,6 +63,7 @@ class Configuration():
         self.set("findergeometry", "1200x800+0+0")
         self.set("viewergeometry", "1200x800+50+0")
         self.set("restoremovefolders", False)
+        self.set("smartzoomtofit", False)
         for i in range(1, self.get("numfolders")+1):
             self.set("folder"+str(i), "")
 
@@ -83,6 +84,7 @@ class Configuration():
             finderGeometry = default.get("findergeometry", "1200x800+0+0")
             viewerGeometry = default.get("viewergeometry", "1200x800+50+0")
             restoremovefolders = default.getstrbool("restoremovefolders", "no")
+            smartzoomtofit = default.getstrbool("smartzoomtofit", "no")
             # store read values in ConfigurationDict
             self.set("searchinsubfolders", doRecursive)
             self.set("confirmdelete", confirmdelete)
@@ -96,6 +98,7 @@ class Configuration():
             self.set("findergeometry", finderGeometry)
             self.set("viewergeometry", viewerGeometry)
             self.set("restoremovefolders", restoremovefolders)
+            self.set("smartzoomtofit", smartzoomtofit)
 
             # restore move folders enabled
             if restoremovefolders:
@@ -129,6 +132,7 @@ class Configuration():
             "findergeometry": self.get("findergeometry"),
             "viewergeometry": self.get("viewergeometry"),
             "restoremovefolders": self.get("restoremovefolders"),
+            "smartzoomtofit": self.get("smartzoomtofit"),
         }
         for i in range(1, self.get("numfolders")+1):
             config["simimg"].update({"folder"+str(i): self.get("folder"+str(i))})
