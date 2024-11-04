@@ -20,7 +20,7 @@ def imageOpen(fn):
 
 def imageResize(img, w, h):
     try:
-        res = img.resize((w, h), Image.ANTIALIAS)
+        res = img.resize((w, h), Image.Resampling.LANCZOS)
     except:
         res = None
     return res
