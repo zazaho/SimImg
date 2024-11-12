@@ -1,3 +1,11 @@
+version 0.9.7 (SH Feb 10 2024)
+- Implement rotate right, left in viewer
+
+version 0.9.6 (SH Feb 10 2024)
+- Correct show first image
+- Correct show scale image with newer pillow
+- Implement smart zoom in viewer
+
 version 0.9.5 (SH Feb 10 2024)
 - Implement equalize, grayscale and autocontrast in viewer
 

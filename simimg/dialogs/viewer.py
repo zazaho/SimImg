@@ -3,10 +3,17 @@ import tkinter as tk
 from copy import copy
 from functools import partial
 from tkinter import messagebox as tkmessagebox
+from PIL.Image import ROTATE_270, ROTATE_90
 from PIL.ImageOps import autocontrast, equalize, grayscale, mirror
 
 import simimg.utils.pillowplus as PP
 
+def _rotate_left(im):
+    return im.transpose(ROTATE_270)
+    
+def _rotate_right(im):
+    return im.transpose(ROTATE_90)
+    
 
 class Viewer(tk.Toplevel):
     "A viewer window to display the selected pictures"
@@ -30,6 +37,8 @@ class Viewer(tk.Toplevel):
             "equalize": equalize,
             "grayscale": grayscale,
             "flip": mirror,
+            "rotate_left": _rotate_left,
+            "rotate_right": _rotate_right,
         }
         self._default_imageops = {k: "d" for k in self._func_map}
         self._wantedImageOps = copy(self._default_imageops)
@@ -59,6 +68,8 @@ class Viewer(tk.Toplevel):
             "e": partial(self._toggleImageOp, opp="equalize"),
             "f": partial(self._toggleImageOp, opp="flip"),
             "g": partial(self._toggleImageOp, opp="grayscale"),
+            "r": partial(self._toggleImageOp, opp="rotate_left"),
+            "l": partial(self._toggleImageOp, opp="rotate_right"),
             "F1": self._showHelp,
             "q": self._exitViewer,
             "Escape": self._exitViewer
@@ -293,6 +304,8 @@ f: flip the image horizontally
 c: toggle automatically adjusting the contrast
 e: toggle equalizing the image
 g: toggle converting the image to grayscale
+l: toggle rotating the image to the left (anti-clockwise)
+r: toggle rotating the image to the right (clockwise)
 m: move the file to the folder set in the main window
 <n>: move the file to the folder #n move panel of the main window
 q, Escape: quit the viewer
