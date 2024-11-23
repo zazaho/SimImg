@@ -1,3 +1,6 @@
+version 0.9.8 (SH Nov 23 2024)
+- Implement brighten by 20%  in viewer
+
 version 0.9.7 (SH Feb 10 2024)
 - Implement rotate right, left in viewer
 

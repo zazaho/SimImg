@@ -5,6 +5,7 @@ from functools import partial
 from tkinter import messagebox as tkmessagebox
 from PIL.Image import ROTATE_270, ROTATE_90
 from PIL.ImageOps import autocontrast, equalize, grayscale, mirror
+from PIL.ImageEnhance import Brightness
 
 import simimg.utils.pillowplus as PP
 
@@ -14,6 +15,8 @@ def _rotate_left(im):
 def _rotate_right(im):
     return im.transpose(ROTATE_90)
     
+def _brighten(im):
+    return Brightness(im).enhance(1.2)
 
 class Viewer(tk.Toplevel):
     "A viewer window to display the selected pictures"
@@ -39,6 +42,7 @@ class Viewer(tk.Toplevel):
             "flip": mirror,
             "rotate_left": _rotate_left,
             "rotate_right": _rotate_right,
+            "brighten": _brighten,
         }
         self._default_imageops = {k: "d" for k in self._func_map}
         self._wantedImageOps = copy(self._default_imageops)
@@ -70,6 +74,7 @@ class Viewer(tk.Toplevel):
             "g": partial(self._toggleImageOp, opp="grayscale"),
             "r": partial(self._toggleImageOp, opp="rotate_left"),
             "l": partial(self._toggleImageOp, opp="rotate_right"),
+            "b": partial(self._toggleImageOp, opp="brighten"),
             "F1": self._showHelp,
             "q": self._exitViewer,
             "Escape": self._exitViewer
@@ -306,6 +311,7 @@ e: toggle equalizing the image
 g: toggle converting the image to grayscale
 l: toggle rotating the image to the left (anti-clockwise)
 r: toggle rotating the image to the right (clockwise)
+b: toggle brightening the image by 20%
 m: move the file to the folder set in the main window
 <n>: move the file to the folder #n move panel of the main window
 q, Escape: quit the viewer
