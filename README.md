@@ -252,3 +252,4 @@ Some of the algorithms used have been inspired by code found at
 [pyimagesearch](https://www.pyimagesearch.com/2014/12/01/complete-guide-building-image-search-engine-python-opencv/)
 and [imageHash](https://github.com/JohannesBuchner/imagehash).
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/zazaho/SimImg/badge)](https://scorecard.dev/viewer/?uri=github.com/zazaho/SimImg)
