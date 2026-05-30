@@ -1,6 +1,6 @@
 [project]
 name = "simimg"
-version = "0.9.9"
+version = "0.9.10"
 description = "Similar Image Finder"
 authors = [
     { name = "sacha", email = "sachahony@gmail.com" },

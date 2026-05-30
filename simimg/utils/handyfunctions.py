@@ -11,7 +11,7 @@ def hexstring2array(hexstring: str) -> list[str]:
     return [int(hexstring[i:i+2], 16) for i in range(0, len(hexstring), 2)]
 
 
-def array2hexstring(array: likst[str]) -> str:
+def array2hexstring(array: list[str]) -> str:
     """convert an array to a hexstring
     (each pair of letters represents one element)"""
     return "".join(format(round(i), "x").zfill(2) for i in array)
