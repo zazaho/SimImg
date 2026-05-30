@@ -2,61 +2,50 @@
 import gzip
 import os
 import shutil
+from collections import defaultdict
 
 
-def hexstring2array(hexstring):
+def hexstring2array(hexstring: str) -> list[str]:
     """convert a hexstring to an array
     (each pair of letters represents one element) <255"""
     return [int(hexstring[i:i+2], 16) for i in range(0, len(hexstring), 2)]
 
 
-def array2hexstring(array):
+def array2hexstring(array: likst[str]) -> str:
     """convert an array to a hexstring
     (each pair of letters represents one element)"""
     return "".join(format(round(i), "x").zfill(2) for i in array)
 
 
-def pairlist2dict(lst):
+def pairlist2dict(lst: list[dict]) -> dict[str]:
     """take a list containing key,values pairs and return
     a dict where each key holds a list of matching values.
     """
-    dct = {}
-    for ky, vle in lst:
-        if ky in dct:
-            dct[ky].append(vle)
-        else:
-            dct[ky] = [vle]
+    dct = defaultdict(list)
+    for key, value in lst:
+        dct[key].append(value)
     return dct
 
 
-def stringlist2commonunique(sl):
+def stringlist2commonunique(sl: list[str]) -> tuple[str, list[str]]:
     """split list of strings (filenames) into a common part and unique part
     like ["/home/user/pictures/pic1.jpg", "/home/user/pictures/pic2.jpg"]
     =>
     ("/home/user/pictures/pic", ["1.jpg","2.jpg"])
     """
-
-    # break the list of string into tuples of letters for each position
-    letterTupleList = map(list, zip(*sl))
-    common = ""
-    for letterTuple in letterTupleList:
-        # if there is more than one letter in the set of letters
-        # it means that the filenames start to differ at this position.
-        if len(set(letterTuple)) > 1:
-            break
-        common += letterTuple[0]
+    common = os.path.commonprefix(sl)
     unique = [s[len(common):] for s in sl]
-    return (common, unique)
+    return common, unique
 
 
-def gzipfile(file):
+def gzipfile(file: str) -> None:
     with open(file, "rb") as f_in:
         with gzip.open(file+".gz", "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
             os.remove(file)
 
 
-def mergeGroupDicts(ListGDict):
+def mergeGroupDicts(ListGDict: list[dict]) -> dict:
     """ this routine takes a list of group dicts
     each element containing a dict of matching images
     returned by a condition modules.
@@ -70,15 +59,14 @@ def mergeGroupDicts(ListGDict):
     This function should return the union of each by element:
     GL = { 1:{1,2,3}, 2:{2,3,4,6}, 5:{5,6}, 6:{6,7} }
     """
-    GDict = {}
+    GDict = defaultdict(set)
     for d in ListGDict:
         for m, g in d.items():
-            previous = GDict[m] if m in GDict else set()
-            GDict[m] = previous | g
+            GDict[m] |= g
     return GDict
 
 
-def applyMMGroupDicts(GDict, ListGDict):
+def applyMMGroupDicts(GDict: dict, ListGDict: list[dict]) -> dict:
     """ this routine take a group dict and a list of group dicts
     The first list contains groups of images that matched at least one
     active condition.
@@ -93,7 +81,7 @@ def applyMMGroupDicts(GDict, ListGDict):
     return {k: v for k, v in GDict.items() if len(v) > 1}
 
 
-def removeRedunantSubgroups(GDict):
+def removeRedunantSubgroups(GDict: dict) -> dict:
     """ Remove groups that exists entirely as subgroups elsewhere"""
     # We sort by reverse length of the groups so we know that
     # subgroups can only be found later in the list
@@ -111,7 +99,7 @@ def removeRedunantSubgroups(GDict):
     return cleanedGDict
 
 
-def existsAsSubGroup(g, GL):
+def existsAsSubGroup(g: set[str], GL: list[set[str]]) -> bool:
     "Test whether G exists as a subgroup in any of the groups in GL"
     for G in GL:
         if g - G == set():
@@ -119,12 +107,12 @@ def existsAsSubGroup(g, GL):
     return False
 
 
-def sortMatchingGroupsByFilename(GDict, filenameChecksumDict):
+def sortMatchingGroupsByFilename(GDict: dist, filenameChecksumDict: dict) -> list:
     # sort each line
     sortedLines = [sortChecksumsByFilename(c, filenameChecksumDict) for c in GDict.values()]
     # sort the final list of lists by the first element of each list
     return sorted(sortedLines, key=lambda k: filenameChecksumDict[k[0]])
 
 
-def sortChecksumsByFilename(checksums, filenameChecksumDict):
+def sortChecksumsByFilename(checksums: list[str], filenameChecksumDict: str) -> list[str]:
     return sorted(checksums, key=lambda k: filenameChecksumDict[k])

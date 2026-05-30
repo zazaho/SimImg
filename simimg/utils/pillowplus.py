@@ -2,7 +2,31 @@
 from PIL import Image, ImageTk, ImageChops
 
 pillowplus_table16 = [i/256 for i in range(65536)]
+_EXIF_ORIENTATION_CODE = 274
+_EXIF_ORIENTATION_CORRECTION_MAPPING = {
+    2: Image.FLIP_LEFT_RIGHT,
+    3: Image.ROTATE_180,
+    4: Image.FLIP_TOP_BOTTOM,
+    5: Image.TRANSPOSE,
+    6: Image.ROTATE_270,
+    7: Image.TRANSVERSE,
+    8: Image.ROTATE_90,
+}
 
+def _rotate_image(img):
+    try:
+        exif = img._getexif()
+        if not exif:
+            return img
+        if _EXIF_ORIENTATION_CODE not in exif:
+            return img
+        if exif[_EXIF_ORIENTATION_CODE] not in _EXIF_ORIENTATION_CORRECTION_MAPPING:
+            return img
+        return img.transpose(
+            _EXIF_ORIENTATION_CORRECTION_MAPPING[exif[_EXIF_ORIENTATION_CODE]]
+        )
+    except:
+        return img
 
 def imageOpen(fn):
     try:
@@ -15,6 +39,7 @@ def imageOpen(fn):
             img = img.point(pillowplus_table16, "L")
     except:
         return None
+    img = _rotate_image(img)
     return img
 
 
