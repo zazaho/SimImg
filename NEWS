@@ -1,3 +1,6 @@
+version 0.9.11 (SH May 30 2026)
+- Fix init ordering
+
 version 0.9.10 (SH May 30 2026)
 - Fix typo in typing
 

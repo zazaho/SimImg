@@ -59,11 +59,13 @@ class ConditionModule(ttk.Frame):
         )
         self._mustMatchToggle.pack(fill="x")
         self._childWidgets = [self._mustMatchToggle]
-        self._makeAdditionalWidgets()
-        self._setActive(False)
 
         self.missingmatches = None
         self.scalevalue = None
+
+        self._makeAdditionalWidgets()
+        self._setActive(False)
+
 
     def _makeAdditionalWidgets(self):
         pass
