@@ -43,6 +43,20 @@ def imageOpen(fn):
     return img
 
 
+def imageOpenNoRotate(fn):
+    try:
+        img = Image.open(fn)
+        if (
+                img.format == "PNG" and
+                img.mode == "I" and
+                max(img.getdata()) > 255
+        ):
+            img = img.point(pillowplus_table16, "L")
+    except:
+        return None
+    return img
+
+
 def imageResize(img, w, h):
     try:
         res = img.resize((w, h), Image.Resampling.LANCZOS)

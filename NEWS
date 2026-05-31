@@ -1,3 +1,6 @@
+version 0.9.12 (SH May 31 2026)
+- Fix picture shape filtering not using exif rotation
+
 version 0.9.11 (SH May 30 2026)
 - Fix init ordering
 

@@ -27,7 +27,7 @@ class FileObject():
             if FullPath in checksumFilenameDict
             else None
         )
-        self._size = None
+        self._size_ = None
         self._thumbnail = None
         # It this file active
         self.active = True
@@ -35,13 +35,11 @@ class FileObject():
     @cached_property
     def isImage(self):
         " Set IsImage to True if the file can be read by PIL "
-        try:
-            img = Image.open(self.fullPath)
-            # do this here to save time
-            self._size = img.size
-            return True
-        except:
+        img = PP.imageOpen(self.fullPath)
+        if not img:
             return False
+        self._size_ = img.size
+        return True
 
     def checksum(self):
         if self._checksum is None:
@@ -61,18 +59,14 @@ class FileObject():
             "DateTime": "",
             "DateTimeDigitized": ""
         }
-        with Image.open(self.fullPath) as image:
-            # image does not have method to get tags
-            if not hasattr(image, "_getexif"):
-                return exifTags
-            exif = image._getexif()
-            # image does not have tags
-            if not exif:
-                return exifTags
-            for key, value in exif.items():
-                if key in ExifTags.TAGS:
-                    exifTags[ExifTags.TAGS[key]] = value
+        # Rotating in pillow removes exifTags
+        image = PP.imageOpenNoRotate(self.fullPath)
+        if not image or not hasattr(image, "_getexif") or not (exif := image._getexif()):
             return exifTags
+        for key, value in exif.items():
+            if (exif_label := ExifTags.TAGS.get(key)) in exifTags:
+                exifTags[exif_label] = value
+        return exifTags
 
     def cameraMake(self):
         return self.exifTags["Make"]
@@ -105,12 +99,12 @@ class FileObject():
 
     @cached_property
     def size(self):
-        if self._size is not None:
-            return self._size
-        my_size = (0, 0)
-        with Image.open(self.fullPath) as image:
-            my_size = image.size
-        return my_size
+        if self._size_ is not None:
+            return self._size_
+        image = PP.imageOpen(self.fullPath)
+        if not image:
+            return (0, 0)
+        return image.size
 
     def shapeParameter(self):
         w, h = self.size
